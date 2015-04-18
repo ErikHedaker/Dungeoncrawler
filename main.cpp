@@ -386,7 +386,7 @@ void ChooseMonsterAmount( WorldStruct &World )
 	{
 		World.Unit.Allmonsters.amountDesired = GetPositiveInteger( );
 
-		if( World.Unit.Allmonsters.amountDesired > World.Room.length * World.Room.width - playerProtectRange - World.Room.Allwalls.amountAll &&
+		if( World.Unit.Allmonsters.amountDesired >= World.Room.length * World.Room.width - playerProtectRange - World.Room.Allwalls.amountAll &&
 			World.Unit.Allmonsters.amountDesired != 0 )
 		{
 			std::cout << "Too many monsters, try again: ";
