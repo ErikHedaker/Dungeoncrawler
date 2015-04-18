@@ -8,22 +8,20 @@ struct PositionStruct
 	int x;
 	int y;
 };
+struct PlayerStruct
+{
+	PositionStruct Position;
+	char icon = 'P';
+};
 struct MonsterStruct
 {
 	PositionStruct Position;
-	static int amountDesired;
-	static int amountCurrent;
 };
 struct AllmonstersStruct
 {
 	char icon = 'M';
 	int amountDesired = 0;
 	int amountCurrent = 0;
-};
-struct PlayerStruct
-{
-	PositionStruct Position;
-	char icon = 'P';
 };
 struct UnitStruct
 {
@@ -65,27 +63,27 @@ struct WorldStruct
 
 int GetPositiveInteger( )
 {
-	std::string input;
+	std::string userChoice;
 
 	RETRY:
-	std::cin >> input;
+	std::cin >> userChoice;
 
-	if( input.size( ) > 9 ) // Manual max int input: 999 999 999, roughly half of the max size for signed int.
+	if( userChoice.size( ) > 9 ) // Manual max int input: 999 999 999, roughly half of the max size for signed int.
 	{
 		std::cout << "Input is too big, try again: ";
 		goto RETRY;
 	}
 
-	for( int i = 0; i < input.size( ); i++ )
+	for( int i = 0; i < userChoice.size( ); i++ )
 	{
-		if( isdigit( input[i] ) == false )
+		if( isdigit( userChoice[i] ) == false )
 		{
 			std::cout << "Input does not consist of only digits, try again: ";
 			goto RETRY;
 		}
 	}
 
-	int output = atoi( input.c_str( ) );
+	int output = atoi( userChoice.c_str( ) );
 
 	return output;
 }
@@ -193,7 +191,7 @@ void SetRoomSize( WorldStruct &World )
 }
 void SetRoomExits( WorldStruct &World )
 {
-	World.Room.Exit.amount = 1;
+	World.Room.Exit.amount = 1;	// Temporary.
 	World.Room.Exit.Position.x = 1;
 	World.Room.Exit.Position.y = 0; // Top left corner.
 }
@@ -223,14 +221,12 @@ void SetRoomOuterWalls( WorldStruct &World )
 }
 /*bool SetOneExtendingInnerWall( WorldStruct &World, int chosenWall )
 {
-      int xPosTemp, yPosTemp;
+	int xPosTemp, yPosTemp;
 
+	if( ( World.Room.Wall[chosenWall].Position.x == 0 || World.Room.Wall[chosenWall].Position.x == World.Room.width - 1 ) &&
+		( World.Room.Wall[chosenWall].Position.y == 0 || World.Room.Wall[chosenWall].Position.y == World.Room.length - 1 ) )
 
-
-      if( ( World.Room.Wall[chosenWall].Position.x == 0 || World.Room.Wall[chosenWall].Position.x == World.Room.width - 1 ) &&
-              ( World.Room.Wall[chosenWall].Position.y == 0 || World.Room.Wall[chosenWall].Position.y == World.Room.length - 1 ) )
-
-      return false;   // Did not manage to create an extending wall.
+	return false;   // Did not manage to create an extending wall.
 }*/
 /*void SetRoomInnerWalls( WorldStruct &World )
 {
@@ -423,7 +419,7 @@ void SetRandomMonsterPositions( WorldStruct &World )
 		if( World.Unit.Allmonsters.amountCurrent < World.Unit.Allmonsters.amountDesired )
 		{
 			World.Unit.Allmonsters.amountCurrent++;
-		}       // To avoid trying to access unvalid memory of monsterpositions before its allocated inside CheckForMonsterPosition( World, xPosTemp, yPosTemp ).
+		}	// To avoid trying to access unvalid memory of monsterpositions before its allocated inside CheckForMonsterPosition( World, xPos, yPos ).
 
 		Temp.Position.x = xPosTemp;
 		Temp.Position.y = yPosTemp;
@@ -461,12 +457,12 @@ void DrawRoom( const WorldStruct &World )
 			}
 		}
 
-		std::cout << std::endl;
+		std::cout << "\n";
 	}
 }
 void SayTurnOptions( )
 {
-	std::cout << std::endl;
+	std::cout << "\n";
 	std::cout << "[W] Go up.\n";
 	std::cout << "[S] Go down.\n";
 	std::cout << "[A] Go left.\n";
@@ -537,16 +533,16 @@ void ChooseTurnOptions( WorldStruct &World )
 			break;
 		}
 
-		case 'E':
-		case 'e':       // Roomexit game.
-		{
-			exit( 0 );
-		}
-
 		case 'Q':
-		case 'q':       // Roomexit game.
+		case 'q':       // Do nothing.
 		{
 			break;
+		}
+
+		case 'E':
+		case 'e':       // Exit game.
+		{
+			exit( 0 );
 		}
 
 		default:
@@ -571,7 +567,7 @@ void RandomizeMonsterMovement( WorldStruct &World )
 
 			switch( randomTemp )
 			{
-				case 1: // Monster goes up.
+				case 1:		// Monster goes up.
 				{
 					yPosTemp = World.Unit.Monster[i].Position.y - 1;
 
@@ -586,7 +582,7 @@ void RandomizeMonsterMovement( WorldStruct &World )
 					break;
 				}
 
-				case 2: // Monster goes down.
+				case 2:		// Monster goes down.
 				{
 					yPosTemp = World.Unit.Monster[i].Position.y + 1;
 
@@ -601,7 +597,7 @@ void RandomizeMonsterMovement( WorldStruct &World )
 					break;
 				}
 
-				case 3: // Monster goes left.
+				case 3:		// Monster goes left.
 				{
 					xPosTemp = World.Unit.Monster[i].Position.x - 1;
 
@@ -616,7 +612,7 @@ void RandomizeMonsterMovement( WorldStruct &World )
 					break;
 				}
 
-				case 4: // Monster goes right.
+				case 4:		// Monster goes right.
 				{
 					xPosTemp = World.Unit.Monster[i].Position.x + 1;
 
@@ -642,10 +638,10 @@ void RandomizeMonsterMovement( WorldStruct &World )
 				case 13:
 				case 14:
 				case 15:
-				case 16:        // Monster stands still.
+				case 16:	// Monster stands still.
 				{
-					for( int k = 0; k < World.Unit.Allmonsters.amountCurrent; k++ ) // Modified CheckForMonsterPosition, incase
-					{                                                                                                                               // another monster has moved to its position.
+					for( int k = 0; k < World.Unit.Allmonsters.amountCurrent; k++ )		// Modified CheckForMonsterPosition, incase
+					{																	// another monster has moved to its position.
 						if( k == i )    // If it checks it's own position.
 						{
 							continue;
