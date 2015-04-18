@@ -221,156 +221,156 @@ void SetRoomOuterWalls( WorldStruct &World )
 		}
 	}
 }
-//bool SetOneExtendingInnerWall( WorldStruct &World, int chosenWall )
-//{
-//      int xPosTemp, yPosTemp;
-//
-//
-//
-//      if( ( World.Room.Wall[chosenWall].Position.x == 0 || World.Room.Wall[chosenWall].Position.x == World.Room.width - 1 ) &&
-//              ( World.Room.Wall[chosenWall].Position.y == 0 || World.Room.Wall[chosenWall].Position.y == World.Room.length - 1 ) )
-//
-//      return false;   // Did not manage to create an extending wall.
-//}
-//void SetRoomInnerWalls( WorldStruct &World )
-//{
-//      WallStruct Temp;
-//      int amountExtendingWalls;
-//      int randomExistingWall;
-//      int xRand, yRand;
-//      int xPosTemp = 0;
-//      int yPosTemp = 0;
-//      int failCounter;
-//      bool RetryLoop;
-//     
-//      amountExtendingWalls = 1 + rand( ) % ( World.Room.Allwalls.amountAll ); // No real logic here.
-//
-//      for( int i = 0; i < amountExtendingWalls; i++ )
-//      {
-//              RetryLoop = true;
-//              randomExistingWall = 1 + rand( ) % World.Room.Wall.size( );
-//              failCounter = 0;
-//
-//              while( RetryLoop == true )
-//              {
-//                      yRand = 1 + rand( ) % 3;
-//                      xRand = 1 + rand( ) % 3;
-//                      failCounter++;
-//
-//                      switch( yRand )
-//                      {
-//                              case 1: // Wall goes up.
-//                              {
-//                                      yPosTemp = World.Room.Wall[randomExistingWall].Position.y - 1;
-//
-//                                      if( yPosTemp < 0 || yPosTemp > World.Room.length - 1  )
-//                                      {
-//                                              break;
-//                                      }
-//                                      else if( CheckForRoomWall( World, World.Room.Wall[randomExistingWall].Position.x, yPosTemp ) == false )
-//                                      {
-//                                              World.Room.Wall[randomExistingWall].Position.y = yPosTemp;
-//                                              RetryLoop = false;
-//                                      }
-//
-//                                      break;
-//                              }
-//
-//                              case 2: // Wall goes down.
-//                              {
-//                                      yPosTemp = World.Room.Wall[randomExistingWall].Position.y + 1;
-//
-//                                      if( yPosTemp < 0 || yPosTemp > World.Room.length - 1 )
-//                                      {
-//                                              break;
-//                                      }
-//                                      else if( CheckForRoomWall( World, World.Room.Wall[randomExistingWall].Position.x, yPosTemp ) == false )
-//                                      {
-//                                              World.Room.Wall[randomExistingWall].Position.y = yPosTemp;
-//                                              RetryLoop = false;
-//                                      }
-//
-//                                      break;
-//                              }
-//
-//                              case 3: // Wall stands still.
-//                              {
-//                                      yPosTemp = World.Room.Wall[randomExistingWall].Position.y;
-//
-//                                      if( failCounter == 10 )
-//                                      {
-//                                              RetryLoop = false;
-//                                      }
-//
-//                                      break;
-//                              }
-//
-//                              default:
-//                              {
-//                                      break;
-//                              }
-//                      }
-//
-//                      switch( xRand )
-//                      {
-//                              case 1: // Wall goes left.
-//                              {
-//                                      xPosTemp = World.Room.Wall[randomExistingWall].Position.x - 1;
-//
-//                                      if( xPosTemp < 0 || xPosTemp > World.Room.width - 1 )
-//                                      {
-//                                              break;
-//                                      }
-//                                      else if( CheckForRoomWall( World, xPosTemp, World.Room.Wall[randomExistingWall].Position.y ) == false )
-//                                      {
-//                                              World.Room.Wall[randomExistingWall].Position.x = xPosTemp;
-//                                              RetryLoop = false;
-//                                      }
-//
-//                                      break;
-//                              }
-//
-//                              case 2: // Wall goes right.
-//                              {
-//                                      xPosTemp = World.Room.Wall[randomExistingWall].Position.x + 1;
-//
-//                                      if( xPosTemp < 0 || xPosTemp > World.Room.width - 1 )
-//                                      {
-//                                              break;
-//                                      }
-//                                      else if( CheckForRoomWall( World, xPosTemp, World.Room.Wall[randomExistingWall].Position.y ) == false )
-//                                      {
-//                                              World.Room.Wall[randomExistingWall].Position.x = xPosTemp;
-//                                              RetryLoop = false;
-//                                      }
-//
-//                                      break;
-//                              }
-//
-//                              case 3: // Wall stands still.
-//                              {
-//                                      xPosTemp = World.Room.Wall[randomExistingWall].Position.x;
-//
-//                                      if( failCounter == 10 )
-//                                      {
-//                                              RetryLoop = false;
-//                                      }
-//
-//                                      break;
-//                              }
-//
-//                              default:
-//                              {
-//                                      break;
-//                              }
-//                      }
-//              }
-//
-//              Temp.Position.x = xPosTemp;
-//              Temp.Position.y = yPosTemp;
-//              World.Room.Wall.push_back( Temp );
-//      }
-//}
+/*bool SetOneExtendingInnerWall( WorldStruct &World, int chosenWall )
+{
+      int xPosTemp, yPosTemp;
+
+
+
+      if( ( World.Room.Wall[chosenWall].Position.x == 0 || World.Room.Wall[chosenWall].Position.x == World.Room.width - 1 ) &&
+              ( World.Room.Wall[chosenWall].Position.y == 0 || World.Room.Wall[chosenWall].Position.y == World.Room.length - 1 ) )
+
+      return false;   // Did not manage to create an extending wall.
+}*/
+/*void SetRoomInnerWalls( WorldStruct &World )
+{
+      WallStruct Temp;
+      int amountExtendingWalls;
+      int randomExistingWall;
+      int xRand, yRand;
+      int xPosTemp = 0;
+      int yPosTemp = 0;
+      int failCounter;
+      bool RetryLoop;
+     
+      amountExtendingWalls = 1 + rand( ) % ( World.Room.Allwalls.amountAll ); // No real logic here.
+
+      for( int i = 0; i < amountExtendingWalls; i++ )
+      {
+              RetryLoop = true;
+              randomExistingWall = 1 + rand( ) % World.Room.Wall.size( );
+              failCounter = 0;
+
+              while( RetryLoop == true )
+              {
+                      yRand = 1 + rand( ) % 3;
+                      xRand = 1 + rand( ) % 3;
+                      failCounter++;
+
+                      switch( yRand )
+                      {
+                              case 1: // Wall goes up.
+                              {
+                                      yPosTemp = World.Room.Wall[randomExistingWall].Position.y - 1;
+
+                                      if( yPosTemp < 0 || yPosTemp > World.Room.length - 1  )
+                                      {
+                                              break;
+                                      }
+                                      else if( CheckForRoomWall( World, World.Room.Wall[randomExistingWall].Position.x, yPosTemp ) == false )
+                                      {
+                                              World.Room.Wall[randomExistingWall].Position.y = yPosTemp;
+                                              RetryLoop = false;
+                                      }
+
+                                      break;
+                              }
+
+                              case 2: // Wall goes down.
+                              {
+                                      yPosTemp = World.Room.Wall[randomExistingWall].Position.y + 1;
+
+                                      if( yPosTemp < 0 || yPosTemp > World.Room.length - 1 )
+                                      {
+                                              break;
+                                      }
+                                      else if( CheckForRoomWall( World, World.Room.Wall[randomExistingWall].Position.x, yPosTemp ) == false )
+                                      {
+                                              World.Room.Wall[randomExistingWall].Position.y = yPosTemp;
+                                              RetryLoop = false;
+                                      }
+
+                                      break;
+                              }
+
+                              case 3: // Wall stands still.
+                              {
+                                      yPosTemp = World.Room.Wall[randomExistingWall].Position.y;
+
+                                      if( failCounter == 10 )
+                                      {
+                                              RetryLoop = false;
+                                      }
+
+                                      break;
+                              }
+
+                              default:
+                              {
+                                      break;
+                              }
+                      }
+
+                      switch( xRand )
+                      {
+                              case 1: // Wall goes left.
+                              {
+                                      xPosTemp = World.Room.Wall[randomExistingWall].Position.x - 1;
+
+                                      if( xPosTemp < 0 || xPosTemp > World.Room.width - 1 )
+                                      {
+                                              break;
+                                      }
+                                      else if( CheckForRoomWall( World, xPosTemp, World.Room.Wall[randomExistingWall].Position.y ) == false )
+                                      {
+                                              World.Room.Wall[randomExistingWall].Position.x = xPosTemp;
+                                              RetryLoop = false;
+                                      }
+
+                                      break;
+                              }
+
+                              case 2: // Wall goes right.
+                              {
+                                      xPosTemp = World.Room.Wall[randomExistingWall].Position.x + 1;
+
+                                      if( xPosTemp < 0 || xPosTemp > World.Room.width - 1 )
+                                      {
+                                              break;
+                                      }
+                                      else if( CheckForRoomWall( World, xPosTemp, World.Room.Wall[randomExistingWall].Position.y ) == false )
+                                      {
+                                              World.Room.Wall[randomExistingWall].Position.x = xPosTemp;
+                                              RetryLoop = false;
+                                      }
+
+                                      break;
+                              }
+
+                              case 3: // Wall stands still.
+                              {
+                                      xPosTemp = World.Room.Wall[randomExistingWall].Position.x;
+
+                                      if( failCounter == 10 )
+                                      {
+                                              RetryLoop = false;
+                                      }
+
+                                      break;
+                              }
+
+                              default:
+                              {
+                                      break;
+                              }
+                      }
+              }
+
+              Temp.Position.x = xPosTemp;
+              Temp.Position.y = yPosTemp;
+              World.Room.Wall.push_back( Temp );
+      }
+}*/
 void SetPlayerPosition( WorldStruct &World )
 {
 	World.Unit.Player.Position.x = World.Room.width - 2;
