@@ -554,16 +554,18 @@ void ChooseTurnOptions( WorldStruct &World )
 }
 void RandomizeMonsterMovement( WorldStruct &World )
 {
-	int yPosTemp, xPosTemp;
+	int xPosTemp;
+	int yPosTemp;
 	int randomTemp;
+	bool RetryLoop;
 
 	for( int i = 0; i < World.Unit.Allmonsters.amountCurrent; i++ )
 	{
-		bool RetryLoop = true;
+		RetryLoop = true;
 
 		while( RetryLoop == true )
 		{
-			randomTemp = 1 + rand( ) % 16;
+			randomTemp = 1 + rand( ) % 16;	// 25% to move in a random direction, 75% to stand still.
 
 			switch( randomTemp )
 			{
@@ -640,22 +642,7 @@ void RandomizeMonsterMovement( WorldStruct &World )
 				case 15:
 				case 16:	// Monster stands still.
 				{
-					for( int k = 0; k < World.Unit.Allmonsters.amountCurrent; k++ )		// Modified CheckForMonsterPosition, incase
-					{																	// another monster has moved to its position.
-						if( k == i )    // If it checks it's own position.
-						{
-							continue;
-						}
-						else if( World.Unit.Monster[i].Position.x == World.Unit.Monster[k].Position.x &&
-								 World.Unit.Monster[i].Position.y == World.Unit.Monster[k].Position.y )
-						{
-							break;
-						}
-						else if( k == World.Unit.Allmonsters.amountCurrent - 1 )
-						{
-							RetryLoop = false;
-						}
-					}
+					RetryLoop = false;
 
 					break;
 				}
