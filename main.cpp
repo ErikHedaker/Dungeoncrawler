@@ -39,7 +39,6 @@ struct AllwallsStruct
 	int amountAll = 0;
 	int amountOuter = 0;
 	int amountInner = 0;
-
 };
 struct ExitStruct
 {
@@ -564,6 +563,8 @@ void RandomizeMonsterMovement( WorldStruct &World )
 		while( RetryLoop == true )
 		{
 			randomTemp = 1 + rand( ) % 16;
+
+			// if statement instead of switch.
 
 			switch( randomTemp )
 			{
