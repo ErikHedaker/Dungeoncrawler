@@ -99,6 +99,14 @@ int randomBooleanGenerator( )
 	return randomNumber;
 }
 
+int CompleteDataMap( InstanceStruct &Instance )
+{
+	// Dynamic and static information.
+}
+int StaticDataMap( InstanceStruct &Instance )
+{
+	// Only static information.
+}
 bool CheckForRoomExit( const InstanceStruct &Instance, int xPos, int yPos )
 {
 	for( int i = 0; i < Instance.Room.Exit.amount; i++ )
