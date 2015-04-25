@@ -133,12 +133,25 @@ bool CheckForRoomWall( const WorldStruct &World, int xPos, int yPos )
 
 	return false;
 }
-bool CheckForPlayerPosition( const WorldStruct &World, int xPos, int yPos )
+bool CheckForPlayer( const WorldStruct &World, int xPos, int yPos )
 {
 	if( xPos == World.Unit.Player.Position.x &&
 		yPos == World.Unit.Player.Position.y )
 	{
 		return true;
+	}
+
+	return false;
+}
+bool CheckForMonster( const WorldStruct &World, int xPos, int yPos )
+{
+	for( int i = 0; i < World.Unit.Allmonsters.amountCurrent; i++ )
+	{
+		if( xPos == World.Unit.Monster[i].Position.x &&
+			yPos == World.Unit.Monster[i].Position.y )
+		{
+			return true;
+		}
 	}
 
 	return false;
@@ -159,19 +172,6 @@ bool CheckForSpawnNearPlayer( const WorldStruct &World, int xPos, int yPos )
 
 	return false;
 }
-bool CheckForMonsterPosition( const WorldStruct &World, int xPos, int yPos )
-{
-	for( int i = 0; i < World.Unit.Allmonsters.amountCurrent; i++ )
-	{
-		if( xPos == World.Unit.Monster[i].Position.x &&
-			yPos == World.Unit.Monster[i].Position.y )
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
 bool CheckForWinLoseCondition( const WorldStruct &World )
 {
 	if( CheckForRoomExit( World, World.Unit.Player.Position.x, World.Unit.Player.Position.y ) == true )
@@ -179,7 +179,7 @@ bool CheckForWinLoseCondition( const WorldStruct &World )
 		std::cout << "\nYou win!";
 		return true;
 	}
-	else if( CheckForMonsterPosition( World, World.Unit.Player.Position.x, World.Unit.Player.Position.y ) == true )
+	else if( CheckForMonster( World, World.Unit.Player.Position.x, World.Unit.Player.Position.y ) == true )
 	{
 		std::cout << "\nYou lose!";
 		return true;
@@ -192,8 +192,8 @@ bool CheckForWinLoseCondition( const WorldStruct &World )
 
 void SayGameRules( )
 {
-	std::cout << "\nWin  condition: Enter the exit.";
-	std::cout << "\nLose condition: Enter the same space as a monster.\n\n";
+	std::cout << "Win  condition: Enter the exit.\n";
+	std::cout << "Lose condition: Enter the same space as a monster.\n";
 }
 void SetRoomSize( WorldStruct &World )
 {
@@ -411,7 +411,7 @@ void ChooseMonsterAmount( WorldStruct &World )
 {
 	const int playerProtectRange = 9;       // From CheckForSpawnNearPlayer( const WorldStruct &World, int xPos, int yPos ).
 
-	std::cout << "\nEnter amount of monsters: ";
+	std::cout << "Enter amount of monsters: ";
 
 	while( true )
 	{
@@ -441,11 +441,11 @@ void SetRandomMonsterPositions( WorldStruct &World )
 			xPosTemp = randomNumberGenerator( 1, World.Room.width - 2 );    // Between 1 and 8 if default RoomWidth value (10).
 			yPosTemp = randomNumberGenerator( 1, World.Room.length - 2 );   // Between 1 and 8 if default RoomLength value (10).
 
-			if( CheckForMonsterPosition( World, xPosTemp, yPosTemp ) == false &&
-				CheckForSpawnNearPlayer( World, xPosTemp, yPosTemp ) == false &&
-				CheckForPlayerPosition( World, xPosTemp, yPosTemp ) == false &&
-				CheckForRoomExit( World, xPosTemp, yPosTemp ) == false &&
-				CheckForRoomWall( World, xPosTemp, yPosTemp ) == false )
+			if( CheckForSpawnNearPlayer( World, xPosTemp, yPosTemp ) == false &&
+				CheckForRoomExit       ( World, xPosTemp, yPosTemp ) == false &&
+				CheckForRoomWall       ( World, xPosTemp, yPosTemp ) == false &&
+				CheckForMonster        ( World, xPosTemp, yPosTemp ) == false &&
+				CheckForPlayer         ( World, xPosTemp, yPosTemp ) == false )
 			{
 				break;
 			}
@@ -464,25 +464,23 @@ void SetRandomMonsterPositions( WorldStruct &World )
 
 void DrawRoom( const WorldStruct &World )
 {
-	std::cout << "\n";
-
-	for( int yDraw = 0; yDraw < World.Room.length; yDraw++ )
+	for( int drawHorizontal = 0; drawHorizontal < World.Room.length; drawHorizontal++ )
 	{
-		for( int xDraw = 0; xDraw < World.Room.width; xDraw++ )
+		for( int drawVertical = 0; drawVertical < World.Room.width; drawVertical++ )
 		{
-			if( CheckForRoomExit( World, xDraw, yDraw ) == true )
+			if( CheckForRoomExit( World, drawVertical, drawHorizontal ) == true )
 			{
 				std::cout << World.Room.Exit.icon;              // '='.
 			}
-			else if( CheckForRoomWall( World, xDraw, yDraw ) == true )
+			else if( CheckForRoomWall( World, drawVertical, drawHorizontal ) == true )
 			{
 				std::cout << World.Room.Allwalls.icon;          // '#'.
 			}
-			else if( CheckForMonsterPosition( World, xDraw, yDraw ) == true )
+			else if( CheckForMonster( World, drawVertical, drawHorizontal ) == true )
 			{
 				std::cout << World.Unit.Allmonsters.icon;       // 'M'.
 			}
-			else if( CheckForPlayerPosition( World, xDraw, yDraw ) == true )
+			else if( CheckForPlayer( World, drawVertical, drawHorizontal ) == true )
 			{
 				std::cout << World.Unit.Player.icon;            // 'P'.
 			}
@@ -497,7 +495,6 @@ void DrawRoom( const WorldStruct &World )
 }
 void SayTurnOptions( )
 {
-	std::cout << "\n";
 	std::cout << "[W] Go up.\n";
 	std::cout << "[S] Go down.\n";
 	std::cout << "[A] Go left.\n";
@@ -510,8 +507,8 @@ void ChooseTurnOptions( WorldStruct &World )
 	std::string userChoice;
 	int yPosTemp, xPosTemp;
 
-	std::cout << "\nYour choice: ";
 	RETRY:
+	std::cout << "\nYour choice: ";
 	std::cin >> userChoice;
 
 	switch( userChoice[0] )
@@ -519,12 +516,8 @@ void ChooseTurnOptions( WorldStruct &World )
 		case 'W':
 		case 'w':       // Move up.
 		{
+			xPosTemp = World.Unit.Player.Position.x;
 			yPosTemp = World.Unit.Player.Position.y - 1;
-
-			if( CheckForRoomWall( World, World.Unit.Player.Position.x, yPosTemp ) == false )
-			{
-				World.Unit.Player.Position.y = yPosTemp;
-			}
 
 			break;
 		}
@@ -532,12 +525,8 @@ void ChooseTurnOptions( WorldStruct &World )
 		case 'S':
 		case 's':       // Move down.
 		{
+			xPosTemp = World.Unit.Player.Position.x;
 			yPosTemp = World.Unit.Player.Position.y + 1;
-
-			if( CheckForRoomWall( World, World.Unit.Player.Position.x, yPosTemp ) == false )
-			{
-				World.Unit.Player.Position.y = yPosTemp;
-			}
 
 			break;
 		}
@@ -546,11 +535,7 @@ void ChooseTurnOptions( WorldStruct &World )
 		case 'a':       // Move left.
 		{
 			xPosTemp = World.Unit.Player.Position.x - 1;
-
-			if( CheckForRoomWall( World, xPosTemp, World.Unit.Player.Position.y ) == false )
-			{
-				World.Unit.Player.Position.x = xPosTemp;
-			}
+			yPosTemp = World.Unit.Player.Position.y;
 
 			break;
 		}
@@ -559,11 +544,7 @@ void ChooseTurnOptions( WorldStruct &World )
 		case 'd':       // Move right.
 		{
 			xPosTemp = World.Unit.Player.Position.x + 1;
-
-			if( CheckForRoomWall( World, xPosTemp, World.Unit.Player.Position.y ) == false )
-			{
-				World.Unit.Player.Position.x = xPosTemp;
-			}
+			yPosTemp = World.Unit.Player.Position.y;
 
 			break;
 		}
@@ -582,9 +563,15 @@ void ChooseTurnOptions( WorldStruct &World )
 
 		default:
 		{
-			std::cout << "Invalid input, try again: ";
+			std::cout << "Invalid input, try again\n";
 			goto RETRY;
 		}
+	}
+
+	if( CheckForRoomWall( World, xPosTemp, yPosTemp ) == false )
+	{
+		World.Unit.Player.Position.x = xPosTemp;
+		World.Unit.Player.Position.y = yPosTemp;
 	}
 }
 void RandomizeMonsterMovement( WorldStruct &World )
@@ -597,32 +584,30 @@ void RandomizeMonsterMovement( WorldStruct &World )
 	{
 		while( true )
 		{
-			randomNumber = randomNumberGenerator( 0, 15 );
+			randomNumber = randomNumberGenerator( 1, 16 );
 
-			if( randomNumber < 4 ) // Monster moves.
+			if( randomNumber <= 2 ) // Monster moves vertically.
 			{
-				if( randomNumber < 2 ) // Monster moves horizontally;
-				{
-					xPosTemp = World.Unit.Monster[i].Position.x + randomBooleanGenerator( );
-					yPosTemp = World.Unit.Monster[i].Position.y;
-				}
-				else // Monster moves vertically.
-				{
-					xPosTemp = World.Unit.Monster[i].Position.x;
-					yPosTemp = World.Unit.Monster[i].Position.y + randomBooleanGenerator( );
-				}
+				xPosTemp = World.Unit.Monster[i].Position.x;
+				yPosTemp = World.Unit.Monster[i].Position.y + randomBooleanGenerator( );
+			}
+			else if( randomNumber <= 4 ) // Monster moves horizontally.
+			{
+				xPosTemp = World.Unit.Monster[i].Position.x + randomBooleanGenerator( );
+				yPosTemp = World.Unit.Monster[i].Position.y;
 			}
 			else // Monster stands still.
 			{
 				break;
 			}
 
-			if( CheckForMonsterPosition( World, xPosTemp, yPosTemp ) == false &&
-				CheckForRoomExit       ( World, xPosTemp, yPosTemp ) == false &&
-				CheckForRoomWall       ( World, xPosTemp, yPosTemp ) == false )
+			if( CheckForRoomExit( World, xPosTemp, yPosTemp ) == false &&
+				CheckForRoomWall( World, xPosTemp, yPosTemp ) == false &&
+				CheckForMonster ( World, xPosTemp, yPosTemp ) == false )
 			{
 				World.Unit.Monster[i].Position.x = xPosTemp;
 				World.Unit.Monster[i].Position.y = yPosTemp;
+				break;
 			}
 		}
 	}
@@ -658,11 +643,14 @@ int main( )
 	{
 		WorldStruct World;
 
+		system( "CLS" );
 		SayGameRules( );
+		std::cout << std::endl;
 		SetRoomSize( World );
 		SetRoomExits( World );
 		SetRoomOuterWalls( World );
 		SetPlayerPosition( World );
+		std::cout << std::endl;
 		ChooseMonsterAmount( World );
 		SetRandomMonsterPositions( World );
 
@@ -674,6 +662,7 @@ int main( )
 			{
 				break;
 			}
+			std::cout << std::endl;
 			SayTurnOptions( );
 			ChooseTurnOptions( World );
 			RandomizeMonsterMovement( World );
