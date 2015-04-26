@@ -17,7 +17,6 @@ How the game currently functions (2015-04-16):
 -	In the event of the Player or a Monster trying to enter the same space as a wall, it's positional value remains unchanged.
 
 How I want the game to function and additional features (2015-04-16):
--	Back-end, map out positions of all interacting elements on a gridlike system and only check local changes to eliminate the runtime performance impact of checking every position for each change.
 -	Entering an Exit leads to a new room, instead of being the win condition.
 -	Pseudo-random, asymetrical generation of rooms.
 -	Pseudo-random, asymetrical generation of inner walls, that does not cut the room in half.
@@ -25,4 +24,4 @@ How I want the game to function and additional features (2015-04-16):
 -	Items with various stats.
 
 Known bugs (2015-04-16):
--	RandomizeMonsterMovement( WorldStruct &World ) not acting as it should (75% to stand still and 6,25% to go in each direction) but instead randomly selected Monsters always move and randomly selected Monsters stand still / rarely move.
+-	(Not bug, rather lack of algorithm) Terrain has the possibility of cutting off the player and the exit.
