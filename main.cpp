@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <random>
+#include <math.h>
 
 struct PositionStruct
 {
@@ -206,6 +207,81 @@ bool CheckForWinLoseCondition( const InstanceStruct &Instance )
 	}
 }
 
+void SetStaticDataMap( InstanceStruct &Instance )
+{
+	if( Instance.Room.staticDataMap.size( ) == 0 )
+	{
+		Instance.Room.staticDataMap.resize( Instance.Room.length, std::vector<char>( Instance.Room.width ) );
+	}
+
+	for( int y = 0; y < Instance.Room.length; y++ )
+	{
+		for( int x = 0; x < Instance.Room.width; x++ )
+		{
+			if( CheckForRoomExit( Instance, x, y ) == true )
+			{
+				Instance.Room.staticDataMap[y][x] = '=';
+			}
+			else if( CheckForRoomWall( Instance, x, y, 0 ) == true )
+			{
+				Instance.Room.staticDataMap[y][x] = '#';
+			}
+			else
+			{
+				Instance.Room.staticDataMap[y][x] = '-';
+			}
+		}
+	}
+}
+void SetCompleteDataMap( InstanceStruct &Instance )
+{
+	Instance.Room.completeDataMap = Instance.Room.staticDataMap;
+
+	for( int y = 0; y < Instance.Room.length; y++ )
+	{
+		for( int x = 0; x < Instance.Room.width; x++ )
+		{
+			if( CheckForMonster( Instance, x, y ) == true )
+			{
+				Instance.Room.completeDataMap[y][x] = 'M';
+			}
+			else if( CheckForPlayer( Instance, x, y ) == true )
+			{
+				Instance.Room.completeDataMap[y][x] = 'P';
+			}
+		}
+	}
+}
+bool EmptySurroundedTile( InstanceStruct &Instance, int xPos, int yPos )
+{
+	int surroundingWalls = 0;
+
+	for( int y = -1; y <= 1; y++ )
+	{
+		for( int x = -1; y <= 1; y++ )
+		{
+			if( xPos == 0 || xPos == Instance.Room.width - 1 ||
+				yPos == 0 || yPos == Instance.Room.length - 1 )
+			{
+				continue;
+			}
+			else if( CheckForRoomWall( Instance, xPos + x, yPos + y, Instance.Room.Wall.amountOuter ) == true )
+			{
+				surroundingWalls++;
+			}
+		}
+	}
+
+	if( surroundingWalls > 5 )
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 void PrintGameRules( )
 {
 	std::cout << "Win  condition: Enter the exit.\n";
@@ -215,7 +291,7 @@ void SetRoomSize( InstanceStruct &Instance )
 {
 	std::string userChoice;
 
-	std::cout << "Would you like to determine the room dimensions, [y/n]: ";
+	std::cout << "\nWould you like to determine the room dimensions, [y/n]: ";
 	while( true )
 	{
 		std::cin >> userChoice;
@@ -282,8 +358,10 @@ void SetRoomOuterWalls( InstanceStruct &Instance )
 void SetRoomRandomWalls( InstanceStruct &Instance )
 {
 	PositionStruct Temp;
-	int randomSourceWalls = RandomNumberGenerator( 15, 30 );
-	int randomTries = RandomNumberGenerator( 8, 10 );
+	double high = sqrt( Instance.Room.length * Instance.Room.width ) * 1.5;
+	double low = sqrt( Instance.Room.length * Instance.Room.width ) / 1.5;
+	int randomSourceWalls = RandomNumberGenerator( (int)low, (int)high );
+	int randomTries = RandomNumberGenerator( 5, 7 );
 
 	while( randomSourceWalls > 0 ) // Place source walls.
 	{
@@ -320,12 +398,22 @@ void SetRoomRandomWalls( InstanceStruct &Instance )
 				{
 					Temp.x = x + RandomBooleanGenerator( ) * RandomNumberGenerator( 0, 1 );
 					Temp.y = y + RandomBooleanGenerator( ) * RandomNumberGenerator( 0, 1 );
+
 					if( CheckForRoomWall( Instance, Temp.x, Temp.y, Instance.Room.Wall.amountOuter ) == true ||
 						CheckForSpawnNearPlayer( Instance, x, y ) == true &&
 						CheckForSpawnNearExits( Instance, x, y ) == true )
 					{
 						continue;
 					}
+
+					Instance.Room.Wall.Position.push_back( Temp );
+					Instance.Room.Wall.amountAll++;
+				}
+				else if( CheckForRoomWall( Instance, x, y, Instance.Room.Wall.amountOuter ) == false &&
+						 EmptySurroundedTile( Instance, x, y ) == true )
+				{
+					Temp.x = x;
+					Temp.y = y;
 					Instance.Room.Wall.Position.push_back( Temp );
 					Instance.Room.Wall.amountAll++;
 				}
@@ -344,7 +432,7 @@ void ChooseMonsterAmount( InstanceStruct &Instance )
 {
 	int maxMonsters = ( Instance.Room.length * Instance.Room.width ) - Instance.Room.Wall.amountAll;
 
-	std::cout << "Enter amount of monsters: ";
+	std::cout << "\nEnter amount of monsters: ";
 	while( true )
 	{
 		Instance.Unit.Monster.amountDesired = GetPositiveInteger( );
@@ -403,51 +491,6 @@ void SetRandomMonsterPositions( InstanceStruct &Instance )
 	}
 }
 
-void SetStaticDataMap( InstanceStruct &Instance )
-{
-	Instance.Room.staticDataMap.resize( Instance.Room.length, std::vector<char>( Instance.Room.width ) );
-
-	for( int y = 0; y < Instance.Room.length; y++ )
-	{
-		for( int x = 0; x < Instance.Room.width; x++ )
-		{
-			if( CheckForRoomExit( Instance, x, y ) == true )
-			{
-				Instance.Room.staticDataMap[y][x] = '=';
-			}
-			else if( CheckForRoomWall( Instance, x, y, 0 ) == true )
-			{
-				Instance.Room.staticDataMap[y][x] = '#';
-			}
-			else
-			{
-				Instance.Room.staticDataMap[y][x] = '-';
-			}
-
-			// Alter current "else" to "else if" and make new "else" for non-existing terrain.
-		}
-	}
-}
-void SetCompleteDataMap( InstanceStruct &Instance )
-{
-	Instance.Room.completeDataMap = Instance.Room.staticDataMap;
-
-	for( int y = 0; y < Instance.Room.length; y++ )
-	{
-		for( int x = 0; x < Instance.Room.width; x++ )
-		{
-			if( CheckForMonster( Instance, x, y ) == true )
-			{
-				Instance.Room.completeDataMap[y][x] = 'M';
-			}
-			else if( CheckForPlayer( Instance, x, y ) == true )
-			{
-				Instance.Room.completeDataMap[y][x] = 'P';
-			}
-		}
-	}
-}
-
 void DrawRoom( const InstanceStruct &Instance )
 {
 	for( int y = 0; y < Instance.Room.length; y++ )
@@ -459,6 +502,8 @@ void DrawRoom( const InstanceStruct &Instance )
 
 		std::cout << "\n";
 	}
+
+	std::cout << std::endl;
 }
 void SayTurnOptions( )
 {
@@ -467,7 +512,7 @@ void SayTurnOptions( )
 	std::cout << "[A] Go left.\n";
 	std::cout << "[D] Go Right.\n";
 	std::cout << "[Q] Do nothing.\n";
-	std::cout << "[E] Exit game.\n";
+	std::cout << "[E] Exit game.\n\n";
 }
 void ChooseTurnOptions( InstanceStruct &Instance )
 {
@@ -621,14 +666,12 @@ int main( )
 
 		system( "CLS" );
 		PrintGameRules( );
-		std::cout << std::endl;
 		SetRoomSize( Instance[0] );
 		SetRoomExits( Instance[0] );
 		SetRoomOuterWalls( Instance[0] );
 		SetRoomRandomWalls( Instance[0] );
 		SetStaticDataMap( Instance[0] );
 		SetPlayerPosition( Instance[0] );
-		std::cout << std::endl;
 		ChooseMonsterAmount( Instance[0] );
 		SetRandomMonsterPositions( Instance[0] );
 
@@ -641,9 +684,7 @@ int main( )
 			{
 				break;
 			}
-			std::cout << std::endl;
 			SayTurnOptions( );
-			std::cout << std::endl;
 			ChooseTurnOptions( Instance[0] );
 			RandomizeMonsterMovement( Instance[0] );
 		}
