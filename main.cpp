@@ -281,6 +281,10 @@ bool EmptySurroundedTile( InstanceStruct &Instance, int xPos, int yPos )
 		return false;
 	}
 }
+void SetRandomPath( InstanceStruct &Instance )
+{
+
+}
 
 void PrintGameRules( )
 {
@@ -409,8 +413,7 @@ void SetRoomRandomWalls( InstanceStruct &Instance )
 					Instance.Room.Wall.Position.push_back( Temp );
 					Instance.Room.Wall.amountAll++;
 				}
-				else if( CheckForRoomWall( Instance, x, y, Instance.Room.Wall.amountOuter ) == false &&
-						 EmptySurroundedTile( Instance, x, y ) == true )
+				else if( EmptySurroundedTile( Instance, x, y ) == true )
 				{
 					Temp.x = x;
 					Temp.y = y;
