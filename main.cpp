@@ -1,58 +1,9 @@
+#include "Room.h"
 #include <iostream>
 #include <vector>
 #include <string>
 #include <random>
 #include <math.h>
-
-struct PositionStruct
-{
-	int x;
-	int y;
-};
-struct PlayerStruct
-{
-	PositionStruct Position;
-	char icon = 'P';
-};
-struct MonsterStruct
-{
-	std::vector<PositionStruct> Position;
-	char icon = 'M';
-	int amountDesired = 0;
-	int amountCurrent = 0;
-};
-struct UnitStruct
-{
-	MonsterStruct Monster;
-	PlayerStruct Player;
-};
-struct WallStruct
-{
-	std::vector<PositionStruct> Position;
-	char icon = '#';
-	int amountAll = 0;
-	int amountOuter = 0;
-};
-struct ExitStruct
-{
-	std::vector<PositionStruct> Position;
-	char icon = '=';
-	int amount = 0;
-};
-struct RoomStruct
-{
-	WallStruct Wall;
-	ExitStruct Exit;
-	std::vector< std::vector<char> > staticDataMap;
-	std::vector< std::vector<char> > completeDataMap;
-	int length;
-	int width;
-};
-struct InstanceStruct
-{
-	UnitStruct Unit;
-	RoomStruct Room;
-};
 
 int GetPositiveInteger( )
 {
@@ -88,7 +39,7 @@ int RandomNumberGenerator( int min, int max )
 
 	return randomNumber( generator );
 }
-int RandomBooleanGenerator( )
+int RandomPositiveNegativeGenerator( )
 {
 	int randomNumber;
 
@@ -100,179 +51,27 @@ int RandomBooleanGenerator( )
 
 	return randomNumber;
 }
-
-bool CheckForRoomExit( const InstanceStruct &Instance, int xPos, int yPos )
-{
-	for( int i = 0; i < Instance.Room.Exit.amount; i++ )
-	{
-		if( xPos == Instance.Room.Exit.Position[i].x &&
-			yPos == Instance.Room.Exit.Position[i].y )
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-bool CheckForRoomWall( const InstanceStruct &Instance, int xPos, int yPos, int startIterator )
-{
-	for( int i = startIterator; i < Instance.Room.Wall.amountAll; i++ )
-	{
-		if( xPos == Instance.Room.Wall.Position[i].x &&
-			yPos == Instance.Room.Wall.Position[i].y )
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-bool CheckForPlayer( const InstanceStruct &Instance, int xPos, int yPos )
-{
-	if( xPos == Instance.Unit.Player.Position.x &&
-		yPos == Instance.Unit.Player.Position.y )
-	{
-		return true;
-	}
-
-	return false;
-}
-bool CheckForMonster( const InstanceStruct &Instance, int xPos, int yPos )
-{
-	for( int i = 0; i < Instance.Unit.Monster.amountCurrent; i++ )
-	{
-		if( xPos == Instance.Unit.Monster.Position[i].x &&
-			yPos == Instance.Unit.Monster.Position[i].y )
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-bool CheckForSpawnNearPlayer( const InstanceStruct &Instance, int xPos, int yPos )
-{
-	int range = 3;
-
-	for( int yProtect = Instance.Unit.Player.Position.y - range; yProtect < Instance.Unit.Player.Position.y + range; yProtect++ )
-	{
-		for( int xProtect = Instance.Unit.Player.Position.x - range; xProtect < Instance.Unit.Player.Position.x + range; xProtect++ )
-		{
-			if( xPos == xProtect &&
-				yPos == yProtect )
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-bool CheckForSpawnNearExits( const InstanceStruct &Instance, int xPos, int yPos )
-{
-	int range = 3;
-
-	for( int i = 0; i < Instance.Room.Exit.amount; i++ )
-	{
-		for( int yProtect = Instance.Room.Exit.Position[i].y - range; yProtect < Instance.Room.Exit.Position[i].y + range; yProtect++ )
-		{
-			for( int xProtect = Instance.Room.Exit.Position[i].x - range; xProtect < Instance.Room.Exit.Position[i].x + range; xProtect++ )
-			{
-				if( xPos == xProtect &&
-					yPos == yProtect )
-				{
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-bool CheckForWinLoseCondition( const InstanceStruct &Instance )
-{
-	if( CheckForRoomExit( Instance, Instance.Unit.Player.Position.x, Instance.Unit.Player.Position.y ) == true )
-	{
-		std::cout << "\nYou win!";
-		return true;
-	}
-	else if( CheckForMonster( Instance, Instance.Unit.Player.Position.x, Instance.Unit.Player.Position.y ) == true )
-	{
-		std::cout << "\nYou lose!";
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-void SetStaticDataMap( InstanceStruct &Instance )
-{
-	if( Instance.Room.staticDataMap.size( ) == 0 )
-	{
-		Instance.Room.staticDataMap.resize( Instance.Room.length, std::vector<char>( Instance.Room.width ) );
-	}
-
-	for( int y = 0; y < Instance.Room.length; y++ )
-	{
-		for( int x = 0; x < Instance.Room.width; x++ )
-		{
-			if( CheckForRoomExit( Instance, x, y ) == true )
-			{
-				Instance.Room.staticDataMap[y][x] = '=';
-			}
-			else if( CheckForRoomWall( Instance, x, y, 0 ) == true )
-			{
-				Instance.Room.staticDataMap[y][x] = '#';
-			}
-			else
-			{
-				Instance.Room.staticDataMap[y][x] = '-';
-			}
-		}
-	}
-}
-void SetCompleteDataMap( InstanceStruct &Instance )
-{
-	Instance.Room.completeDataMap = Instance.Room.staticDataMap;
-
-	for( int y = 0; y < Instance.Room.length; y++ )
-	{
-		for( int x = 0; x < Instance.Room.width; x++ )
-		{
-			if( CheckForMonster( Instance, x, y ) == true )
-			{
-				Instance.Room.completeDataMap[y][x] = 'M';
-			}
-			else if( CheckForPlayer( Instance, x, y ) == true )
-			{
-				Instance.Room.completeDataMap[y][x] = 'P';
-			}
-		}
-	}
-}
-bool EmptySurroundedTile( InstanceStruct &Instance, int xPos, int yPos )
+bool EmptySurroundedTile( Room &room, Position &current )
 {
 	int surroundingWalls = 0;
 
 	for( int y = -1; y <= 1; y++ )
 	{
-		for( int x = -1; y <= 1; y++ )
+		for( int x = -1; x <= 1; x++ )
 		{
-			if( xPos == 0 || xPos == Instance.Room.width - 1 ||
-				yPos == 0 || yPos == Instance.Room.length - 1 )
+			if( current.x == 0 || current.x == room.width( ) - 1 ||
+				current.y == 0 || current.y == room.length( ) - 1 )
 			{
 				continue;
 			}
-			else if( CheckForRoomWall( Instance, xPos + x, yPos + y, Instance.Room.Wall.amountOuter ) == true )
+			else if( room.checkPosition( current, room.wall ) == true )
 			{
 				surroundingWalls++;
 			}
 		}
 	}
 
-	if( surroundingWalls > 5 )
+	if( surroundingWalls > 4 )
 	{
 		return true;
 	}
@@ -280,10 +79,6 @@ bool EmptySurroundedTile( InstanceStruct &Instance, int xPos, int yPos )
 	{
 		return false;
 	}
-}
-void SetRandomPath( InstanceStruct &Instance )
-{
-
 }
 
 void PrintGameRules( )
@@ -291,7 +86,7 @@ void PrintGameRules( )
 	std::cout << "Win  condition: Enter the exit.\n";
 	std::cout << "Lose condition: Enter the same space as a monster.\n";
 }
-void SetRoomSize( InstanceStruct &Instance )
+void SetRoomSize( Room &room )
 {
 	std::string userChoice;
 
@@ -303,15 +98,15 @@ void SetRoomSize( InstanceStruct &Instance )
 		if( userChoice[0] == 'Y' || userChoice[0] == 'y' )
 		{
 			std::cout << "Enter the playing Room length: ";
-			Instance.Room.length = GetPositiveInteger( );
+			room.lengthSet( GetPositiveInteger( ) );
 			std::cout << "Enter the playing Room width: ";
-			Instance.Room.width = GetPositiveInteger( );
+			room.widthSet( GetPositiveInteger( ) );
 			break;
 		}
 		else if( userChoice[0] == 'N' || userChoice[0] == 'n' )
 		{
-			Instance.Room.length = RandomNumberGenerator( 15, 30 );
-			Instance.Room.width = RandomNumberGenerator( 50, 100 );
+			room.lengthSet( RandomNumberGenerator( 15, 30 ) );
+			room.widthSet( RandomNumberGenerator( 50, 100 ) );
 			break;
 		}
 		else
@@ -320,68 +115,61 @@ void SetRoomSize( InstanceStruct &Instance )
 		}
 	}
 }
-void SetRoomExits( InstanceStruct &Instance )
+void SetRoomExits( Room &room )
 {
-	PositionStruct Temp;
-	Instance.Room.Exit.Position.push_back( Temp );
-	Instance.Room.Exit.amount++;
-	
-	//for( int i = 0; i < 100; i++ )
-	//{
-	//	int n = RandomNumberGenerator( 0, Instance.Room.Wall.Position.size( ) - 1 );
-	//	if(  )
-	//}
-
-	Instance.Room.Exit.Position[0].x = Instance.Room.width - 2;  // Default
-	Instance.Room.Exit.Position[0].y = Instance.Room.length - 1; // bottom right corner.
+	Exit temp;
+	room.exit.push_back( temp );
+	room.xSet( room.exit[0], room.width( ) - 2 );  // Default.
+	room.ySet( room.exit[0], room.length( ) - 1 ); // bottom right corner.
 }
-void SetRoomOuterWalls( InstanceStruct &Instance )
+void SetRoomOuterWalls( Room &room )
 {
-	PositionStruct Temp;
+	Position tempPosition;
+	Wall tempWall;
 
-	for( int ySet = 0; ySet < Instance.Room.length; ySet++ )
+	for( int y = 0; y < room.length( ); y++ )
 	{
-		for( int xSet = 0; xSet < Instance.Room.width; xSet++ )
+		for( int x = 0; x < room.width( ); x++ )
 		{
-			if( CheckForRoomExit( Instance, xSet, ySet ) == true )
+			tempPosition.x = x;
+			tempPosition.y = y;
+			if( room.checkPosition( tempPosition, room.exit ) == true )
 			{
 				continue;
 			}
-			else if( xSet == 0 || xSet == Instance.Room.width - 1 ||
-					 ySet == 0 || ySet == Instance.Room.length - 1 )
+			else if( x == 0 || x == room.width( ) - 1 ||
+					 y == 0 || y == room.length( ) - 1 )
 			{
-				Temp.x = xSet;
-				Temp.y = ySet;
-				Instance.Room.Wall.Position.push_back( Temp );
-				Instance.Room.Wall.amountAll++;
-				Instance.Room.Wall.amountOuter++;
+				room.wall.push_back( tempWall );
+				room.xSet( room.wall, x );
+				room.ySet( room.wall, y );
 			}
 		}
 	}
 }
-void SetRoomRandomWalls( InstanceStruct &Instance )
+void SetRoomRandomWalls( Room &room )
 {
-	PositionStruct Temp;
-	double high = sqrt( Instance.Room.length * Instance.Room.width ) * 1.5;
-	double low = sqrt( Instance.Room.length * Instance.Room.width ) / 1.5;
+	Position tempPosition;
+	Wall tempWall;
+	double high = sqrt( room.length( ) * room.width( ) ) * 1.5;
+	double low = sqrt( room.length( ) * room.width( ) ) / 1.5;
 	int randomSourceWalls = RandomNumberGenerator( (int)low, (int)high );
 	int randomTries = RandomNumberGenerator( 5, 7 );
 
 	while( randomSourceWalls > 0 ) // Place source walls.
 	{
-		for( int y = 0; y < Instance.Room.length; y++ )
+		for( int y = 0; y < room.length( ); y++ )
 		{
-			for( int x = 0; x < Instance.Room.width; x++ )
+			for( int x = 0; x < room.width( ); x++ )
 			{
-				if( CheckForRoomWall( Instance, x, y, 0 ) == false &&
-					CheckForSpawnNearPlayer( Instance, x, y ) == false &&
-					CheckForSpawnNearExits( Instance, x, y ) == false &&
+				tempPosition.x = x;
+				tempPosition.y = y;
+				if( room.checkPosition( tempPosition, room.wall ) == false &&
 					RandomNumberGenerator( 1, 1000 ) == 1 )
 				{
-					Temp.x = x;
-					Temp.y = y;
-					Instance.Room.Wall.Position.push_back( Temp );
-					Instance.Room.Wall.amountAll++;
+					room.wall.push_back( tempWall );
+					room.xSet( room.wall, x );
+					room.ySet( room.wall, y );
 					randomSourceWalls--;
 				}
 			}
@@ -394,31 +182,36 @@ void SetRoomRandomWalls( InstanceStruct &Instance )
 	{
 		std::cout << ".";
 
-		for( int y = 0; y < Instance.Room.length; y++ )
+		for( int y = 0; y < room.length( ); y++ )
 		{
-			for( int x = 0; x < Instance.Room.width; x++ )
+			for( int x = 0; x < room.width( ); x++ )
 			{
-				if( CheckForRoomWall( Instance, x, y, Instance.Room.Wall.amountOuter ) == true )
-				{
-					Temp.x = x + RandomBooleanGenerator( ) * RandomNumberGenerator( 0, 1 );
-					Temp.y = y + RandomBooleanGenerator( ) * RandomNumberGenerator( 0, 1 );
+				tempPosition.x = x;
+				tempPosition.y = y;
 
-					if( CheckForRoomWall( Instance, Temp.x, Temp.y, Instance.Room.Wall.amountOuter ) == true ||
-						CheckForSpawnNearPlayer( Instance, x, y ) == true &&
-						CheckForSpawnNearExits( Instance, x, y ) == true )
+				if( room.checkPosition( tempPosition, room.wall ) == true )
+				{
+					tempPosition.x = x + RandomPositiveNegativeGenerator( ) * RandomNumberGenerator( 0, 1 );
+					tempPosition.y = y + RandomPositiveNegativeGenerator( ) * RandomNumberGenerator( 0, 1 );
+
+					if( room.checkPosition( tempPosition, room.wall ) == true ||
+						room.checkProtectRange( room.player, tempPosition ) == true ||
+						room.checkProtectRange( room.player, tempPosition ) == true )
 					{
 						continue;
 					}
-
-					Instance.Room.Wall.Position.push_back( Temp );
-					Instance.Room.Wall.amountAll++;
+					else
+					{
+						room.wall.push_back( tempWall );
+						room.xSet( room.wall, tempPosition.x );
+						room.ySet( room.wall, tempPosition.y );
+					}
 				}
-				else if( EmptySurroundedTile( Instance, x, y ) == true )
+				else if( EmptySurroundedTile( room, tempPosition ) == true )
 				{
-					Temp.x = x;
-					Temp.y = y;
-					Instance.Room.Wall.Position.push_back( Temp );
-					Instance.Room.Wall.amountAll++;
+					room.wall.push_back( tempWall );
+					room.xSet( room.wall, x );
+					room.ySet( room.wall, y );
 				}
 			}
 		}
@@ -426,22 +219,22 @@ void SetRoomRandomWalls( InstanceStruct &Instance )
 
 	std::cout << std::endl;
 }
-void SetPlayerPosition( InstanceStruct &Instance )
+void SetPlayerPosition( Room &room )
 {
-	Instance.Unit.Player.Position.x = 1;
-	Instance.Unit.Player.Position.y = 1;   // Top left corner.
+	room.xSet( room.player, 1 );
+	room.ySet( room.player, 1 );   // Top left corner.
 }
-void ChooseMonsterAmount( InstanceStruct &Instance )
+void ChooseMonsterAmount( Room &room )
 {
-	int maxMonsters = ( Instance.Room.length * Instance.Room.width ) - Instance.Room.Wall.amountAll;
+	int maxMonsters = ( room.length( ) * room.width( ) ) - room.wall.size( );
 
 	std::cout << "\nEnter amount of monsters: ";
 	while( true )
 	{
-		Instance.Unit.Monster.amountDesired = GetPositiveInteger( );
+		room.monsterAmountDesiredSet( GetPositiveInteger( ) );
 
-		if( Instance.Unit.Monster.amountDesired >= maxMonsters &&
-			Instance.Unit.Monster.amountDesired != 0 )
+		if( room.monsterAmountDesired( ) >= maxMonsters &&
+			room.monsterAmountDesired( ) != 0 )
 		{
 			std::cout << "Too many monsters, try again: ";
 			continue;
@@ -452,55 +245,45 @@ void ChooseMonsterAmount( InstanceStruct &Instance )
 		}
 	}
 }
-void SetRandomMonsterPositions( InstanceStruct &Instance )
+void SetRandomMonsterPositions( Room &room )
 {
-	int xPosTemp;
-	int yPosTemp;
+	Position tempPosition;
+	Monster tempMonster;
 
-	for( int i = 0; i < Instance.Unit.Monster.amountDesired; i++ )
+	for( int i = 0; i < room.monsterAmountDesired( ); i++ )
 	{
 		while( true )
 		{
-			xPosTemp = RandomNumberGenerator( 1, Instance.Room.width - 2 );
-			yPosTemp = RandomNumberGenerator( 1, Instance.Room.length - 2 );
+			tempPosition.x = RandomNumberGenerator( 1, room.width( ) - 2 );
+			tempPosition.y = RandomNumberGenerator( 1, room.length( ) - 2 );
 
-			//if( CheckForSpawnNearPlayer( Instance, xPosTemp, yPosTemp ) == false &&
-			//	CheckForRoomExit       ( Instance, xPosTemp, yPosTemp ) == false &&
-			//	CheckForRoomWall       ( Instance, xPosTemp, yPosTemp ) == false &&
-			//	CheckForMonster        ( Instance, xPosTemp, yPosTemp ) == false &&
-			//	CheckForPlayer         ( Instance, xPosTemp, yPosTemp ) == false )
-			//{
-			//	break;
-			//}
-
-			if( CheckForSpawnNearPlayer( Instance, xPosTemp, yPosTemp ) == false &&
-				CheckForMonster( Instance, xPosTemp, yPosTemp ) == false &&
-				Instance.Room.staticDataMap[yPosTemp][xPosTemp] == '-' )
+			if( room.checkProtectRange( room.player, room.monster[i] ) == false &&
+				room.checkPosition( tempPosition, room.monster ) == false &&
+				room.staticDataMap( tempPosition.x, tempPosition.y ) == '-' )
 			{
 				break;
 			}
 		}
 
-		if( Instance.Unit.Monster.amountCurrent < Instance.Unit.Monster.amountDesired )
-		{
-			Instance.Unit.Monster.amountCurrent++;
-		}	// To avoid trying to access unvalid memory of monsterpositions
-		    // before its allocated inside CheckForMonsterPosition( ).
+		//if(room.monster.size( ) < room.monsterAmountDesired( ) )
+		//{
+		//	Instance.Unit.Monster.amountCurrent++;
+		//}	// To avoid trying to access unvalid memory of monsterpositions
+		//	// before its allocated inside CheckForMonsterPosition( ).
 
-		PositionStruct Temp;
-		Temp.x = xPosTemp;
-		Temp.y = yPosTemp;
-		Instance.Unit.Monster.Position.push_back( Temp );
+		room.monster.push_back( tempMonster );
+		room.xSet( room.monster[i], tempPosition.x );
+		room.ySet( room.monster[i], tempPosition.y );
 	}
 }
 
-void DrawRoom( const InstanceStruct &Instance )
+void DrawRoom( Room &room )
 {
-	for( int y = 0; y < Instance.Room.length; y++ )
+	for( int y = 0; y < room.length( ); y++ )
 	{
-		for( int x = 0; x < Instance.Room.width; x++ )
+		for( int x = 0; x < room.width( ); x++ )
 		{
-			std::cout << Instance.Room.completeDataMap[y][x];
+			std::cout << room.completeDataMap( x, y );
 		}
 
 		std::cout << "\n";
@@ -517,10 +300,11 @@ void SayTurnOptions( )
 	std::cout << "[Q] Do nothing.\n";
 	std::cout << "[E] Exit game.\n\n";
 }
-void ChooseTurnOptions( InstanceStruct &Instance )
+void ChooseTurnOptions( Room &room )
 {
+	int xTemp;
+	int yTemp;
 	std::string userChoice;
-	int yPosTemp, xPosTemp;
 
 	RETRY:
 	std::cout << "Your choice: ";
@@ -531,8 +315,8 @@ void ChooseTurnOptions( InstanceStruct &Instance )
 		case 'W':
 		case 'w':       // Move up.
 		{
-			xPosTemp = Instance.Unit.Player.Position.x;
-			yPosTemp = Instance.Unit.Player.Position.y - 1;
+			xTemp = room.x( room.player );
+			yTemp = room.y( room.player ) - 1;
 
 			break;
 		}
@@ -540,8 +324,8 @@ void ChooseTurnOptions( InstanceStruct &Instance )
 		case 'S':
 		case 's':       // Move down.
 		{
-			xPosTemp = Instance.Unit.Player.Position.x;
-			yPosTemp = Instance.Unit.Player.Position.y + 1;
+			xTemp = room.x( room.player );
+			yTemp = room.y( room.player ) + 1;
 
 			break;
 		}
@@ -549,8 +333,8 @@ void ChooseTurnOptions( InstanceStruct &Instance )
 		case 'A':
 		case 'a':       // Move left.
 		{
-			xPosTemp = Instance.Unit.Player.Position.x - 1;
-			yPosTemp = Instance.Unit.Player.Position.y;
+			xTemp = room.x( room.player ) - 1;
+			yTemp = room.y( room.player );
 
 			break;
 		}
@@ -558,8 +342,8 @@ void ChooseTurnOptions( InstanceStruct &Instance )
 		case 'D':
 		case 'd':       // Move right.
 		{
-			xPosTemp = Instance.Unit.Player.Position.x + 1;
-			yPosTemp = Instance.Unit.Player.Position.y;
+			xTemp = room.x( room.player ) + 1;
+			yTemp = room.y( room.player );
 
 			break;
 		}
@@ -583,57 +367,69 @@ void ChooseTurnOptions( InstanceStruct &Instance )
 		}
 	}
 
-	if( Instance.Room.completeDataMap[yPosTemp][xPosTemp] != '#' )
+	if( room.completeDataMap( xTemp, yTemp ) != '#' )
 	{
-		Instance.Unit.Player.Position.x = xPosTemp;
-		Instance.Unit.Player.Position.y = yPosTemp;
+		room.xSet( room.player, xTemp );
+		room.ySet( room.player, yTemp );
 	}
 }
-void RandomizeMonsterMovement( InstanceStruct &Instance )
+void RandomizeMonsterMovement( Room &room )
 {
-	int xPosTemp;
-	int yPosTemp;
+	int xTemp;
+	int yTemp;
 	int randomNumber;
 
-	for( int i = 0; i < Instance.Unit.Monster.amountCurrent; i++ )
+	for( unsigned int i = 0; i < room.monster.size( ); i++ )
 	{
 		while( true )
 		{
-			randomNumber = RandomNumberGenerator( 1, 16 );
+			randomNumber = RandomNumberGenerator( 1, 16 ); // 25% to move, 75% to stand still.
 
 			if( randomNumber <= 2 ) // Monster moves vertically.
 			{
-				xPosTemp = Instance.Unit.Monster.Position[i].x;
-				yPosTemp = Instance.Unit.Monster.Position[i].y + RandomBooleanGenerator( );
+				xTemp = room.x( room.monster[i] );
+				yTemp = room.y( room.monster[i] ) + RandomPositiveNegativeGenerator( );
 			}
 			else if( randomNumber <= 4 ) // Monster moves horizontally.
 			{
-				xPosTemp = Instance.Unit.Monster.Position[i].x + RandomBooleanGenerator( );
-				yPosTemp = Instance.Unit.Monster.Position[i].y;
+				xTemp = room.x( room.monster[i] ) + RandomPositiveNegativeGenerator( );
+				yTemp = room.y( room.monster[i] );
 			}
 			else // Monster stands still.
 			{
 				break;
 			}
 
-			//if( CheckForRoomExit( Instance, xPosTemp, yPosTemp ) == false &&
-			//	CheckForRoomWall( Instance, xPosTemp, yPosTemp ) == false &&
-			//	CheckForMonster ( Instance, xPosTemp, yPosTemp ) == false )
-			//{
-			//	Instance.Unit.Monster.Position[i].x = xPosTemp;
-			//	Instance.Unit.Monster.Position[i].y = yPosTemp;
-			//	break;
-			//}
-
-			if( Instance.Room.completeDataMap[yPosTemp][xPosTemp] == '-' ||
-				Instance.Room.completeDataMap[yPosTemp][xPosTemp] == 'P')
+			if( room.completeDataMap( xTemp, yTemp ) == '-' ||
+				room.completeDataMap( xTemp, yTemp ) == 'P' )
 			{
-				Instance.Unit.Monster.Position[i].x = xPosTemp;
-				Instance.Unit.Monster.Position[i].y = yPosTemp;
+				room.xSet( room.monster[i], xTemp );
+				room.ySet( room.monster[i], yTemp );
 				break;
 			}
 		}
 	}
+}
+
+bool checkWinCondition(  Room &room )
+{
+	if( room.checkPosition( room.player, room.exit ) == true )
+	{
+		std::cout << "\nYou win!";
+		return true;
+	}
+
+	return false;
+}
+bool checkLoseCondition( Room &room )
+{
+	if( room.checkPosition( room.player, room.monster ) == true )
+	{
+		std::cout << "\nYou lose!";
+		return true;
+	}
+
+	return false;
 }
 
 bool ChooseRestartGame( )
@@ -664,32 +460,34 @@ int main( )
 {
 	do
 	{
-		std::vector<InstanceStruct> Instance;
-		Instance.resize( 10 );
+		std::vector<Room> room;
+		room.resize( 5 );
+		int i = 0;
 
 		system( "CLS" );
 		PrintGameRules( );
-		SetRoomSize( Instance[0] );
-		SetRoomExits( Instance[0] );
-		SetRoomOuterWalls( Instance[0] );
-		SetRoomRandomWalls( Instance[0] );
-		SetStaticDataMap( Instance[0] );
-		SetPlayerPosition( Instance[0] );
-		ChooseMonsterAmount( Instance[0] );
-		SetRandomMonsterPositions( Instance[0] );
+		SetRoomSize( room[i] );
+		SetRoomExits( room[i] );
+		SetRoomOuterWalls( room[i] );
+		SetRoomRandomWalls( room[i] );
+		room[i].staticDataMap( );
+		SetPlayerPosition( room[i] );
+		ChooseMonsterAmount( room[i] );
+		SetRandomMonsterPositions( room[i] );
 
 		while( true )
 		{
 			system( "CLS" );
-			SetCompleteDataMap( Instance[0] );
-			DrawRoom( Instance[0] );
-			if( CheckForWinLoseCondition( Instance[0] ) == true )
+			room[i].completeDataMap( );
+			DrawRoom( room[i] );
+			if( checkWinCondition( room[i] ) == true ||
+				checkLoseCondition( room[i] ) == true )
 			{
 				break;
 			}
 			SayTurnOptions( );
-			ChooseTurnOptions( Instance[0] );
-			RandomizeMonsterMovement( Instance[0] );
+			ChooseTurnOptions( room[i] );
+			RandomizeMonsterMovement( room[i] );
 		}
 	}
 	while( ChooseRestartGame( ) == true );
