@@ -5,7 +5,13 @@
 #include <random>
 #include <math.h>
 
-int GetPositiveInteger( )
+char Player::icon = '@';
+char Monster::icon = 'M';
+char Wall::icon = '#';
+char Exit::icon = '=';
+
+// Functions used by functions.
+int getPositiveInteger( )
 {
 	std::string userChoice;
 
@@ -31,7 +37,7 @@ int GetPositiveInteger( )
 
 	return output;
 }
-int RandomNumberGenerator( int min, int max )
+int randomNumberGenerator( int min, int max )
 {
 	static std::random_device randomEngine;
 	std::mt19937 generator( randomEngine( ) );
@@ -39,19 +45,20 @@ int RandomNumberGenerator( int min, int max )
 
 	return randomNumber( generator );
 }
-int RandomPositiveNegativeGenerator( )
+int randomPositiveNegativeGenerator( )
 {
-	int randomNumber;
+	int randomNumber = randomNumberGenerator( 0, 1 );
 
-	do
+	if( randomNumber == 1 )
 	{
-		randomNumber = RandomNumberGenerator( -1, 1 );
+		return 1;
 	}
-	while( randomNumber == 0 );
-
-	return randomNumber;
+	else
+	{
+		return -1;
+	}
 }
-bool EmptySurroundedTile( Room &room, Position &current )
+bool checkEmptySurroundedTile( Room &room, int xCurrent, int yCurrent )
 {
 	int surroundingWalls = 0;
 
@@ -59,12 +66,14 @@ bool EmptySurroundedTile( Room &room, Position &current )
 	{
 		for( int x = -1; x <= 1; x++ )
 		{
-			if( current.x == 0 || current.x == room.width( ) - 1 ||
-				current.y == 0 || current.y == room.length( ) - 1 )
+			if( xCurrent == room.width( ) - 1 ||
+				yCurrent == room.length( ) - 1 ||
+				xCurrent == 0 ||
+				yCurrent == 0 )
 			{
 				continue;
 			}
-			else if( room.checkPosition( current, room.wall ) == true )
+			else if( room.checkPosition( xCurrent, yCurrent, room.wall ) == true )
 			{
 				surroundingWalls++;
 			}
@@ -81,12 +90,13 @@ bool EmptySurroundedTile( Room &room, Position &current )
 	}
 }
 
-void PrintGameRules( )
+// Default gamestate.
+void printGameRules( )
 {
-	std::cout << "Win  condition: Enter the exit.\n";
+	std::cout << "Win condition: Enter the exit.\n";
 	std::cout << "Lose condition: Enter the same space as a monster.\n";
 }
-void SetRoomSize( Room &room )
+void setRoomSize( Room &room )
 {
 	std::string userChoice;
 
@@ -98,15 +108,15 @@ void SetRoomSize( Room &room )
 		if( userChoice[0] == 'Y' || userChoice[0] == 'y' )
 		{
 			std::cout << "Enter the playing Room length: ";
-			room.lengthSet( GetPositiveInteger( ) );
+			room.lengthSet( getPositiveInteger( ) );
 			std::cout << "Enter the playing Room width: ";
-			room.widthSet( GetPositiveInteger( ) );
+			room.widthSet( getPositiveInteger( ) );
 			break;
 		}
 		else if( userChoice[0] == 'N' || userChoice[0] == 'n' )
 		{
-			room.lengthSet( RandomNumberGenerator( 15, 30 ) );
-			room.widthSet( RandomNumberGenerator( 50, 100 ) );
+			room.lengthSet( randomNumberGenerator( 15, 30 ) );
+			room.widthSet( randomNumberGenerator( 50, 100 ) );
 			break;
 		}
 		else
@@ -115,46 +125,50 @@ void SetRoomSize( Room &room )
 		}
 	}
 }
-void SetRoomExits( Room &room )
+void setRoomExits( Room &room )
 {
-	Exit temp;
-	room.exit.push_back( temp );
-	room.xSet( room.exit[0], room.width( ) - 2 );  // Default.
-	room.ySet( room.exit[0], room.length( ) - 1 ); // bottom right corner.
+	Exit tempExit;
+	room.exit.push_back( tempExit );
+
+	int x = room.width( ) - 2;
+	int y = room.length( ) - 1;
+	room.xSet( room.exit.back( ), x );	// Default.
+	room.ySet( room.exit.back( ), y );	// bottom right corner.
 }
-void SetRoomOuterWalls( Room &room )
+void setRoomOuterWalls( Room &room )
 {
-	Position tempPosition;
 	Wall tempWall;
 
 	for( int y = 0; y < room.length( ); y++ )
 	{
 		for( int x = 0; x < room.width( ); x++ )
 		{
-			tempPosition.x = x;
-			tempPosition.y = y;
-			if( room.checkPosition( tempPosition, room.exit ) == true )
+			if( room.checkPosition( x, y, room.exit ) == true )
 			{
 				continue;
 			}
-			else if( x == 0 || x == room.width( ) - 1 ||
-					 y == 0 || y == room.length( ) - 1 )
+			else if( x == room.width( ) - 1 ||
+					 y == room.length( ) - 1 ||
+					 x == 0 ||
+					 y == 0 )
 			{
 				room.wall.push_back( tempWall );
-				room.xSet( room.wall, x );
-				room.ySet( room.wall, y );
+				room.xSet( room.wall.back( ), x );
+				room.ySet( room.wall.back( ), y );
+				room.outerWallsAmountIncrease( );
 			}
 		}
 	}
 }
-void SetRoomRandomWalls( Room &room )
+void setRoomRandomWalls( Room &room )
 {
-	Position tempPosition;
 	Wall tempWall;
+	int xTemp;
+	int yTemp;
 	double high = sqrt( room.length( ) * room.width( ) ) * 1.5;
 	double low = sqrt( room.length( ) * room.width( ) ) / 1.5;
-	int randomSourceWalls = RandomNumberGenerator( (int)low, (int)high );
-	int randomTries = RandomNumberGenerator( 5, 7 );
+	int randomSourceWalls = randomNumberGenerator( (int)low, (int)high );
+	int randomTries = randomNumberGenerator( 5, 7 );
 
 	while( randomSourceWalls > 0 ) // Place source walls.
 	{
@@ -162,14 +176,12 @@ void SetRoomRandomWalls( Room &room )
 		{
 			for( int x = 0; x < room.width( ); x++ )
 			{
-				tempPosition.x = x;
-				tempPosition.y = y;
-				if( room.checkPosition( tempPosition, room.wall ) == false &&
-					RandomNumberGenerator( 1, 1000 ) == 1 )
+				if( room.checkPosition( x, y, room.wall ) == false &&
+					randomNumberGenerator( 1, 1000 ) == 1 )
 				{
 					room.wall.push_back( tempWall );
-					room.xSet( room.wall, x );
-					room.ySet( room.wall, y );
+					room.xSet( room.wall.back( ), x );
+					room.ySet( room.wall.back( ), y );
 					randomSourceWalls--;
 				}
 			}
@@ -186,52 +198,49 @@ void SetRoomRandomWalls( Room &room )
 		{
 			for( int x = 0; x < room.width( ); x++ )
 			{
-				tempPosition.x = x;
-				tempPosition.y = y;
-
-				if( room.checkPosition( tempPosition, room.wall ) == true )
+				if( room.checkPosition( x, y, room.wall, room.outerWallsAmount( ) ) == true )	// Check for source walls, excluding outer walls.
 				{
-					tempPosition.x = x + RandomPositiveNegativeGenerator( ) * RandomNumberGenerator( 0, 1 );
-					tempPosition.y = y + RandomPositiveNegativeGenerator( ) * RandomNumberGenerator( 0, 1 );
+					xTemp = x + randomNumberGenerator( 0, 1 ) * randomPositiveNegativeGenerator( );
+					yTemp = y + randomNumberGenerator( 0, 1 ) * randomPositiveNegativeGenerator( );
 
-					if( room.checkPosition( tempPosition, room.wall ) == true ||
-						room.checkProtectRange( room.player, tempPosition ) == true ||
-						room.checkProtectRange( room.player, tempPosition ) == true )
+					if( room.checkPosition( xTemp, yTemp, room.wall ) == true ||
+						room.checkProtectRange( room.player, xTemp, yTemp ) == true ||
+						room.checkProtectRange( room.exit, xTemp, yTemp ) == true )
 					{
 						continue;
 					}
 					else
 					{
 						room.wall.push_back( tempWall );
-						room.xSet( room.wall, tempPosition.x );
-						room.ySet( room.wall, tempPosition.y );
+						room.xSet( room.wall.back( ), xTemp );
+						room.ySet( room.wall.back( ), yTemp );
 					}
 				}
-				else if( EmptySurroundedTile( room, tempPosition ) == true )
+				else if( checkEmptySurroundedTile( room, x, y ) == true )
 				{
 					room.wall.push_back( tempWall );
-					room.xSet( room.wall, x );
-					room.ySet( room.wall, y );
+					room.xSet( room.wall.back( ), x );
+					room.ySet( room.wall.back( ), y );
 				}
 			}
 		}
 	}
-
-	std::cout << std::endl;
+	
+	std::cout << "\n";
 }
-void SetPlayerPosition( Room &room )
+void setPlayerPosition( Room &room )
 {
 	room.xSet( room.player, 1 );
 	room.ySet( room.player, 1 );   // Top left corner.
 }
-void ChooseMonsterAmount( Room &room )
+void chooseMonsterAmount( Room &room )
 {
-	int maxMonsters = ( room.length( ) * room.width( ) ) - room.wall.size( );
-
+	int maxMonsters = ( room.length( ) * room.width( ) ) - room.wall.size( ) - ( ( 5 * 5 ) * 2 );
+																			   // From checkProtectRange( ) of player and exit.
 	std::cout << "\nEnter amount of monsters: ";
 	while( true )
 	{
-		room.monsterAmountDesiredSet( GetPositiveInteger( ) );
+		room.monsterAmountDesiredSet( getPositiveInteger( ) );
 
 		if( room.monsterAmountDesired( ) >= maxMonsters &&
 			room.monsterAmountDesired( ) != 0 )
@@ -245,39 +254,36 @@ void ChooseMonsterAmount( Room &room )
 		}
 	}
 }
-void SetRandomMonsterPositions( Room &room )
+void setRandomMonsterPositions( Room &room )
 {
-	Position tempPosition;
 	Monster tempMonster;
+	int xTemp;
+	int yTemp;
 
 	for( int i = 0; i < room.monsterAmountDesired( ); i++ )
 	{
+		room.monster.push_back( tempMonster );
+
 		while( true )
 		{
-			tempPosition.x = RandomNumberGenerator( 1, room.width( ) - 2 );
-			tempPosition.y = RandomNumberGenerator( 1, room.length( ) - 2 );
+			xTemp = randomNumberGenerator( 1, room.width( ) - 2 );
+			yTemp = randomNumberGenerator( 1, room.length( ) - 2 );
 
-			if( room.checkProtectRange( room.player, room.monster[i] ) == false &&
-				room.checkPosition( tempPosition, room.monster ) == false &&
-				room.staticDataMap( tempPosition.x, tempPosition.y ) == '-' )
+			if( room.checkProtectRange( room.player, xTemp, yTemp ) == false &&
+				room.checkPosition( xTemp, yTemp, room.monster ) == false &&
+				room.staticDataMap( xTemp, yTemp ) == '-' )
 			{
 				break;
 			}
 		}
 
-		//if(room.monster.size( ) < room.monsterAmountDesired( ) )
-		//{
-		//	Instance.Unit.Monster.amountCurrent++;
-		//}	// To avoid trying to access unvalid memory of monsterpositions
-		//	// before its allocated inside CheckForMonsterPosition( ).
-
-		room.monster.push_back( tempMonster );
-		room.xSet( room.monster[i], tempPosition.x );
-		room.ySet( room.monster[i], tempPosition.y );
+		room.xSet( room.monster.back( ), xTemp );
+		room.ySet( room.monster.back( ), yTemp );
 	}
 }
 
-void DrawRoom( Room &room )
+// Gameloop.
+void drawRoom( Room &room )
 {
 	for( int y = 0; y < room.length( ); y++ )
 	{
@@ -289,9 +295,9 @@ void DrawRoom( Room &room )
 		std::cout << "\n";
 	}
 
-	std::cout << std::endl;
+	std::cout << "\n";
 }
-void SayTurnOptions( )
+void sayTurnOptions( )
 {
 	std::cout << "[W] Go up.\n";
 	std::cout << "[S] Go down.\n";
@@ -300,7 +306,7 @@ void SayTurnOptions( )
 	std::cout << "[Q] Do nothing.\n";
 	std::cout << "[E] Exit game.\n\n";
 }
-void ChooseTurnOptions( Room &room )
+void chooseTurnOptions( Room &room )
 {
 	int xTemp;
 	int yTemp;
@@ -362,18 +368,18 @@ void ChooseTurnOptions( Room &room )
 
 		default:
 		{
-			std::cout << "Invalid input, try again\n";
+			std::cout << "Invalid input, try again.\n";
 			goto RETRY;
 		}
 	}
 
-	if( room.completeDataMap( xTemp, yTemp ) != '#' )
+	if( room.completeDataMap( xTemp, yTemp ) != '#' )	// Faster than comparing the position of every wall.
 	{
 		room.xSet( room.player, xTemp );
 		room.ySet( room.player, yTemp );
 	}
 }
-void RandomizeMonsterMovement( Room &room )
+void randomizeMonsterMovement( Room &room )
 {
 	int xTemp;
 	int yTemp;
@@ -383,16 +389,16 @@ void RandomizeMonsterMovement( Room &room )
 	{
 		while( true )
 		{
-			randomNumber = RandomNumberGenerator( 1, 16 ); // 25% to move, 75% to stand still.
+			randomNumber = randomNumberGenerator( 1, 16 ); // 25% to move, 75% to stand still.
 
-			if( randomNumber <= 2 ) // Monster moves vertically.
+			if( randomNumber <= 2 )	// Monster moves vertically.
 			{
 				xTemp = room.x( room.monster[i] );
-				yTemp = room.y( room.monster[i] ) + RandomPositiveNegativeGenerator( );
+				yTemp = room.y( room.monster[i] ) + randomPositiveNegativeGenerator( );
 			}
 			else if( randomNumber <= 4 ) // Monster moves horizontally.
 			{
-				xTemp = room.x( room.monster[i] ) + RandomPositiveNegativeGenerator( );
+				xTemp = room.x( room.monster[i] ) + randomPositiveNegativeGenerator( );
 				yTemp = room.y( room.monster[i] );
 			}
 			else // Monster stands still.
@@ -411,6 +417,7 @@ void RandomizeMonsterMovement( Room &room )
 	}
 }
 
+// Checked during or after gameloop.
 bool checkWinCondition(  Room &room )
 {
 	if( room.checkPosition( room.player, room.exit ) == true )
@@ -431,8 +438,7 @@ bool checkLoseCondition( Room &room )
 
 	return false;
 }
-
-bool ChooseRestartGame( )
+bool chooseRestartGame( )
 {
 	std::string userChoice;
 
@@ -465,32 +471,32 @@ int main( )
 		int i = 0;
 
 		system( "CLS" );
-		PrintGameRules( );
-		SetRoomSize( room[i] );
-		SetRoomExits( room[i] );
-		SetRoomOuterWalls( room[i] );
-		SetRoomRandomWalls( room[i] );
+		printGameRules( );
+		setRoomSize( room[i] );
+		setRoomExits( room[i] );
+		setRoomOuterWalls( room[i] );
+		setRoomRandomWalls( room[i] );
 		room[i].staticDataMap( );
-		SetPlayerPosition( room[i] );
-		ChooseMonsterAmount( room[i] );
-		SetRandomMonsterPositions( room[i] );
+		setPlayerPosition( room[i] );
+		chooseMonsterAmount( room[i] );
+		setRandomMonsterPositions( room[i] );
 
 		while( true )
 		{
 			system( "CLS" );
 			room[i].completeDataMap( );
-			DrawRoom( room[i] );
+			drawRoom( room[i] );
 			if( checkWinCondition( room[i] ) == true ||
 				checkLoseCondition( room[i] ) == true )
 			{
 				break;
 			}
-			SayTurnOptions( );
-			ChooseTurnOptions( room[i] );
-			RandomizeMonsterMovement( room[i] );
+			sayTurnOptions( );
+			chooseTurnOptions( room[i] );
+			randomizeMonsterMovement( room[i] );
 		}
 	}
-	while( ChooseRestartGame( ) == true );
+	while( chooseRestartGame( ) == true );
 
 	return 0;
 }

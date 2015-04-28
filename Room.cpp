@@ -1,87 +1,5 @@
 #include "Room.h"
 
-template<class T> void Room::xSet( T &object, int input )
-{
-	object.position.x = input;
-}
-template<class T> void Room::ySet( T &object, int input )
-{
-	object.position.y = input;
-}
-template<class T> int Room::x( const T &object )
-{
-	return object.position.x;
-}
-template<class T> int Room::y( const T &object )
-{
-	return object.position.y;
-}
-template<class T, class Y> bool Room::checkPosition( const T &current, const Y &search )
-{
-	if( x( current ) == x( search ) &&
-		y( current ) == y( search ) )
-	{
-		return true;
-	}
-
-	return false;
-}
-template<class T, class Y> bool Room::checkPosition( const T &current, const std::vector<Y> &search )
-{
-	for( unsigned int i = 0; i < search.size( ); i++ )
-	{
-		if( x( current ) == x( search[i] ) &&
-			y( current ) == y( search[i] ) )
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-template<class T, class Y> bool Room::checkProtectRange( const T &current, const Y &search, const int range )
-{
-	for( int y = y( current ) - range; y < y( current ) + range; y++ )
-	{
-		for( int x = x( current ) - range; x < x( current ) + range; x++ )
-		{
-			if( x == x( search ) &&
-				y == y( search ) )
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-template<class T, class Y> bool Room::checkProtectRange( const T &current, const std::vector<Y> &search, const int range )
-{
-	for( int i = 0; i < seach.size( ); i++ )
-	{
-		for( int y = y( current ) - range; y < y( current ) + range; y++ )
-		{
-			for( int x = x( current ) - range; x < x( current ) + range; x++ )
-			{
-				if( x == x( search[i] ) &&
-					y == y( search[i] ) )
-				{
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-void Room::objectIconSet( )
-{
-	Player::icon = '@';
-	Monster::icon = 'M';
-	Wall::icon = '#';
-	Exit::icon = '=';
-}
-
 void Room::lengthSet( int input )
 {
 	_length = input;
@@ -106,10 +24,16 @@ int Room::monsterAmountDesired( )
 {
 	return _monsterAmountDesired;
 }
+int Room::outerWallsAmount( )
+{
+	return _outerWallsAmount;
+}
+void Room::outerWallsAmountIncrease( int n )
+{
+	_outerWallsAmount += n;	// Default n = 1;
+}
 void Room::staticDataMap( )
 {
-	Position tempPosition;
-
 	if( _staticDataMap.size( ) == 0 )
 	{
 		_staticDataMap.resize( length( ), std::vector<char>( width( ) ) );
@@ -119,14 +43,11 @@ void Room::staticDataMap( )
 	{
 		for( int x = 0; x < width( ); x++ )
 		{
-			tempPosition.x = x;
-			tempPosition.y = y;
-
-			if( checkPosition( tempPosition, exit ) == true )
+			if( checkPosition( x, y, exit ) == true )
 			{
 				_staticDataMap[y][x] = '=';
 			}
-			else if( checkPosition( tempPosition, wall ) == true )
+			else if( checkPosition( x, y, wall ) == true )
 			{
 				_staticDataMap[y][x] = '#';
 			}
@@ -139,25 +60,17 @@ void Room::staticDataMap( )
 }
 void Room::completeDataMap( )
 {
-	Position tempPosition;
+	_completeDataMap = _staticDataMap;		// Initial overwrite.
 
-	if( _completeDataMap.size( ) == 0 )
-	{
-		_completeDataMap = _staticDataMap;
-	}
-
-	for( int y = 0; y < length( ); y++ )	// Overwriting values.
+	for( int y = 0; y < length( ); y++ )	// Overwriting values of staticDataMap( ).
 	{
 		for( int x = 0; x < width( ); x++ )
 		{
-			tempPosition.x = x;
-			tempPosition.y = y;
-
-			if( checkPosition( tempPosition, monster ) == true )
+			if( checkPosition( x, y, monster ) == true )
 			{
 				_completeDataMap[y][x] = 'M';
 			}
-			else if( checkPosition( tempPosition, player ) == true )
+			else if( checkPosition( x, y, player ) == true )
 			{
 				_completeDataMap[y][x] = 'P';
 			}
