@@ -40,7 +40,16 @@ class Exit
 		int x;
 		int y;
 };
+class Path
+{
+	public:
+		friend class Room;
+		static char icon;
 
+	private:
+		int x;
+		int y;
+};
 class Room
 {
 	public:
@@ -48,6 +57,7 @@ class Room
 		std::vector<Monster> monster;
 		std::vector<Wall> wall;
 		std::vector<Exit> exit;
+		std::vector<Path> path;
 
 		template<class T> void xSet( T &object, int input );
 		template<class T> void ySet( T &object, int input );

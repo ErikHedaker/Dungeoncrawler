@@ -45,15 +45,19 @@ void Room::staticDataMap( )
 		{
 			if( checkPosition( x, y, exit ) == true )
 			{
-				_staticDataMap[y][x] = '=';
+				_staticDataMap[y][x] = Exit::icon;	// '='
 			}
 			else if( checkPosition( x, y, wall ) == true )
 			{
-				_staticDataMap[y][x] = '#';
+				_staticDataMap[y][x] = Wall::icon;	// '#'
+			}
+			else if( checkPosition( x, y, path ) == true )
+			{
+				_staticDataMap[y][x] = Path::icon;	// ':', only visible in _staticDataMap.
 			}
 			else
 			{
-				_staticDataMap[y][x] = '-';
+				_staticDataMap[y][x] = '-';	// The floor.
 			}
 		}
 	}
@@ -68,11 +72,15 @@ void Room::completeDataMap( )
 		{
 			if( checkPosition( x, y, monster ) == true )
 			{
-				_completeDataMap[y][x] = 'M';
+				_completeDataMap[y][x] = Monster::icon;	// 'M'
 			}
 			else if( checkPosition( x, y, player ) == true )
 			{
-				_completeDataMap[y][x] = 'P';
+				_completeDataMap[y][x] = Player::icon;	// '@'
+			}
+			else if( checkPosition( x, y, path ) == true )
+			{
+				_completeDataMap[y][x] = '-';	// Path is now invisible.
 			}
 		}
 	}

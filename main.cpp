@@ -9,6 +9,7 @@ char Player::icon = '@';
 char Monster::icon = 'M';
 char Wall::icon = '#';
 char Exit::icon = '=';
+char Path::icon = ':';
 
 // Functions used by functions.
 int getPositiveInteger( )
@@ -143,7 +144,8 @@ void setRoomOuterWalls( Room &room )
 	{
 		for( int x = 0; x < room.width( ); x++ )
 		{
-			if( room.checkPosition( x, y, room.exit ) == true )
+			if( room.checkPosition( x, y, room.exit ) == true ||
+				room.checkPosition( x, y, room.path ) == true )
 			{
 				continue;
 			}
@@ -160,6 +162,63 @@ void setRoomOuterWalls( Room &room )
 		}
 	}
 }
+void setRoomInvisiblePath( Room &room)
+{
+	// Path from player starting point to exit.
+	// Walls cannot be placed on path.
+	// Player can no longer be cut off from exit due to randomly palced walls.
+	// Function can be replaced by A* algorithm, or similar algorithm.
+
+	Path tempPath;
+	int xTemp = room.x( room.player );
+	int yTemp = room.y( room.player );
+	int xTemp_0;
+	int yTemp_0;
+	int random;
+
+	while( true )
+	{
+		xTemp_0 = xTemp;
+		yTemp_0 = yTemp;
+		random = randomNumberGenerator( 1, 6 );
+
+		if( random <= 3 )
+		{
+			xTemp++;
+		}
+		else if( random <= 4 )
+		{
+			yTemp++;
+		}
+		else if( random <= 5 )
+		{
+			xTemp--;
+		}
+		else
+		{
+			yTemp--;
+		}
+
+		if( room.checkPosition( xTemp, yTemp, room.wall ) == false )
+		{
+			room.path.push_back( tempPath );
+			room.xSet( room.path.back( ), xTemp );
+			room.ySet( room.path.back( ), yTemp );
+		}
+		else
+		{
+			xTemp = xTemp_0;
+			yTemp = yTemp_0;
+		}
+
+		if( room.path.size( ) > 0 &&
+			room.x( room.path.back( ) ) == room.x( room.exit.back( ) ) &&
+			room.y( room.path.back( ) ) == room.y( room.exit.back( ) ) )
+		{
+			break;
+		}
+	}
+}
 void setRoomRandomWalls( Room &room )
 {
 	Wall tempWall;
@@ -172,11 +231,14 @@ void setRoomRandomWalls( Room &room )
 
 	while( randomSourceWalls > 0 ) // Place source walls.
 	{
+		std::cout << ".";
+
 		for( int y = 0; y < room.length( ); y++ )
 		{
 			for( int x = 0; x < room.width( ); x++ )
 			{
 				if( room.checkPosition( x, y, room.wall ) == false &&
+					room.checkPosition( x, y, room.path ) == false &&
 					randomNumberGenerator( 1, 1000 ) == 1 )
 				{
 					room.wall.push_back( tempWall );
@@ -187,8 +249,6 @@ void setRoomRandomWalls( Room &room )
 			}
 		}
 	}
-
-	std::cout << "\nLoading, please wait.\n";
 
 	for( int i = 0; i < randomTries; i++ ) // Place extension walls.
 	{
@@ -204,6 +264,7 @@ void setRoomRandomWalls( Room &room )
 					yTemp = y + randomNumberGenerator( 0, 1 ) * randomPositiveNegativeGenerator( );
 
 					if( room.checkPosition( xTemp, yTemp, room.wall ) == true ||
+						room.checkPosition( xTemp, yTemp, room.path ) == true ||
 						room.checkProtectRange( room.player, xTemp, yTemp ) == true ||
 						room.checkProtectRange( room.exit, xTemp, yTemp ) == true )
 					{
@@ -473,11 +534,13 @@ int main( )
 		system( "CLS" );
 		printGameRules( );
 		setRoomSize( room[i] );
+		setPlayerPosition( room[i] );
+		std::cout << "\nLoading, please wait.\n";
 		setRoomExits( room[i] );
 		setRoomOuterWalls( room[i] );
+		setRoomInvisiblePath( room[i] );
 		setRoomRandomWalls( room[i] );
 		room[i].staticDataMap( );
-		setPlayerPosition( room[i] );
 		chooseMonsterAmount( room[i] );
 		setRandomMonsterPositions( room[i] );
 
