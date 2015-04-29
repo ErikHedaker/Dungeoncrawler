@@ -265,8 +265,8 @@ void setRoomRandomWalls( Room &room )
 
 					if( room.checkPosition( xTemp, yTemp, room.wall ) == true ||
 						room.checkPosition( xTemp, yTemp, room.path ) == true ||
-						room.checkProtectRange( room.player, xTemp, yTemp ) == true ||
-						room.checkProtectRange( room.exit, xTemp, yTemp ) == true )
+						room.checkProtectRange( xTemp, yTemp, room.player ) == true ||
+						room.checkProtectRange( xTemp, yTemp, room.exit ) == true )
 					{
 						continue;
 					}
@@ -330,7 +330,7 @@ void setRandomMonsterPositions( Room &room )
 			xTemp = randomNumberGenerator( 1, room.width( ) - 2 );
 			yTemp = randomNumberGenerator( 1, room.length( ) - 2 );
 
-			if( room.checkProtectRange( room.player, xTemp, yTemp ) == false &&
+			if( room.checkProtectRange( xTemp, yTemp, room.player ) == false &&
 				room.checkPosition( xTemp, yTemp, room.monster ) == false &&
 				room.staticDataMap( xTemp, yTemp ) == '-' )
 			{
@@ -350,7 +350,14 @@ void drawRoom( Room &room )
 	{
 		for( int x = 0; x < room.width( ); x++ )
 		{
-			std::cout << room.completeDataMap( x, y );
+			if( room.visibleDataMap( x, y ) == 1 )
+			{
+				std::cout << room.completeDataMap( x, y );
+			}
+			else
+			{
+				std::cout << " ";
+			}
 		}
 
 		std::cout << "\n";
@@ -548,6 +555,7 @@ int main( )
 		{
 			system( "CLS" );
 			room[i].completeDataMap( );
+			room[i].visibleDataMap( 3 );
 			drawRoom( room[i] );
 			if( checkWinCondition( room[i] ) == true ||
 				checkLoseCondition( room[i] ) == true )

@@ -85,6 +85,26 @@ void Room::completeDataMap( )
 		}
 	}
 }
+void Room::visibleDataMap( int range )
+{
+	if( _visibleDataMap.size( ) == 0 )
+	{
+		_visibleDataMap.resize( length( ), std::vector<char>( width( ) ) );
+		_visibleDataMap.assign( length( ), std::vector<char>( width( ), 0 ) );
+	}
+
+	for( int y = 0; y < length( ); y++ )
+	{
+		for( int x = 0; x < width( ); x++ )
+		{
+			if( x >= player.x - range && x <= player.x + range &&
+				y >= player.y - range && y <= player.y + range )
+			{
+				_visibleDataMap[y][x] = 1;
+			}
+		}
+	}
+}
 char Room::staticDataMap( int x, int y )
 {
 	return _staticDataMap[y][x];
@@ -92,4 +112,8 @@ char Room::staticDataMap( int x, int y )
 char Room::completeDataMap( int x, int y )
 {
 	return _completeDataMap[y][x];
+}
+char Room::visibleDataMap( int x, int y )
+{
+	return _visibleDataMap[y][x];
 }

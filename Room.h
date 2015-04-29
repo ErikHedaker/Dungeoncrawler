@@ -67,10 +67,8 @@ class Room
 		template<class T> bool checkPosition( int xCurrent, int yCurrent, const std::vector<T> &search, int startIt = 0 );
 		template<class T, class Y> bool checkPosition( const T &current, const Y &search );
 		template<class T, class Y> bool checkPosition( const T &current, const std::vector<Y> &search, int startIt = 0 );
-		template<class T> bool checkProtectRange( const T &search, int xCurrent, int yCurrent, int range = 2 );
-		template<class T> bool checkProtectRange( const std::vector<T> &search, int xCurrent, int yCurrent, int range = 2 );
-		template<class T, class Y> bool checkProtectRange( const T &current, const Y &search, int range = 2 );
-		template<class T, class Y> bool checkProtectRange( const T &current, const std::vector<Y> &search, int range = 2 );
+		template<class T> bool checkProtectRange( int xCurrent, int yCurrent, const T &search, int range = 2 );
+		template<class T> bool checkProtectRange( int xCurrent, int yCurrent, const std::vector<T> &search, int range = 2 );
 
 		void lengthSet( int input );
 		void widthSet( int input );
@@ -82,8 +80,10 @@ class Room
 		void outerWallsAmountIncrease( int n = 1 );
 		void staticDataMap( );
 		void completeDataMap( );
+		void visibleDataMap( int range = 5 );
 		char staticDataMap( int x, int y );
 		char completeDataMap( int x, int y );
+		char visibleDataMap( int x, int y );
 
 	private:
 		int _length = 10;
@@ -92,6 +92,7 @@ class Room
 		int _outerWallsAmount = 0;
 		std::vector< std::vector<char> > _staticDataMap;
 		std::vector< std::vector<char> > _completeDataMap;
+		std::vector< std::vector<char> > _visibleDataMap;	// Note: char is used as it were bool.
 };
 
 template<class T> void Room::xSet( T &object, int input )
@@ -156,7 +157,7 @@ template<class T, class Y> bool Room::checkPosition( const T &current, const std
 
 	return false;
 }
-template<class T> bool Room::checkProtectRange( const T &search, int xCurrent, int yCurrent, int range )
+template<class T> bool Room::checkProtectRange( int xCurrent, int yCurrent, const T &search, int range )
 {
 	for( int y = yCurrent - range; y < yCurrent + range; y++ )
 	{
@@ -172,51 +173,16 @@ template<class T> bool Room::checkProtectRange( const T &search, int xCurrent, i
 
 	return false;
 }
-template<class T> bool Room::checkProtectRange( const std::vector<T> &search, int xCurrent, int yCurrent, int range )
+template<class T> bool Room::checkProtectRange( int xCurrent, int yCurrent, const std::vector<T> &search, int range )
 {
-	for( int i = 0; i < search.size( ); i++ )
+	for( unsigned int i = 0; i < search.size( ); i++ )
 	{
 		for( int y = yCurrent - range; y < yCurrent + range; y++ )
 		{
 			for( int x = xCurrent - range; x < xCurrent + range; x++ )
 			{
 				if( x == search[i].x &&
-					y == search[i].y )
-				{
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-template<class T, class Y> bool Room::checkProtectRange( const T &current, const Y &search, int range )
-{
-	for( int y = current.y - range; y < current.y + range; y++ )
-	{
-		for( int x = current.x - range; x < current.x + range; x++ )
-		{
-			if( x == search.x &&
-				y == search.y )
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-template<class T, class Y> bool Room::checkProtectRange( const T &current, const std::vector<Y> &search, int range )
-{
-	for( int i = 0; i < seach.size( ); i++ )
-	{
-		for( int y = current.y - range; y < current.y + range; y++ )
-		{
-			for( int x = current.x - range; x < current.x + range; x++ )
-			{
-				if( x == search[i].x &&
-					y == search[i].y )
+					y == search[i].y ) 
 				{
 					return true;
 				}
