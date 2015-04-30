@@ -84,7 +84,7 @@ bool checkEmptySurroundedTile( Room &room, int xCurrent, int yCurrent )
 	}
 }
 
-// Gamestate.
+// Meny
 void printGameRules( )
 {
 	std::cout << "Win condition: Enter the exit.\n";
@@ -121,14 +121,30 @@ void setGameState( int &mode )
 		goto RETRY;
 	}
 }
+
+// Configuration
 void setRoomSize( Room &room, int mode )
 {
 	if( mode == 2 )
 	{
+		RETRY:
 		std::cout << "Enter the playing Room length: ";
 		room.lengthSet( getPositiveInteger( ) );
 		std::cout << "Enter the playing Room width: ";
 		room.widthSet( getPositiveInteger( ) );
+		
+		if( room.length( ) < 3 ||
+			room.width( ) < 3 )
+		{
+			std::cout << "\nInput is too small, try again.\n\n";
+			goto RETRY;
+		}
+		else if( room.length( ) > 1000 ||
+				 room.width( ) > 1000 )
+		{
+			std::cout << "\nInput is too big, try again.\n\n";
+			goto RETRY;
+		}
 	}
 	else
 	{
@@ -153,7 +169,7 @@ void setMonsterAmount( Room &room, int mode )
 {
 	if( mode == 2 )
 	{
-		int maxMonsters = ( room.length( ) * room.width( ) ) - room.wall.size( ) - ( ( 5 * 5 ) * 2 );
+		int maxMonsters = ( room.length( ) * room.width( ) ) - room.wall.size( ) - ( room.length( ) * room.width( ) ) / 2;
 
 		while( true )
 		{
@@ -180,7 +196,15 @@ void setMonsterAmount( Room &room, int mode )
 		room.monsterAmountDesiredSet( randomNumberGenerator( ( int ) low, ( int ) high ) );
 	}
 }
-void setRoomExits( Room &room )
+
+// Automatic
+void setPlayerPosition( Room &room )
+{
+	room.xSet( room.player, 1 );
+	room.ySet( room.player, 1 );   // Top left corner.
+	room.visibleDataMapUpdate( 1, 1, Player::icon );
+}
+void setExits( Room &room )
 {
 	Exit tempExit;
 	room.exit.push_back( tempExit );
@@ -189,9 +213,9 @@ void setRoomExits( Room &room )
 	int yTemp = room.length( ) - 1;
 	room.xSet( room.exit.back( ), xTemp );	// Default.
 	room.ySet( room.exit.back( ), yTemp );	// bottom right corner.
-	room.visibleDataMapUpdateSingle( xTemp, yTemp, Exit::icon );
+	room.visibleDataMapUpdate( xTemp, yTemp, Exit::icon );
 }
-void setRoomOuterWalls( Room &room )
+void setOuterWalls( Room &room )
 {
 	Wall tempWall;
 
@@ -211,13 +235,13 @@ void setRoomOuterWalls( Room &room )
 				room.wall.push_back( tempWall );
 				room.xSet( room.wall.back( ), x );
 				room.ySet( room.wall.back( ), y );
-				room.visibleDataMapUpdateSingle( x, y, Wall::icon );
+				room.visibleDataMapUpdate( x, y, Wall::icon );
 				room.outerWallsAmountIncrease( );
 			}
 		}
 	}
 }
-void setRoomInvisiblePath( Room &room)
+void setInvisiblePath( Room &room)
 {
 	// Path from player starting point to exit.
 	// Walls cannot be placed on path.
@@ -292,13 +316,13 @@ void setRoomInvisiblePath( Room &room)
 				room.path.push_back( tempPath );
 				room.xSet( room.path.back( ), xTemp_0 );
 				room.ySet( room.path.back( ), yTemp_0 );
-				room.hiddenDataMapUpdateSingle( xTemp, yTemp, Path::icon );
+				room.hiddenDataMapUpdate( xTemp, yTemp, Path::icon );
 			}
 
 			room.path.push_back( tempPath );
 			room.xSet( room.path.back( ), xTemp );
 			room.ySet( room.path.back( ), yTemp );
-			room.hiddenDataMapUpdateSingle( xTemp, yTemp, Path::icon );
+			room.hiddenDataMapUpdate( xTemp, yTemp, Path::icon );
 		}
 
 		if( room.path.size( ) > 0 &&
@@ -309,7 +333,7 @@ void setRoomInvisiblePath( Room &room)
 		}
 	}
 }
-void setRoomRandomWalls( Room &room )
+void setRandomWalls( Room &room )
 {
 	Wall tempWall;
 	int xTemp;
@@ -367,7 +391,7 @@ void setRoomRandomWalls( Room &room )
 						room.wall.push_back( tempWall );
 						room.xSet( room.wall.back( ), xTemp );
 						room.ySet( room.wall.back( ), yTemp );
-						room.visibleDataMapUpdateSingle( xTemp, yTemp, Wall::icon );
+						room.visibleDataMapUpdate( xTemp, yTemp, Wall::icon );
 					}
 				}
 				else if( room.visibleDataMap( x, y ) == '-' &&
@@ -377,19 +401,13 @@ void setRoomRandomWalls( Room &room )
 					room.wall.push_back( tempWall );
 					room.xSet( room.wall.back( ), x );
 					room.ySet( room.wall.back( ), y );
-					room.visibleDataMapUpdateSingle( x, y, Wall::icon );
+					room.visibleDataMapUpdate( x, y, Wall::icon );
 				}
 			}
 		}
 	}
 	
 	std::cout << "\n";
-}
-void setPlayerPosition( Room &room )
-{
-	room.xSet( room.player, 1 );
-	room.ySet( room.player, 1 );   // Top left corner.
-	room.visibleDataMapUpdateSingle( 1, 1, Player::icon );
 }
 void setRandomMonsterPositions( Room &room )
 {
@@ -416,11 +434,11 @@ void setRandomMonsterPositions( Room &room )
 
 		room.xSet( room.monster.back( ), xTemp );
 		room.ySet( room.monster.back( ), yTemp );
-		room.visibleDataMapUpdateSingle( xTemp, yTemp, Monster::icon );
+		room.visibleDataMapUpdate( xTemp, yTemp, Monster::icon );
 	}
 }
 
-// Gameloop.
+// Gameloop
 void clearScreen( Room &room )
 {
 	int GAME_WINDOW_SIZE = 40;
@@ -451,23 +469,21 @@ void drawRoom( Room &room )
 
 	std::cout << "\n";
 }
-void sayTurnOptions( )
-{
-	std::cout << "[W] Go up\n";
-	std::cout << "[S] Go down\n";
-	std::cout << "[A] Go left\n";
-	std::cout << "[D] Go Right\n";
-	std::cout << "[Q] Do nothing\n";
-	std::cout << "[E] Exit to meny\n\n";
-}
-char chooseTurnOptions( Room &room )
+char turnOptions( Room &room )
 {
 	int xTemp;
 	int yTemp;
 	std::string userChoice;
 
+	std::cout << "[W] Go up\n";
+	std::cout << "[S] Go down\n";
+	std::cout << "[A] Go left\n";
+	std::cout << "[D] Go Right\n";
+	std::cout << "[Q] Do nothing\n";
+	std::cout << "[E] Exit to meny\n";
+
 	RETRY:
-	std::cout << "Your choice: ";
+	std::cout << "\nYour choice: ";
 	std::cin >> userChoice;
 
 	switch( userChoice[0] )
@@ -532,11 +548,11 @@ char chooseTurnOptions( Room &room )
 	{
 		int xTemp_0 = room.x( room.player );
 		int yTemp_0 = room.y( room.player );
-		room.visibleDataMapUpdateSingle( xTemp_0, yTemp_0, '-' );
+		room.visibleDataMapUpdate( xTemp_0, yTemp_0, '-' );
 
 		room.xSet( room.player, xTemp );
 		room.ySet( room.player, yTemp );
-		room.visibleDataMapUpdateSingle( xTemp, yTemp, Player::icon );
+		room.visibleDataMapUpdate( xTemp, yTemp, Player::icon );
 	}
 
 	return 0;
@@ -573,18 +589,18 @@ void randomizeMonsterMovement( Room &room )
 			{
 				int xTemp_0 = room.x( room.monster[i] );
 				int yTemp_0 = room.y( room.monster[i] );
-				room.visibleDataMapUpdateSingle( xTemp_0, yTemp_0, '-' );
+				room.visibleDataMapUpdate( xTemp_0, yTemp_0, '-' );
 
 				room.xSet( room.monster[i], xTemp );
 				room.ySet( room.monster[i], yTemp );
-				room.visibleDataMapUpdateSingle( xTemp, yTemp, Monster::icon );
+				room.visibleDataMapUpdate( xTemp, yTemp, Monster::icon );
 				break;
 			}
 		}
 	}
 }
 
-// Checked during or after gameloop.
+// Checked during or after gameloop
 bool checkWinCondition(  Room &room )
 {
 	if( room.checkPosition( room.player, room.exit ) == true )
@@ -645,25 +661,27 @@ int main( )
 		{
 			system( "CLS" );
 			i++;
+
 			room.push_back( tempRoom );
 			setRoomSize( room[i], mode );
 			setLineOfSight( LoS, mode );
 			setMonsterAmount( room[i], mode );
-			room[i].hiddenDataMapUpdate( );
-			room[i].visibleDataMapUpdate( );
-			setPlayerPosition( room[i] );
+
+			room[i].hiddenDataMapBuild( );
+			room[i].visibleDataMapBuild( );
+
 			std::cout << "Loading, please wait.\n";
-			setRoomExits( room[i] );
-			setRoomOuterWalls( room[i] );
-			setRoomInvisiblePath( room[i] );
-			setRoomRandomWalls( room[i] );;
+			setPlayerPosition( room[i] );
+			setExits( room[i] );
+			setOuterWalls( room[i] );
+			setInvisiblePath( room[i] );
+			setRandomWalls( room[i] );;
 			setRandomMonsterPositions( room[i] );
 
 			while( true )
 			{
 				system( "CLS" );
-				room[i].visibleDataMapFogOfWarUpdate( LoS );
-				//room[i].visibleDataMapFogOfWarLineOfSight( 5 );	// Note: buggy and prone to crash.
+				room[i].visibleDataMapFogOfWarBuild( LoS );
 				drawRoom( room[i] );
 
 				if( checkWinCondition( room[i] ) == true )
@@ -683,11 +701,11 @@ int main( )
 					break;
 				}
 
-				sayTurnOptions( );
-				if( chooseTurnOptions( room[i] ) == 'E' )
+				if( turnOptions( room[i] ) == 'E' )
 				{
 					goto MENY;
 				}
+
 				randomizeMonsterMovement( room[i] );
 			}
 		}

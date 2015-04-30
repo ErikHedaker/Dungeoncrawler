@@ -78,12 +78,12 @@ class Room
 		int monsterAmountDesired( );
 		int outerWallsAmount( );
 		void outerWallsAmountIncrease( int n = 1 );
-		void hiddenDataMapUpdate( );
-		void hiddenDataMapUpdateSingle( int x, int y, int value );
-		void visibleDataMapUpdate( );
-		void visibleDataMapUpdateSingle( int x, int y, char value );
-		void visibleDataMapFogOfWarUpdate( int range = 5 );
-		void visibleDataMapFogOfWarLineOfSightUpdate( int range = 5 );
+		void hiddenDataMapBuild( );
+		void hiddenDataMapUpdate( int x, int y, int value );
+		void visibleDataMapBuild( );
+		void visibleDataMapUpdate( int x, int y, char value );
+		void visibleDataMapFogOfWarBuild( int range = 5 );
+		void visibleDataMapFogOfWarLineOfSightBuild( int range = 5 );
 		char hiddenDataMap( int x, int y );
 		char visibleDataMap( int x, int y );
 		char visibleDataMapFogOfWar( int x, int y );

@@ -32,7 +32,7 @@ void Room::outerWallsAmountIncrease( int n )
 {
 	_outerWallsAmount += n;	// Default n = 1;
 }
-void Room::hiddenDataMapUpdate( )
+void Room::hiddenDataMapBuild( )
 {
 	_hiddenDataMap.clear( );
 	_hiddenDataMap.resize( length( ), std::vector<char>( width( ) ) );
@@ -48,11 +48,11 @@ void Room::hiddenDataMapUpdate( )
 		}
 	}
 }
-void Room::hiddenDataMapUpdateSingle( int x, int y, int value )
+void Room::hiddenDataMapUpdate( int x, int y, int value )
 {
 	_hiddenDataMap[y][x] = value;
 }
-void Room::visibleDataMapUpdate( )
+void Room::visibleDataMapBuild( )
 {
 	_visibleDataMap.clear( );
 	_visibleDataMap.resize( length( ), std::vector<char>( width( ) ) );
@@ -85,15 +85,17 @@ void Room::visibleDataMapUpdate( )
 		}
 	}
 }
-void Room::visibleDataMapUpdateSingle( int x, int y, char value )
+void Room::visibleDataMapUpdate( int x, int y, char value )
 {
 	_visibleDataMap[y][x] = value;
 }
-void Room::visibleDataMapFogOfWarUpdate( int range )
+void Room::visibleDataMapFogOfWarBuild( int range )
 {
-	_visibleDataMapFogOfWar.clear( );
-	_visibleDataMapFogOfWar.resize( length( ), std::vector<char>( width( ) ) );
-	_visibleDataMapFogOfWar.assign( length( ), std::vector<char>( width( ), 0 ) );
+	if( _visibleDataMapFogOfWar.size( ) == 0 )
+	{
+		_visibleDataMapFogOfWar.resize( length( ), std::vector<char>( width( ) ) );
+		_visibleDataMapFogOfWar.assign( length( ), std::vector<char>( width( ), 0 ) );
+	}
 
 	for( int y = 0; y < length( ); y++ )
 	{
@@ -107,8 +109,10 @@ void Room::visibleDataMapFogOfWarUpdate( int range )
 		}
 	}
 }
-void Room::visibleDataMapFogOfWarLineOfSightUpdate( int range )
+void Room::visibleDataMapFogOfWarLineOfSightBuild( int range )
 {
+	// Not in use due to bugs.
+
 	_visibleDataMapFogOfWar.clear( );
 	_visibleDataMapFogOfWar.resize( length( ), std::vector<char>( width( ) ) );
 	_visibleDataMapFogOfWar.assign( length( ), std::vector<char>( width( ), 0 ) );
