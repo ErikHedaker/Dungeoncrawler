@@ -81,6 +81,7 @@ class Room
 		void staticDataMap( );
 		void completeDataMap( );
 		void visibleDataMap( int range = 5 );
+		void visibleDataMapFogOfWar( int range = 5 );
 		char staticDataMap( int x, int y );
 		char completeDataMap( int x, int y );
 		char visibleDataMap( int x, int y );

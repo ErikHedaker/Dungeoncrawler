@@ -78,7 +78,8 @@ void Room::completeDataMap( )
 			{
 				_completeDataMap[y][x] = Player::icon;	// '@'
 			}
-			else if( checkPosition( x, y, path ) == true )
+			else if( checkPosition( x, y, path ) == true &&
+					 checkPosition( x, y, exit ) == false )
 			{
 				_completeDataMap[y][x] = '-';	// Path is now invisible.
 			}
@@ -99,6 +100,255 @@ void Room::visibleDataMap( int range )
 		{
 			if( x >= player.x - range && x <= player.x + range &&
 				y >= player.y - range && y <= player.y + range )
+			{
+				_visibleDataMap[y][x] = 1;
+			}
+		}
+	}
+}
+void Room::visibleDataMapFogOfWar( int range )
+{
+	if( _visibleDataMap.size( ) == 0 )
+	{
+		_visibleDataMap.resize( length( ), std::vector<char>( width( ) ) );
+		_visibleDataMap.assign( length( ), std::vector<char>( width( ), 0 ) );
+	}
+
+	for( int y = player.y; y < player.y + range; y++ )
+	{
+		if( y > length( ) || y < 0 )
+		{
+			break;
+		}
+
+		for( int x = player.x; x < player.x + range; x++ )
+		{
+			if( x > width( ) || x < 0 )
+			{
+				break;
+			}
+
+			if( checkPosition( x, y, wall ) == true ||
+				checkPosition( x, y, exit ) == true )
+			{
+				_visibleDataMap[y][x] = 1;
+				//goto next_0;
+				break;
+			}
+			else
+			{
+				_visibleDataMap[y][x] = 1;
+			}
+		}
+	}
+
+	//next_0:
+
+	for( int y = player.y; y > player.y - range; y-- )
+	{
+		if( y > length( ) || y < 0 )
+		{
+			break;
+		}
+
+		for( int x = player.x; x < player.x + range; x++ )
+		{
+			if( x > width( ) || x < 0 )
+			{
+				break;
+			}
+
+			if( checkPosition( x, y, wall ) == true ||
+				checkPosition( x, y, exit ) == true )
+			{
+				_visibleDataMap[y][x] = 1;
+				//goto next_1;
+				break;
+			}
+			else
+			{
+				_visibleDataMap[y][x] = 1;
+			}
+		}
+	}
+
+	//next_1:
+
+	for( int y = player.y; y < player.y + range; y++ )
+	{
+		if( y > length( ) || y < 0 )
+		{
+			break;
+		}
+
+		for( int x = player.x; x > player.x - range; x-- )
+		{
+			if( x > width( ) || x < 0 )
+			{
+				break;
+			}
+
+			if( checkPosition( x, y, wall ) == true ||
+				checkPosition( x, y, exit ) == true )
+			{
+				_visibleDataMap[y][x] = 1;
+				//goto next_2;
+				break;
+			}
+			else
+			{
+				_visibleDataMap[y][x] = 1;
+			}
+		}
+	}
+
+	//next_2:
+
+	for( int y = player.y; y > player.y - range; y-- )
+	{
+		if( y > length( ) || y < 0 )
+		{
+			break;
+		}
+
+		for( int x = player.x; x > player.x - range; x-- )
+		{
+			if( x > width( ) || x < 0 )
+			{
+				break;
+			}
+
+			if( checkPosition( x, y, wall ) == true ||
+				checkPosition( x, y, exit ) == true )
+			{
+				_visibleDataMap[y][x] = 1;
+				//goto next_3;
+				break;
+			}
+			else
+			{
+				_visibleDataMap[y][x] = 1;
+			}
+		}
+	}
+
+	//next_3:
+
+	// Check again, this time y and x loops are reversed.
+	// This should fix any visual bugs.
+
+	for( int x = player.x; x < player.x + range; x++ )
+	{
+		if( x > width( ) || x < 0 )
+		{
+			break;
+		}
+
+		for( int y = player.y; y < player.y + range; y++ )
+		{
+			if( y > length( ) || y < 0 )
+			{
+				break;
+			}
+
+			if( checkPosition( x, y, wall ) == true ||
+				checkPosition( x, y, exit ) == true )
+			{
+				_visibleDataMap[y][x] = 1;
+				//goto next_4;
+				break;
+			}
+			else
+			{
+				_visibleDataMap[y][x] = 1;
+			}
+		}
+	}
+
+	//next_4:
+
+	for( int x = player.x; x > player.x - range; x-- )
+	{
+		if( x > width( ) || x < 0 )
+		{
+			break;
+		}
+
+		for( int y = player.y; y < player.y + range; y++ )
+		{
+			if( y > length( ) || y < 0 )
+			{
+				break;
+			}
+
+			if( checkPosition( x, y, wall ) == true ||
+				checkPosition( x, y, exit ) == true )
+			{
+				_visibleDataMap[y][x] = 1;
+				//goto next_5;
+				break;
+			}
+			else
+			{
+				_visibleDataMap[y][x] = 1;
+			}
+		}
+	}
+
+	//next_5:
+
+	for( int x = player.x; x < player.x + range; x++ )
+	{
+		if( x > width( ) || x < 0 )
+		{
+			break;
+		}
+
+		for( int y = player.y; y > player.y - range; y-- )
+		{
+			if( y > length( ) || y < 0 )
+			{
+				break;
+			}
+
+			if( checkPosition( x, y, wall ) == true ||
+				checkPosition( x, y, exit ) == true )
+			{
+				_visibleDataMap[y][x] = 1;
+				//goto next_6;
+				break;
+			}
+			else
+			{
+				_visibleDataMap[y][x] = 1;
+			}
+		}
+	}
+
+	//next_6:
+
+	for( int x = player.x; x > player.x - range; x-- )
+	{
+		if( x > width( ) || x < 0 )
+		{
+			break;
+		}
+
+		for( int y = player.y; y > player.y - range; y-- )
+		{
+			if( y > length( ) || y < 0 )
+			{
+				break;
+			}
+
+			if( checkPosition( x, y, wall ) == true ||
+				checkPosition( x, y, exit ) == true )
+			{
+				_visibleDataMap[y][x] = 1;
+				//return;
+				break;
+			}
+			else
 			{
 				_visibleDataMap[y][x] = 1;
 			}

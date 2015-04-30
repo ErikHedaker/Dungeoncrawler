@@ -91,39 +91,95 @@ bool checkEmptySurroundedTile( Room &room, int xCurrent, int yCurrent )
 	}
 }
 
-// Default gamestate.
+// Gamestate.
 void printGameRules( )
 {
 	std::cout << "Win condition: Enter the exit.\n";
-	std::cout << "Lose condition: Enter the same space as a monster.\n";
+	std::cout << "Lose condition: Enter the same space as a monster.\n\n";
 }
-void setRoomSize( Room &room )
+void setGameState( int &mode )
 {
 	std::string userChoice;
 
-	std::cout << "\nWould you like to determine the room dimensions, [y/n]: ";
-	while( true )
-	{
-		std::cin >> userChoice;
+	std::cout << "Choose the game state.\n";
+	std::cout << "[1] Randomization mode\n";
+	std::cout << "[2] Configuration mode\n";
 
-		if( userChoice[0] == 'Y' || userChoice[0] == 'y' )
+	RETRY:
+	std::cout << "\nYour choice: ";
+	std::cin >> userChoice;
+
+	if( userChoice[0] == '1' )
+	{
+		mode = 1;
+	}
+	else if( userChoice[0] == '2' )
+	{
+		mode = 2;
+	}
+	else
+	{
+		std::cout << "Invalid input, try again.\n";
+		goto RETRY;
+	}
+}
+void setRoomSize( Room &room, int mode )
+{
+	if( mode == 2 )
+	{
+		std::cout << "Enter the playing Room length: ";
+		room.lengthSet( getPositiveInteger( ) );
+		std::cout << "Enter the playing Room width: ";
+		room.widthSet( getPositiveInteger( ) );
+	}
+	else
+	{
+		room.lengthSet( randomNumberGenerator( 15, 30 ) );
+		room.widthSet( randomNumberGenerator( 50, 100 ) );
+
+	}
+}
+void setLineOfSight( int &LoS, int mode )
+{
+	if( mode == 2 )
+	{
+		std::cout << "Enter the line of sight range: ";
+		LoS = getPositiveInteger( );
+	}
+	else
+	{
+		LoS = 4;
+	}
+}
+void setMonsterAmount( Room &room, int mode )
+{
+	if( mode == 2 )
+	{
+		int maxMonsters = ( room.length( ) * room.width( ) ) - room.wall.size( ) - ( ( 5 * 5 ) * 2 );
+
+		while( true )
 		{
-			std::cout << "Enter the playing Room length: ";
-			room.lengthSet( getPositiveInteger( ) );
-			std::cout << "Enter the playing Room width: ";
-			room.widthSet( getPositiveInteger( ) );
-			break;
+			std::cout << "Enter the amount of monsters: ";
+			room.monsterAmountDesiredSet( getPositiveInteger( ) );
+
+			if( room.monsterAmountDesired( ) >= maxMonsters &&
+				room.monsterAmountDesired( ) != 0 )
+			{
+				std::cout << "Too many monsters, try again.\n";
+				continue;
+			}
+			else
+			{
+				std::cout << "\n";
+				break;
+			}
 		}
-		else if( userChoice[0] == 'N' || userChoice[0] == 'n' )
-		{
-			room.lengthSet( randomNumberGenerator( 15, 30 ) );
-			room.widthSet( randomNumberGenerator( 50, 100 ) );
-			break;
-		}
-		else
-		{
-			std::cout << "Invalid input, try again: ";
-		}
+	}
+	else
+	{
+		double high = sqrt( room.length( ) * room.width( ) ) / 1.5;
+		double low = sqrt( room.length( ) * room.width( ) ) / 3;
+		room.monsterAmountDesiredSet( randomNumberGenerator( ( int ) low, ( int ) high ) );
 	}
 }
 void setRoomExits( Room &room )
@@ -224,10 +280,14 @@ void setRoomRandomWalls( Room &room )
 	Wall tempWall;
 	int xTemp;
 	int yTemp;
-	double high = sqrt( room.length( ) * room.width( ) ) * 1.5;
-	double low = sqrt( room.length( ) * room.width( ) ) / 1.5;
-	int randomSourceWalls = randomNumberGenerator( (int)low, (int)high );
-	int randomTries = randomNumberGenerator( 5, 7 );
+
+	double high_0 = sqrt( room.length( ) * room.width( ) ) * 1.5;
+	double low_0 = sqrt( room.length( ) * room.width( ) ) / 1.5;
+	int randomSourceWalls = randomNumberGenerator( (int)low_0, (int)high_0 );
+
+	double high_1 = sqrt( room.length( ) * room.width( ) ) / 5;
+	double low_1 = sqrt( room.length( ) * room.width( ) ) / 7;
+	int randomTries = randomNumberGenerator( (int)low_1, (int)high_1 );
 
 	while( randomSourceWalls > 0 ) // Place source walls.
 	{
@@ -249,6 +309,8 @@ void setRoomRandomWalls( Room &room )
 			}
 		}
 	}
+
+	std::cout << "\n";
 
 	for( int i = 0; i < randomTries; i++ ) // Place extension walls.
 	{
@@ -294,27 +356,6 @@ void setPlayerPosition( Room &room )
 	room.xSet( room.player, 1 );
 	room.ySet( room.player, 1 );   // Top left corner.
 }
-void chooseMonsterAmount( Room &room )
-{
-	int maxMonsters = ( room.length( ) * room.width( ) ) - room.wall.size( ) - ( ( 5 * 5 ) * 2 );
-																			   // From checkProtectRange( ) of player and exit.
-	std::cout << "\nEnter amount of monsters: ";
-	while( true )
-	{
-		room.monsterAmountDesiredSet( getPositiveInteger( ) );
-
-		if( room.monsterAmountDesired( ) >= maxMonsters &&
-			room.monsterAmountDesired( ) != 0 )
-		{
-			std::cout << "Too many monsters, try again: ";
-			continue;
-		}
-		else
-		{
-			break;
-		}
-	}
-}
 void setRandomMonsterPositions( Room &room )
 {
 	Monster tempMonster;
@@ -344,6 +385,15 @@ void setRandomMonsterPositions( Room &room )
 }
 
 // Gameloop.
+void clearScreen( Room &room )
+{
+	int GAME_WINDOW_SIZE = 40;
+
+	for( int i = 0; i < GAME_WINDOW_SIZE - room.length( ); i++ )
+	{
+		std::cout << "\n";
+	}
+}
 void drawRoom( Room &room )
 {
 	for( int y = 0; y < room.length( ); y++ )
@@ -451,6 +501,7 @@ void randomizeMonsterMovement( Room &room )
 {
 	int xTemp;
 	int yTemp;
+	int tempValue;
 	int randomNumber;
 
 	for( unsigned int i = 0; i < room.monster.size( ); i++ )
@@ -490,7 +541,6 @@ bool checkWinCondition(  Room &room )
 {
 	if( room.checkPosition( room.player, room.exit ) == true )
 	{
-		std::cout << "\nYou win!";
 		return true;
 	}
 
@@ -500,7 +550,6 @@ bool checkLoseCondition( Room &room )
 {
 	if( room.checkPosition( room.player, room.monster ) == true )
 	{
-		std::cout << "\nYou lose!";
 		return true;
 	}
 
@@ -536,35 +585,56 @@ int main( )
 	{
 		std::vector<Room> room;
 		room.resize( 5 );
-		int i = 0;
+		int mode;
+		int LoS;
 
-		system( "CLS" );
 		printGameRules( );
-		setRoomSize( room[i] );
-		setPlayerPosition( room[i] );
-		std::cout << "\nLoading, please wait.\n";
-		setRoomExits( room[i] );
-		setRoomOuterWalls( room[i] );
-		setRoomInvisiblePath( room[i] );
-		setRoomRandomWalls( room[i] );
-		room[i].staticDataMap( );
-		chooseMonsterAmount( room[i] );
-		setRandomMonsterPositions( room[i] );
+		setGameState( mode );
 
-		while( true )
+		for( int i = 0; i < 100; i++ )
 		{
 			system( "CLS" );
-			room[i].completeDataMap( );
-			room[i].visibleDataMap( 3 );
-			drawRoom( room[i] );
-			if( checkWinCondition( room[i] ) == true ||
-				checkLoseCondition( room[i] ) == true )
+			setRoomSize( room[i], mode );
+			setLineOfSight( LoS, mode );
+			setMonsterAmount( room[i], mode );
+			setPlayerPosition( room[i] );
+			std::cout << "Loading, please wait.\n";
+			setRoomExits( room[i] );
+			setRoomOuterWalls( room[i] );
+			setRoomInvisiblePath( room[i] );
+			setRoomRandomWalls( room[i] );
+			room[i].staticDataMap( );
+			setRandomMonsterPositions( room[i] );
+
+			while( true )
 			{
-				break;
+				system( "CLS" );
+				room[i].completeDataMap( );
+				room[i].visibleDataMap( LoS );
+				//room[i].visibleDataMapFogOfWar( 5 );	// Note: buggy and prone to crash.
+				drawRoom( room[i] );
+
+				if( checkWinCondition( room[i] ) == true )
+				{
+					std::cout << "You win!";
+					std::cout << "\n\nPress enter to continue: ";
+					std::cin.get( );
+					std::cin.get( );
+					break;
+				}
+				else if( checkLoseCondition( room[i] ) == true )
+				{
+					std::cout << "You lose!";
+					std::cout << "\n\nPress enter to continue: ";
+					std::cin.get( );
+					std::cin.get( );
+					break;
+				}
+
+				sayTurnOptions( );
+				chooseTurnOptions( room[i] );
+				randomizeMonsterMovement( room[i] );
 			}
-			sayTurnOptions( );
-			chooseTurnOptions( room[i] );
-			randomizeMonsterMovement( room[i] );
 		}
 	}
 	while( chooseRestartGame( ) == true );
