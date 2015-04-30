@@ -32,12 +32,31 @@ void Room::outerWallsAmountIncrease( int n )
 {
 	_outerWallsAmount += n;	// Default n = 1;
 }
-void Room::staticDataMap( )
+void Room::hiddenDataMapUpdate( )
 {
-	if( _staticDataMap.size( ) == 0 )
+	_hiddenDataMap.clear( );
+	_hiddenDataMap.resize( length( ), std::vector<char>( width( ) ) );
+
+	for( int y = 0; y < length( ); y++ )
 	{
-		_staticDataMap.resize( length( ), std::vector<char>( width( ) ) );
+		for( int x = 0; x < width( ); x++ )
+		{
+			if( checkPosition( x, y, path ) == true )
+			{
+				_hiddenDataMap[y][x] = Path::icon;
+			}
+		}
 	}
+}
+void Room::hiddenDataMapUpdateSingle( int x, int y, int value )
+{
+	_hiddenDataMap[y][x] = value;
+}
+void Room::visibleDataMapUpdate( )
+{
+	_visibleDataMap.clear( );
+	_visibleDataMap.resize( length( ), std::vector<char>( width( ) ) );
+	_visibleDataMap.assign( length( ), std::vector<char>( width( ), '-' ) );
 
 	for( int y = 0; y < length( ); y++ )
 	{
@@ -45,58 +64,36 @@ void Room::staticDataMap( )
 		{
 			if( checkPosition( x, y, exit ) == true )
 			{
-				_staticDataMap[y][x] = Exit::icon;	// '='
+				_visibleDataMap[y][x] = Exit::icon;		// '='
 			}
 			else if( checkPosition( x, y, wall ) == true )
 			{
-				_staticDataMap[y][x] = Wall::icon;	// '#'
+				_visibleDataMap[y][x] = Wall::icon;		// '#'
 			}
-			else if( checkPosition( x, y, path ) == true )
+			else if( checkPosition( x, y, monster ) == true )
 			{
-				_staticDataMap[y][x] = Path::icon;	// ':', only visible in _staticDataMap.
-			}
-			else
-			{
-				_staticDataMap[y][x] = '-';	// The floor.
-			}
-		}
-	}
-}
-void Room::completeDataMap( )
-{
-	_completeDataMap = _staticDataMap;		// Initial overwrite.
-
-	for( int y = 0; y < length( ); y++ )	// Overwriting values of staticDataMap( ).
-	{
-		for( int x = 0; x < width( ); x++ )
-		{
-			if( checkPosition( x, y, monster ) == true )
-			{
-				_completeDataMap[y][x] = Monster::icon;	// 'M'
+				_visibleDataMap[y][x] = Monster::icon;	// 'M'
 			}
 			else if( checkPosition( x, y, player ) == true )
 			{
-				_completeDataMap[y][x] = Player::icon;	// '@'
+				_visibleDataMap[y][x] = Player::icon;	// '@'
 			}
-			else if( checkPosition( x, y, path ) == true &&
-					 checkPosition( x, y, exit ) == false )
+			else
 			{
-				_completeDataMap[y][x] = '-';	// Path is now invisible.
+				_visibleDataMap[y][x] = '-';
 			}
 		}
 	}
 }
-void Room::completeDataMapSingle( int x, int y, char value )
+void Room::visibleDataMapUpdateSingle( int x, int y, char value )
 {
-	_completeDataMap[y][x] = value;
+	_visibleDataMap[y][x] = value;
 }
-void Room::visibleDataMap( int range )
+void Room::visibleDataMapFogOfWarUpdate( int range )
 {
-	if( _visibleDataMap.size( ) == 0 )
-	{
-		_visibleDataMap.resize( length( ), std::vector<char>( width( ) ) );
-		_visibleDataMap.assign( length( ), std::vector<char>( width( ), 0 ) );
-	}
+	_visibleDataMapFogOfWar.clear( );
+	_visibleDataMapFogOfWar.resize( length( ), std::vector<char>( width( ) ) );
+	_visibleDataMapFogOfWar.assign( length( ), std::vector<char>( width( ), 0 ) );
 
 	for( int y = 0; y < length( ); y++ )
 	{
@@ -105,18 +102,16 @@ void Room::visibleDataMap( int range )
 			if( x >= player.x - range && x <= player.x + range &&
 				y >= player.y - range && y <= player.y + range )
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 			}
 		}
 	}
 }
-void Room::visibleDataMapFogOfWar( int range )
+void Room::visibleDataMapFogOfWarLineOfSightUpdate( int range )
 {
-	if( _visibleDataMap.size( ) == 0 )
-	{
-		_visibleDataMap.resize( length( ), std::vector<char>( width( ) ) );
-		_visibleDataMap.assign( length( ), std::vector<char>( width( ), 0 ) );
-	}
+	_visibleDataMapFogOfWar.clear( );
+	_visibleDataMapFogOfWar.resize( length( ), std::vector<char>( width( ) ) );
+	_visibleDataMapFogOfWar.assign( length( ), std::vector<char>( width( ), 0 ) );
 
 	for( int y = player.y; y < player.y + range; y++ )
 	{
@@ -135,13 +130,13 @@ void Room::visibleDataMapFogOfWar( int range )
 			if( checkPosition( x, y, wall ) == true ||
 				checkPosition( x, y, exit ) == true )
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 				//goto next_0;
 				break;
 			}
 			else
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 			}
 		}
 	}
@@ -165,13 +160,13 @@ void Room::visibleDataMapFogOfWar( int range )
 			if( checkPosition( x, y, wall ) == true ||
 				checkPosition( x, y, exit ) == true )
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 				//goto next_1;
 				break;
 			}
 			else
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 			}
 		}
 	}
@@ -195,13 +190,13 @@ void Room::visibleDataMapFogOfWar( int range )
 			if( checkPosition( x, y, wall ) == true ||
 				checkPosition( x, y, exit ) == true )
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 				//goto next_2;
 				break;
 			}
 			else
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 			}
 		}
 	}
@@ -225,13 +220,13 @@ void Room::visibleDataMapFogOfWar( int range )
 			if( checkPosition( x, y, wall ) == true ||
 				checkPosition( x, y, exit ) == true )
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 				//goto next_3;
 				break;
 			}
 			else
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 			}
 		}
 	}
@@ -258,13 +253,13 @@ void Room::visibleDataMapFogOfWar( int range )
 			if( checkPosition( x, y, wall ) == true ||
 				checkPosition( x, y, exit ) == true )
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 				//goto next_4;
 				break;
 			}
 			else
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 			}
 		}
 	}
@@ -288,13 +283,13 @@ void Room::visibleDataMapFogOfWar( int range )
 			if( checkPosition( x, y, wall ) == true ||
 				checkPosition( x, y, exit ) == true )
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 				//goto next_5;
 				break;
 			}
 			else
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 			}
 		}
 	}
@@ -318,13 +313,13 @@ void Room::visibleDataMapFogOfWar( int range )
 			if( checkPosition( x, y, wall ) == true ||
 				checkPosition( x, y, exit ) == true )
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 				//goto next_6;
 				break;
 			}
 			else
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 			}
 		}
 	}
@@ -348,26 +343,26 @@ void Room::visibleDataMapFogOfWar( int range )
 			if( checkPosition( x, y, wall ) == true ||
 				checkPosition( x, y, exit ) == true )
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 				//return;
 				break;
 			}
 			else
 			{
-				_visibleDataMap[y][x] = 1;
+				_visibleDataMapFogOfWar[y][x] = 1;
 			}
 		}
 	}
 }
-char Room::staticDataMap( int x, int y )
+char Room::hiddenDataMap( int x, int y )
 {
-	return _staticDataMap[y][x];
-}
-char Room::completeDataMap( int x, int y )
-{
-	return _completeDataMap[y][x];
+	return _hiddenDataMap[y][x];
 }
 char Room::visibleDataMap( int x, int y )
 {
 	return _visibleDataMap[y][x];
+}
+char Room::visibleDataMapFogOfWar( int x, int y )
+{
+	return _visibleDataMapFogOfWar[y][x];
 }

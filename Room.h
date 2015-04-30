@@ -78,23 +78,24 @@ class Room
 		int monsterAmountDesired( );
 		int outerWallsAmount( );
 		void outerWallsAmountIncrease( int n = 1 );
-		void staticDataMap( );
-		void completeDataMap( );
-		void completeDataMapSingle( int x, int y, char value );
-		void visibleDataMap( int range = 5 );
-		void visibleDataMapFogOfWar( int range = 5 );
-		char staticDataMap( int x, int y );
-		char completeDataMap( int x, int y );
+		void hiddenDataMapUpdate( );
+		void hiddenDataMapUpdateSingle( int x, int y, int value );
+		void visibleDataMapUpdate( );
+		void visibleDataMapUpdateSingle( int x, int y, char value );
+		void visibleDataMapFogOfWarUpdate( int range = 5 );
+		void visibleDataMapFogOfWarLineOfSightUpdate( int range = 5 );
+		char hiddenDataMap( int x, int y );
 		char visibleDataMap( int x, int y );
+		char visibleDataMapFogOfWar( int x, int y );
 
 	private:
 		int _length = 10;
 		int _width = 10;
 		int _monsterAmountDesired = 0;
 		int _outerWallsAmount = 0;
-		std::vector< std::vector<char> > _staticDataMap;
-		std::vector< std::vector<char> > _completeDataMap;
-		std::vector< std::vector<char> > _visibleDataMap;	// Note: char is used as it were bool.
+		std::vector< std::vector<char> > _hiddenDataMap;
+		std::vector< std::vector<char> > _visibleDataMap;
+		std::vector< std::vector<char> > _visibleDataMapFogOfWar;	// Note: char is used as it were bool.
 };
 
 template<class T> void Room::xSet( T &object, int input )
