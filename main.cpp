@@ -491,17 +491,21 @@ void chooseTurnOptions( Room &room )
 		}
 	}
 
-	if( room.completeDataMap( xTemp, yTemp ) != '#' )	// Faster than comparing the position of every wall.
+	if( room.completeDataMap( xTemp, yTemp ) != '#' )
 	{
+		int xTemp_0 = room.x( room.player );
+		int yTemp_0 = room.y( room.player );
+		room.completeDataMapSingle( xTemp_0, yTemp_0, '-' );
+
 		room.xSet( room.player, xTemp );
 		room.ySet( room.player, yTemp );
+		room.completeDataMapSingle( xTemp, yTemp, Player::icon );
 	}
 }
 void randomizeMonsterMovement( Room &room )
 {
 	int xTemp;
 	int yTemp;
-	int tempValue;
 	int randomNumber;
 
 	for( unsigned int i = 0; i < room.monster.size( ); i++ )
@@ -526,10 +530,15 @@ void randomizeMonsterMovement( Room &room )
 			}
 
 			if( room.completeDataMap( xTemp, yTemp ) == '-' ||
-				room.completeDataMap( xTemp, yTemp ) == 'P' )
+				room.completeDataMap( xTemp, yTemp ) == '@' )
 			{
+				int xTemp_0 = room.x( room.monster[i] );
+				int yTemp_0 = room.y( room.monster[i] );
+				room.completeDataMapSingle( xTemp_0, yTemp_0, '-' );
+
 				room.xSet( room.monster[i], xTemp );
 				room.ySet( room.monster[i], yTemp );
+				room.completeDataMapSingle( xTemp, yTemp, Monster::icon );
 				break;
 			}
 		}
@@ -605,11 +614,11 @@ int main( )
 			setRoomRandomWalls( room[i] );
 			room[i].staticDataMap( );
 			setRandomMonsterPositions( room[i] );
+			room[i].completeDataMap( );
 
 			while( true )
 			{
 				system( "CLS" );
-				room[i].completeDataMap( );
 				room[i].visibleDataMap( LoS );
 				//room[i].visibleDataMapFogOfWar( 5 );	// Note: buggy and prone to crash.
 				drawRoom( room[i] );

@@ -86,6 +86,10 @@ void Room::completeDataMap( )
 		}
 	}
 }
+void Room::completeDataMapSingle( int x, int y, char value )
+{
+	_completeDataMap[y][x] = value;
+}
 void Room::visibleDataMap( int range )
 {
 	if( _visibleDataMap.size( ) == 0 )

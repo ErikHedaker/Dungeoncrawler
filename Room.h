@@ -80,6 +80,7 @@ class Room
 		void outerWallsAmountIncrease( int n = 1 );
 		void staticDataMap( );
 		void completeDataMap( );
+		void completeDataMapSingle( int x, int y, char value );
 		void visibleDataMap( int range = 5 );
 		void visibleDataMapFogOfWar( int range = 5 );
 		char staticDataMap( int x, int y );
