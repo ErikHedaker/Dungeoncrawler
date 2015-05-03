@@ -129,9 +129,9 @@ void setRoomSize( Room &room, int mode )
 	{
 		RETRY:
 		std::cout << "Enter the playing Room length: ";
-		room.lengthSet( getPositiveInteger( ) );
+		room.set_length( getPositiveInteger( ) );
 		std::cout << "Enter the playing Room width: ";
-		room.widthSet( getPositiveInteger( ) );
+		room.set_width( getPositiveInteger( ) );
 		
 		if( room.length( ) < 3 ||
 			room.width( ) < 3 )
@@ -139,44 +139,44 @@ void setRoomSize( Room &room, int mode )
 			std::cout << "\nInput is too small, try again.\n\n";
 			goto RETRY;
 		}
-		else if( room.length( ) > 1000 ||
-				 room.width( ) > 1000 )
-		{
-			std::cout << "\nInput is too big, try again.\n\n";
-			goto RETRY;
-		}
+		//else if( room.length( ) > 10000 ||
+		//		 room.width( ) > 10000 )
+		//{
+		//	std::cout << "\nInput is too big, try again.\n\n";
+		//	goto RETRY;
+		//}
 	}
 	else
 	{
-		room.lengthSet( randomNumberGenerator( 15, 30 ) );
-		room.widthSet( randomNumberGenerator( 50, 100 ) );
+		room.set_length( randomNumberGenerator( 15, 30 ) );
+		room.set_width( randomNumberGenerator( 50, 100 ) );
 
 	}
 }
-void setLineOfSight( int &LoS, int mode )
+void setLineOfSight( Room &room, int mode )
 {
 	if( mode == 2 )
 	{
 		std::cout << "Enter the line of sight range: ";
-		LoS = getPositiveInteger( );
+		room.set_lineOfSight( getPositiveInteger( ) );
 	}
 	else
 	{
-		LoS = 4;
+		room.set_lineOfSight( 4 );
 	}
 }
 void setMonsterAmount( Room &room, int mode )
 {
 	if( mode == 2 )
 	{
-		int maxMonsters = ( room.length( ) * room.width( ) ) - room.wall.size( ) - ( room.length( ) * room.width( ) ) / 2;
+		int minMonsters = ( room.length( ) * room.width( ) ) - room.wall.size( ) - ( room.length( ) * room.width( ) ) / 2;
 
 		while( true )
 		{
 			std::cout << "Enter the amount of monsters: ";
-			room.monsterAmountDesiredSet( getPositiveInteger( ) );
+			room.set_monsterAmountDesired( getPositiveInteger( ) );
 
-			if( room.monsterAmountDesired( ) >= maxMonsters &&
+			if( room.monsterAmountDesired( ) >= minMonsters &&
 				room.monsterAmountDesired( ) != 0 )
 			{
 				std::cout << "Too many monsters, try again.\n";
@@ -193,7 +193,7 @@ void setMonsterAmount( Room &room, int mode )
 	{
 		double high = sqrt( room.length( ) * room.width( ) ) / 1.5;
 		double low = sqrt( room.length( ) * room.width( ) ) / 3;
-		room.monsterAmountDesiredSet( randomNumberGenerator( ( int ) low, ( int ) high ) );
+		room.set_monsterAmountDesired( randomNumberGenerator( ( int ) low, ( int ) high ) );
 	}
 }
 
@@ -202,7 +202,7 @@ void setPlayerPosition( Room &room )
 {
 	room.xSet( room.player, 1 );
 	room.ySet( room.player, 1 );   // Top left corner.
-	room.visibleDataMapUpdate( 1, 1, Player::icon );
+	room.update_visibleDataMap( 1, 1, Player::icon );
 }
 void setExits( Room &room )
 {
@@ -211,9 +211,9 @@ void setExits( Room &room )
 
 	int xTemp = room.width( ) - 2;
 	int yTemp = room.length( ) - 1;
-	room.xSet( room.exit.back( ), xTemp );	// Default.
-	room.ySet( room.exit.back( ), yTemp );	// bottom right corner.
-	room.visibleDataMapUpdate( xTemp, yTemp, Exit::icon );
+	room.xSet( room.exit.back( ), xTemp );
+	room.ySet( room.exit.back( ), yTemp );	// Bottom right corner.
+	room.update_visibleDataMap( xTemp, yTemp, Exit::icon );
 }
 void setOuterWalls( Room &room )
 {
@@ -235,8 +235,8 @@ void setOuterWalls( Room &room )
 				room.wall.push_back( tempWall );
 				room.xSet( room.wall.back( ), x );
 				room.ySet( room.wall.back( ), y );
-				room.visibleDataMapUpdate( x, y, Wall::icon );
-				room.outerWallsAmountIncrease( );
+				room.update_visibleDataMap( x, y, Wall::icon );
+				room.increase_outerWallsAmount( 1 );
 			}
 		}
 	}
@@ -254,7 +254,9 @@ void setInvisiblePath( Room &room)
 	int xTemp_0;
 	int yTemp_0;
 	int random;
-	int threshold = 50;
+	double high = sqrt( room.length( ) * room.width( ) ) * 3;
+	double low = sqrt( room.length( ) * room.width( ) ) * 2;
+	int threshold = randomNumberGenerator( (int)low, (int)high );
 	int thresholdCounter = 0;
 
 	while( true )
@@ -316,13 +318,13 @@ void setInvisiblePath( Room &room)
 				room.path.push_back( tempPath );
 				room.xSet( room.path.back( ), xTemp_0 );
 				room.ySet( room.path.back( ), yTemp_0 );
-				room.hiddenDataMapUpdate( xTemp, yTemp, Path::icon );
+				room.update_hiddenDataMap( xTemp, yTemp, Path::icon );
 			}
 
 			room.path.push_back( tempPath );
 			room.xSet( room.path.back( ), xTemp );
 			room.ySet( room.path.back( ), yTemp );
-			room.hiddenDataMapUpdate( xTemp, yTemp, Path::icon );
+			room.update_hiddenDataMap( xTemp, yTemp, Path::icon );
 		}
 
 		if( room.path.size( ) > 0 &&
@@ -338,14 +340,16 @@ void setRandomWalls( Room &room )
 	Wall tempWall;
 	int xTemp;
 	int yTemp;
+	int infiniteLoopBreaker = 0;
 
 	double high_0 = sqrt( room.length( ) * room.width( ) ) * 1.5;
 	double low_0 = sqrt( room.length( ) * room.width( ) ) / 1.5;
 	int randomSourceWalls = randomNumberGenerator( (int)low_0, (int)high_0 );
 
-	double high_1 = sqrt( room.length( ) * room.width( ) ) / 5;
-	double low_1 = sqrt( room.length( ) * room.width( ) ) / 7;
-	int randomTries = randomNumberGenerator( (int)low_1, (int)high_1 );
+	//double high_1 = sqrt( room.length( ) * room.width( ) ) / 5;
+	//double low_1 = sqrt( room.length( ) * room.width( ) ) / 7;
+	//int randomTries = randomNumberGenerator( (int)low_1, (int)high_1 );
+	int randomTries = randomNumberGenerator( 5, 10 );
 
 	while( randomSourceWalls > 0 ) // Place source walls.
 	{
@@ -353,45 +357,50 @@ void setRandomWalls( Room &room )
 		{
 			for( int x = 0; x < room.width( ); x++ )
 			{
-				if( room.visibleDataMap( x, y ) != Wall::icon &&
+				if( room.visibleDataMap( x, y ) == '-' &&
+					room.visibleDataMap( x, y ) != Wall::icon &&
 					room.hiddenDataMap( x, y ) != Path::icon &&
 					randomNumberGenerator( 1, 1000 ) == 1 )
 				{
 					room.wall.push_back( tempWall );
 					room.xSet( room.wall.back( ), x );
 					room.ySet( room.wall.back( ), y );
+					room.update_visibleDataMap( x, y, Wall::icon );
 					randomSourceWalls--;
 
 					std::cout << ".";
 				}
 			}
 		}
+
+		if( infiniteLoopBreaker++ > 10000 )
+		{
+			break;
+		}
 	}
 
 	std::cout << "\n";
 
-	for( int i = 0; i < randomTries; i++ ) // Place extension walls.
+	for( int i = 0; i < randomTries; i++ ) // Place extension walls, loop inside of outer walls.
 	{
 		std::cout << ".";
 
-		for( int y = 0; y < room.length( ); y++ )
+		for( int y = 1; y < room.length( ) - 1; y++ )
 		{
-			for( int x = 0; x < room.width( ); x++ )
+			for( int x = 1; x < room.width( ) - 1; x++ )
 			{
-				if( room.checkPosition( x, y, room.wall, room.outerWallsAmount( ) ) == true )	// Check for source walls, excluding outer walls.
+				if( room.visibleDataMap( x, y ) == Wall::icon )
 				{
 					xTemp = x + randomNumberGenerator( 0, 1 ) * randomPositiveNegativeGenerator( );
 					yTemp = y + randomNumberGenerator( 0, 1 ) * randomPositiveNegativeGenerator( );
 
 					if( room.visibleDataMap( xTemp, yTemp ) == '-' &&
-						room.hiddenDataMap( xTemp, yTemp ) != Path::icon &&
-						room.checkProtectRange( xTemp, yTemp, room.player ) == false &&
-						room.checkProtectRange( xTemp, yTemp, room.exit ) == false )
+						room.hiddenDataMap( xTemp, yTemp ) != Path::icon )
 					{
 						room.wall.push_back( tempWall );
 						room.xSet( room.wall.back( ), xTemp );
 						room.ySet( room.wall.back( ), yTemp );
-						room.visibleDataMapUpdate( xTemp, yTemp, Wall::icon );
+						room.update_visibleDataMap( xTemp, yTemp, Wall::icon );
 					}
 				}
 				else if( room.visibleDataMap( x, y ) == '-' &&
@@ -401,7 +410,7 @@ void setRandomWalls( Room &room )
 					room.wall.push_back( tempWall );
 					room.xSet( room.wall.back( ), x );
 					room.ySet( room.wall.back( ), y );
-					room.visibleDataMapUpdate( x, y, Wall::icon );
+					room.update_visibleDataMap( x, y, Wall::icon );
 				}
 			}
 		}
@@ -414,47 +423,55 @@ void setRandomMonsterPositions( Room &room )
 	Monster tempMonster;
 	int xTemp;
 	int yTemp;
+	int infiniteLoopBreaker = 0;
 
 	for( int i = 0; i < room.monsterAmountDesired( ); i++ )
 	{
+		std::cout << ".";
+
 		room.monster.push_back( tempMonster );
 
-		while( true )
+		do
 		{
 			xTemp = randomNumberGenerator( 1, room.width( ) - 2 );
 			yTemp = randomNumberGenerator( 1, room.length( ) - 2 );
 
-			if( room.checkProtectRange( xTemp, yTemp, room.player ) == false &&
-				room.checkPosition( xTemp, yTemp, room.monster ) == false &&
-				room.visibleDataMap( xTemp, yTemp ) == '-' )
+			if( infiniteLoopBreaker++ > 10000 )
 			{
 				break;
 			}
 		}
+		while( room.visibleDataMap( xTemp, yTemp ) != '-' );
 
 		room.xSet( room.monster.back( ), xTemp );
 		room.ySet( room.monster.back( ), yTemp );
-		room.visibleDataMapUpdate( xTemp, yTemp, Monster::icon );
+		room.update_visibleDataMap( xTemp, yTemp, Monster::icon );
+
 	}
+}
+
+// Mode
+void randomizationMode( Room &room )
+{
+	setRoomSize( room, 1 );
+	setLineOfSight( room, 1 );
+	setMonsterAmount( room, 1 );
+}
+void configurationMode( Room &room )
+{
+	setRoomSize( room, 2 );
+	setLineOfSight( room, 2 );
+	setMonsterAmount( room, 2 );
 }
 
 // Gameloop
-void clearScreen( Room &room )
-{
-	int GAME_WINDOW_SIZE = 40;
-
-	for( int i = 0; i < GAME_WINDOW_SIZE - room.length( ); i++ )
-	{
-		std::cout << "\n";
-	}
-}
 void drawRoom( Room &room )
 {
 	for( int y = 0; y < room.length( ); y++ )
 	{
 		for( int x = 0; x < room.width( ); x++ )
 		{
-			if( room.visibleDataMapFogOfWar( x, y ) == 1 )
+			if( room.fogOfWarDataMap( x, y ) == 1 )
 			{
 				std::cout << room.visibleDataMap( x, y );
 			}
@@ -534,6 +551,7 @@ char turnOptions( Room &room )
 		case 'e':       // Exit game.
 		{
 			system( "CLS" );
+
 			return 'E';
 		}
 
@@ -544,15 +562,15 @@ char turnOptions( Room &room )
 		}
 	}
 
-	if( room.visibleDataMap( xTemp, yTemp ) != '#' )
+	if( room.visibleDataMap( xTemp, yTemp ) != Wall::icon )
 	{
 		int xTemp_0 = room.x( room.player );
 		int yTemp_0 = room.y( room.player );
-		room.visibleDataMapUpdate( xTemp_0, yTemp_0, '-' );
+		room.update_visibleDataMap( xTemp_0, yTemp_0, '-' );
 
 		room.xSet( room.player, xTemp );
 		room.ySet( room.player, yTemp );
-		room.visibleDataMapUpdate( xTemp, yTemp, Player::icon );
+		room.update_visibleDataMap( xTemp, yTemp, Player::icon );
 	}
 
 	return 0;
@@ -567,33 +585,37 @@ void randomizeMonsterMovement( Room &room )
 	{
 		while( true )
 		{
-			randomNumber = randomNumberGenerator( 1, 16 ); // 25% to move, 75% to stand still.
+			randomNumber = randomNumberGenerator( 1, 8 );	// 25% to move, 75% to stand still.
 
-			if( randomNumber <= 2 )	// Monster moves vertically.
+			if( randomNumber == 1 )							// Monster moves vertically.
 			{
 				xTemp = room.x( room.monster[i] );
 				yTemp = room.y( room.monster[i] ) + randomPositiveNegativeGenerator( );
 			}
-			else if( randomNumber <= 4 ) // Monster moves horizontally.
+			else if( randomNumber == 2 )					// Monster moves horizontally.
 			{
 				xTemp = room.x( room.monster[i] ) + randomPositiveNegativeGenerator( );
 				yTemp = room.y( room.monster[i] );
 			}
-			else // Monster stands still.
+			else											// Monster stands still.
 			{
 				break;
 			}
 
 			if( room.visibleDataMap( xTemp, yTemp ) == '-' ||
-				room.visibleDataMap( xTemp, yTemp ) == '@' )
+				room.visibleDataMap( xTemp, yTemp ) == Player::icon )
 			{
 				int xTemp_0 = room.x( room.monster[i] );
 				int yTemp_0 = room.y( room.monster[i] );
-				room.visibleDataMapUpdate( xTemp_0, yTemp_0, '-' );
+
+				if( room.checkPosition( xTemp_0, yTemp_0, room.player ) == false )	// Player movement is executed before monster movement, so
+				{																	// clearing the monster's previous position after the player
+					room.update_visibleDataMap( xTemp_0, yTemp_0, '-' );				// has moved to that position will make the player icon invisible.
+				}																	// (this check avoids that)
 
 				room.xSet( room.monster[i], xTemp );
 				room.ySet( room.monster[i], yTemp );
-				room.visibleDataMapUpdate( xTemp, yTemp, Monster::icon );
+				room.update_visibleDataMap( xTemp, yTemp, Monster::icon );
 				break;
 			}
 		}
@@ -647,30 +669,31 @@ int main( )
 {
 	do
 	{
-		Room tempRoom;
 		std::vector<Room> room;
-		int i = -1;
+		Room tempRoom;
 		int mode;
-		int LoS;
 
 		MENY:
+		room.clear( );
 		printGameRules( );
 		setGameState( mode );
 
-		while( true )
+		for( int i = 0; i < 100; i++ )
 		{
 			system( "CLS" );
-			i++;
 
 			room.push_back( tempRoom );
+
 			setRoomSize( room[i], mode );
-			setLineOfSight( LoS, mode );
+			setLineOfSight( room[i], mode );
 			setMonsterAmount( room[i], mode );
 
-			room[i].hiddenDataMapBuild( );
-			room[i].visibleDataMapBuild( );
-
 			std::cout << "Loading, please wait.\n";
+
+			room[i].build_hiddenDataMap( );
+			room[i].build_visibleDataMap( );
+			room[i].build_fogOfWarDataMap( );
+
 			setPlayerPosition( room[i] );
 			setExits( room[i] );
 			setOuterWalls( room[i] );
@@ -681,7 +704,9 @@ int main( )
 			while( true )
 			{
 				system( "CLS" );
-				room[i].visibleDataMapFogOfWarBuild( LoS );
+
+				room[i].update_fogOfWarDataMap( );
+
 				drawRoom( room[i] );
 
 				if( checkWinCondition( room[i] ) == true )

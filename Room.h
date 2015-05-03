@@ -65,37 +65,42 @@ class Room
 		template<class T> int y( const T &object );
 		template<class T> bool checkPosition( int xCurrent, int yCurrent, const T &search );
 		template<class T> bool checkPosition( int xCurrent, int yCurrent, const std::vector<T> &search, int startIt = 0 );
-		template<class T, class Y> bool checkPosition( const T &current, const Y &search );
+		/*template<class T, class Y> bool checkPosition( const T &current, const Y &search );*/
 		template<class T, class Y> bool checkPosition( const T &current, const std::vector<Y> &search, int startIt = 0 );
-		template<class T> bool checkProtectRange( int xCurrent, int yCurrent, const T &search, int range = 2 );
-		template<class T> bool checkProtectRange( int xCurrent, int yCurrent, const std::vector<T> &search, int range = 2 );
+		/*template<class T> bool checkProtectRange( int xCurrent, int yCurrent, const T &search, int range = 2 );*/
+		/*template<class T> bool checkProtectRange( int xCurrent, int yCurrent, const std::vector<T> &search, int range = 2 );*/
 
-		void lengthSet( int input );
-		void widthSet( int input );
-		void monsterAmountDesiredSet( int input );
+		void set_length( int input );
+		void set_width( int input );
+		void set_monsterAmountDesired( int input );
+		void set_lineOfSight( int input );
+		void increase_outerWallsAmount( int input );
 		int length( );
 		int width( );
 		int monsterAmountDesired( );
+		int lineOfSight( );
 		int outerWallsAmount( );
-		void outerWallsAmountIncrease( int n = 1 );
-		void hiddenDataMapBuild( );
-		void hiddenDataMapUpdate( int x, int y, int value );
-		void visibleDataMapBuild( );
-		void visibleDataMapUpdate( int x, int y, char value );
-		void visibleDataMapFogOfWarBuild( int range = 5 );
-		void visibleDataMapFogOfWarLineOfSightBuild( int range = 5 );
+		void build_hiddenDataMap( );
+		void build_visibleDataMap( );
+		void build_fogOfWarDataMap( );
+		void update_hiddenDataMap( int x, int y, char value );
+		void update_visibleDataMap( int x, int y, char value );
+		void update_fogOfWarDataMap( int x, int y, char value );
+		void update_fogOfWarDataMap( );
+		//void visibleDataMapFogOfWarLineOfSightBuild( int range = 5 );
 		char hiddenDataMap( int x, int y );
 		char visibleDataMap( int x, int y );
-		char visibleDataMapFogOfWar( int x, int y );
+		char fogOfWarDataMap( int x, int y );
 
 	private:
 		int _length = 10;
 		int _width = 10;
 		int _monsterAmountDesired = 0;
+		int _lineOfSight = 0;
 		int _outerWallsAmount = 0;
 		std::vector< std::vector<char> > _hiddenDataMap;
 		std::vector< std::vector<char> > _visibleDataMap;
-		std::vector< std::vector<char> > _visibleDataMapFogOfWar;	// Note: char is used as it were bool.
+		std::vector< std::vector<char> > _fogOfWarDataMap;	// Note: char is used as if it were bool.
 };
 
 template<class T> void Room::xSet( T &object, int input )
@@ -137,16 +142,16 @@ template<class T> bool Room::checkPosition( int xCurrent, int yCurrent, const st
 
 	return false;
 }
-template<class T, class Y> bool Room::checkPosition( const T &current, const Y &search )
-{
-	if( x( current ) == x( search ) &&
-		y( current ) == y( search ) )
-	{
-		return true;
-	}
-
-	return false;
-}
+//template<class T, class Y> bool Room::checkPosition( const T &current, const Y &search )
+//{
+//	if( x( current ) == x( search ) &&
+//		y( current ) == y( search ) )
+//	{
+//		return true;
+//	}
+//
+//	return false;
+//}
 template<class T, class Y> bool Room::checkPosition( const T &current, const std::vector<Y> &search, int startIt )
 {
 	for( unsigned int i = startIt; i < search.size( ); i++ )
@@ -160,38 +165,42 @@ template<class T, class Y> bool Room::checkPosition( const T &current, const std
 
 	return false;
 }
-template<class T> bool Room::checkProtectRange( int xCurrent, int yCurrent, const T &search, int range )
-{
-	for( int y = yCurrent - range; y < yCurrent + range; y++ )
-	{
-		for( int x = xCurrent - range; x < xCurrent + range; x++ )
-		{
-			if( x == search.x &&
-				y == search.y )
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-template<class T> bool Room::checkProtectRange( int xCurrent, int yCurrent, const std::vector<T> &search, int range )
-{
-	for( unsigned int i = 0; i < search.size( ); i++ )
-	{
-		for( int y = yCurrent - range; y < yCurrent + range; y++ )
-		{
-			for( int x = xCurrent - range; x < xCurrent + range; x++ )
-			{
-				if( x == search[i].x &&
-					y == search[i].y ) 
-				{
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
+//template<class T> bool Room::checkProtectRange( int xCurrent, int yCurrent, const T &search, int range )
+//{
+//	// Why it won't work with x( search ) and y( search ) I have no fucking idea.
+//
+//	for( int y = yCurrent - range; y < yCurrent + range; y++ )
+//	{
+//		for( int x = xCurrent - range; x < xCurrent + range; x++ )
+//		{
+//			if( x == search.x &&
+//				y == search.y )
+//			{
+//				return true;
+//			}
+//		}
+//	}
+//
+//	return false;
+//}
+//template<class T> bool Room::checkProtectRange( int xCurrent, int yCurrent, const std::vector<T> &search, int range )
+//{
+//	// Same here, "error C2064: term does not evaluate to a function taking 1 arguments" doesn't tell me shit, compiler.
+//
+//	for( unsigned int i = 0; i < search.size( ); i++ )
+//	{
+//		for( int y = yCurrent - range; y < yCurrent + range; y++ )
+//		{
+//			for( int x = xCurrent - range; x < xCurrent + range; x++ )
+//			{
+//				if( x == search[i].x &&
+//					y == search[i].y )
+//				{
+//					return true;
+//				}
+//			}
+//		}
+//	}
+//
+//	return false;
+//}
