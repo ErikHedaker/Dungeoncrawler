@@ -2,7 +2,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <random>
 #include <math.h>
 
 extern const char iconPlayer;
@@ -10,6 +9,10 @@ extern const char iconMonster;
 extern const char iconWall;
 extern const char iconExit;
 extern const char iconPath;
+
+extern int GetPositiveInteger( );
+extern int RandomNumberGenerator( int min, int max );
+extern int RandomPositiveNegativeGenerator( );
 
 bool Room::CheckPosition( Entity& current, Entity& search )
 {
@@ -31,31 +34,22 @@ bool Room::CheckPosition( int xCurrent, int yCurrent, Entity& search )
 
 	return false;
 }
-bool Room::CheckPosition( Entity& current, std::vector<Entity>& search )
+bool Room::CheckEmptySurroundedTile( int xCurrent, int yCurrent )
 {
-	for( unsigned int i = 0; i < search.size( ); i++ )
+	int surroundingWalls = 0;
+
+	for( int y = yCurrent - 1; y <= yCurrent + 1; y++ )
 	{
-		if( current.xPosition == search[i].xPosition &&
-			current.yPosition == search[i].yPosition )
+		for( int x = xCurrent - 1; x <= xCurrent + 1; x++ )
 		{
-			return true;
+			if( GetVisibleDataMap( x, y ) == iconWall )
+			{
+				surroundingWalls++;
+			}
 		}
 	}
 
-	return false;
-}
-bool Room::CheckPosition( int xCurrent, int yCurrent, std::vector<Entity>& search )
-{
-	for( unsigned int i = 0; i < search.size( ); i++ )
-	{
-		if( xCurrent == search[i].xPosition &&
-			yCurrent == search[i].yPosition )
-		{
-			return true;
-		}
-	}
-
-	return false;
+	return surroundingWalls > 4;
 }
 
 void Room::SetLength( int newLength )
@@ -88,21 +82,7 @@ int Room::GetLineOfSight( )
 void Room::BuildHiddenDataMap( )
 {
 	_hiddenDataMap.clear( );
-	_hiddenDataMap.resize( _length, std::vector<char>( _width, '\0' ) );
-
-	for( int y = 0; y < _length; y++ )
-	{
-		for( int x = 0; x < _width; x++ )
-		{
-			for( unsigned int i = 0; i < path.size( ); i++ )
-			{
-				if( CheckPosition( x, y, path[i] ) == true )
-				{
-					_hiddenDataMap[y][x] = iconPath;
-				}
-			}
-		}
-	}
+	_hiddenDataMap.resize( _length, std::vector<char>( _width, '0' ) );
 }
 void Room::SetHiddenDataMap( int x, int y, char value )
 {
@@ -117,29 +97,6 @@ void Room::BuildVisibleDataMap( )
 {
 	_visibleDataMap.clear( );
 	_visibleDataMap.resize( _length, std::vector<char>( _width, '-' ) );
-
-	for( int y = 0; y < _length; y++ )
-	{
-		for( int x = 0; x < _width; x++ )
-		{
-			if( CheckPosition( x, y, exit ) == true )
-			{
-				_visibleDataMap[y][x] = iconExit;		// '='
-			}
-			else if( CheckPosition( x, y, wall ) == true )
-			{
-				_visibleDataMap[y][x] = iconWall;		// '#'
-			}
-			else if( CheckPosition( x, y, monster ) == true )
-			{
-				_visibleDataMap[y][x] = iconMonster;	// 'M'
-			}
-			else if( CheckPosition( x, y, player ) == true )
-			{
-				_visibleDataMap[y][x] = iconPlayer;		// '@'
-			}
-		}
-	}
 }
 void Room::SetVisibleDataMap( int x, int y, char value )
 {
@@ -154,18 +111,6 @@ void Room::BuildFogOfWarDataMap( )
 {
 	_fogOfWarDataMap.clear( );
 	_fogOfWarDataMap.resize( _length, std::vector<char>( _width, 0 ) );
-
-	for( int y = 0; y < _length; y++ )
-	{
-		for( int x = 0; x < _width; x++ )
-		{
-			if( x >= player.xPosition - _lineOfSight && x <= player.xPosition + _lineOfSight &&
-				y >= player.yPosition - _lineOfSight && y <= player.yPosition + _lineOfSight )
-			{
-				_fogOfWarDataMap[y][x] = 1;
-			}
-		}
-	}
 }
 void Room::SetFogOfWarDataMap( )
 {
@@ -186,314 +131,6 @@ char Room::GetFogOfWarDataMap( int x, int y )
 	return _fogOfWarDataMap[y][x];
 }
 
-//void Room::visibleDataMapFogOfWarLineOfSightBuild( int range )
-//{
-//	// Not in use due to bugs.
-//
-//	_visibleDataMapFogOfWar.clear( );
-//	_visibleDataMapFogOfWar.resize( length( ), std::vector<char>( width( ) ) );
-//	_visibleDataMapFogOfWar.assign( length( ), std::vector<char>( width( ), 0 ) );
-//
-//	for( int y = player.y; y < player.y + range; y++ )
-//	{
-//		if( y > length( ) || y < 0 )
-//		{
-//			break;
-//		}
-//
-//		for( int x = player.x; x < player.x + range; x++ )
-//		{
-//			if( x > width( ) || x < 0 )
-//			{
-//				break;
-//			}
-//
-//			if( checkPosition( x, y, wall ) == true ||
-//				checkPosition( x, y, exit ) == true )
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//				//goto next_0;
-//				break;
-//			}
-//			else
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//			}
-//		}
-//	}
-//
-//	//next_0:
-//
-//	for( int y = player.y; y > player.y - range; y-- )
-//	{
-//		if( y > length( ) || y < 0 )
-//		{
-//			break;
-//		}
-//
-//		for( int x = player.x; x < player.x + range; x++ )
-//		{
-//			if( x > width( ) || x < 0 )
-//			{
-//				break;
-//			}
-//
-//			if( checkPosition( x, y, wall ) == true ||
-//				checkPosition( x, y, exit ) == true )
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//				//goto next_1;
-//				break;
-//			}
-//			else
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//			}
-//		}
-//	}
-//
-//	//next_1:
-//
-//	for( int y = player.y; y < player.y + range; y++ )
-//	{
-//		if( y > length( ) || y < 0 )
-//		{
-//			break;
-//		}
-//
-//		for( int x = player.x; x > player.x - range; x-- )
-//		{
-//			if( x > width( ) || x < 0 )
-//			{
-//				break;
-//			}
-//
-//			if( checkPosition( x, y, wall ) == true ||
-//				checkPosition( x, y, exit ) == true )
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//				//goto next_2;
-//				break;
-//			}
-//			else
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//			}
-//		}
-//	}
-//
-//	//next_2:
-//
-//	for( int y = player.y; y > player.y - range; y-- )
-//	{
-//		if( y > length( ) || y < 0 )
-//		{
-//			break;
-//		}
-//
-//		for( int x = player.x; x > player.x - range; x-- )
-//		{
-//			if( x > width( ) || x < 0 )
-//			{
-//				break;
-//			}
-//
-//			if( checkPosition( x, y, wall ) == true ||
-//				checkPosition( x, y, exit ) == true )
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//				//goto next_3;
-//				break;
-//			}
-//			else
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//			}
-//		}
-//	}
-//
-//	//next_3:
-//
-//	// Check again, this time y and x loops are reversed.
-//	// This should fix any visual bugs.
-//
-//	for( int x = player.x; x < player.x + range; x++ )
-//	{
-//		if( x > width( ) || x < 0 )
-//		{
-//			break;
-//		}
-//
-//		for( int y = player.y; y < player.y + range; y++ )
-//		{
-//			if( y > length( ) || y < 0 )
-//			{
-//				break;
-//			}
-//
-//			if( checkPosition( x, y, wall ) == true ||
-//				checkPosition( x, y, exit ) == true )
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//				//goto next_4;
-//				break;
-//			}
-//			else
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//			}
-//		}
-//	}
-//
-//	//next_4:
-//
-//	for( int x = player.x; x > player.x - range; x-- )
-//	{
-//		if( x > width( ) || x < 0 )
-//		{
-//			break;
-//		}
-//
-//		for( int y = player.y; y < player.y + range; y++ )
-//		{
-//			if( y > length( ) || y < 0 )
-//			{
-//				break;
-//			}
-//
-//			if( checkPosition( x, y, wall ) == true ||
-//				checkPosition( x, y, exit ) == true )
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//				//goto next_5;
-//				break;
-//			}
-//			else
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//			}
-//		}
-//	}
-//
-//	//next_5:
-//
-//	for( int x = player.x; x < player.x + range; x++ )
-//	{
-//		if( x > width( ) || x < 0 )
-//		{
-//			break;
-//		}
-//
-//		for( int y = player.y; y > player.y - range; y-- )
-//		{
-//			if( y > length( ) || y < 0 )
-//			{
-//				break;
-//			}
-//
-//			if( checkPosition( x, y, wall ) == true ||
-//				checkPosition( x, y, exit ) == true )
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//				//goto next_6;
-//				break;
-//			}
-//			else
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//			}
-//		}
-//	}
-//
-//	//next_6:
-//
-//	for( int x = player.x; x > player.x - range; x-- )
-//	{
-//		if( x > width( ) || x < 0 )
-//		{
-//			break;
-//		}
-//
-//		for( int y = player.y; y > player.y - range; y-- )
-//		{
-//			if( y > length( ) || y < 0 )
-//			{
-//				break;
-//			}
-//
-//			if( checkPosition( x, y, wall ) == true ||
-//				checkPosition( x, y, exit ) == true )
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//				//return;
-//				break;
-//			}
-//			else
-//			{
-//				_visibleDataMapFogOfWar[y][x] = 1;
-//			}
-//		}
-//	}
-//}
-
-// Functions used by functions.
-int Room::GetPositiveInteger( )
-{
-	std::string userChoice;
-
-	RETRY:
-	std::cin >> userChoice;
-
-	if( userChoice.size( ) > 9 ) // Manual max int input: 999 999 999, roughly half of the max size for signed int.
-	{
-		std::cout << "Input is too big, try again: ";
-		goto RETRY;
-	}
-
-	for( unsigned int i = 0; i < userChoice.size( ); i++ )
-	{
-		if( isdigit( userChoice[i] ) == false )
-		{
-			std::cout << "Input needs to consist of digits only, try again: ";
-			goto RETRY;
-		}
-	}
-
-	int output = atoi( userChoice.c_str( ) );
-
-	return output;
-}
-int Room::RandomNumberGenerator( int min, int max )
-{
-	static std::random_device randomEngine;
-	std::mt19937 generator( randomEngine( ) );
-	std::uniform_int_distribution<int> randomNumber( min, max );
-
-	return randomNumber( generator );
-}
-int Room::RandomPositiveNegativeGenerator( )
-{
-	return RandomNumberGenerator( 0, 1 ) ? 1 : -1;
-}
-bool Room::CheckEmptySurroundedTile( int xCurrent, int yCurrent )
-{
-	int surroundingWalls = 0;
-
-	for( int y = yCurrent - 1; y <= yCurrent + 1; y++ )
-	{
-		for( int x = xCurrent - 1; x <= xCurrent + 1; x++ )
-		{
-			if( GetVisibleDataMap( x, y ) == iconWall )
-			{
-				surroundingWalls++;
-			}
-		}
-	}
-
-	return surroundingWalls > 4;
-}
-
-// Configuration
 void Room::SetRoomSize( int roomMode )
 {
 	if( roomMode == 2 )
@@ -534,21 +171,22 @@ void Room::SetMonsterAmount( int roomMode )
 {
 	if( roomMode == 2 )
 	{
-		int minMonsters = ( GetLength( ) * GetWidth( ) ) - wall.size( ) - ( GetLength( ) * GetWidth( ) ) / 2;
+		int amountMonsters;
+		int minimumMonsters = ( GetLength( ) * GetWidth( ) ) - wall.size( ) - ( GetLength( ) * GetWidth( ) ) / 2;
 
 		while( true )
 		{
 			std::cout << "Enter the amount of monsters: ";
-			monsterAmountDesired = GetPositiveInteger( );
+			amountMonsters = GetPositiveInteger( );
 
-			if( monsterAmountDesired >= minMonsters &&
-				monsterAmountDesired != 0 )
+			if( amountMonsters >= minimumMonsters &&
+				amountMonsters != 0 )
 			{
 				std::cout << "Too many monsters, try again.\n";
-				continue;
 			}
 			else
 			{
+				monster.resize( amountMonsters );
 				std::cout << "\n";
 				break;
 			}
@@ -558,24 +196,21 @@ void Room::SetMonsterAmount( int roomMode )
 	{
 		double high = sqrt( GetLength( ) * GetWidth( ) ) / 1.5;
 		double low = sqrt( GetLength( ) * GetWidth( ) ) / 3;
-		monsterAmountDesired = RandomNumberGenerator( ( int ) low, ( int ) high );
+		monster.resize( RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) ) );
 	}
 }
 
-// Automatic
 void Room::SetPlayerPosition( )
 {
 	player.xPosition = 1;
 	player.yPosition = 1;
-	SetVisibleDataMap( player.xPosition, player.yPosition, iconPlayer );
+	SetVisibleDataMap( 1, 1, iconPlayer );
 }
 void Room::SetExits( )
 {
 	int xTemp = GetWidth( ) - 2;
 	int yTemp = GetLength( ) - 1;
-	exit.emplace_back( );
-	exit.back( ).xPosition = xTemp;
-	exit.back( ).yPosition = yTemp;
+	exit.emplace_back( xTemp, yTemp );
 	SetVisibleDataMap( xTemp, yTemp, iconExit );
 }
 void Room::SetOuterWalls( )
@@ -593,9 +228,7 @@ void Room::SetOuterWalls( )
 					 x == 0 ||
 					 y == 0 )
 			{
-				wall.emplace_back( );
-				wall.back( ).xPosition = x;
-				wall.back( ).yPosition = y;
+				wall.emplace_back( x, y );
 				SetVisibleDataMap( x, y, iconWall );
 			}
 		}
@@ -608,39 +241,45 @@ void Room::SetInvisiblePath( )
 	// Player can no longer be cut off from exit due to randomly palced walls.
 	// Function can be replaced by A* algorithm, or similar algorithm.
 
-	int xTemp = player.xPosition;
-	int yTemp = player.yPosition;
-	int xTemp_0;
-	int yTemp_0;
+	int xNew = player.xPosition;
+	int yNew = player.yPosition;
+	int xPrev;
+	int yPrev;
 	int random;
 	double high = sqrt( GetLength( ) * GetWidth( ) ) * 3;
 	double low = sqrt( GetLength( ) * GetWidth( ) ) * 2;
 	int threshold = RandomNumberGenerator( ( int ) low, ( int ) high );
 	int thresholdCounter = 0;
 
+	if( path.size( ) == 0 )
+	{
+		path.emplace_back( player.xPosition, player.yPosition );
+		SetHiddenDataMap( player.xPosition, player.yPosition, iconPath );
+	}
+
 	while( true )
 	{
-		xTemp_0 = xTemp;
-		yTemp_0 = yTemp;
+		xPrev = xNew;
+		yPrev = yNew;
 		random = RandomNumberGenerator( 1, 16 );
 
 		if( thresholdCounter < threshold ) // Equal chance to move in any direction.
 		{
 			if( random <= 4 )
 			{
-				xTemp++;
+				xNew++;
 			}
 			else if( random <= 8 )
 			{
-				yTemp++;
+				yNew++;
 			}
 			else if( random <= 12 )
 			{
-				xTemp--;
+				xNew--;
 			}
 			else
 			{
-				yTemp--;
+				yNew--;
 			}
 
 			thresholdCounter++;
@@ -649,45 +288,34 @@ void Room::SetInvisiblePath( )
 		{
 			if( random <= 6 )
 			{
-				xTemp++;
+				xNew++;
 			}
 			else if( random <= 14 )
 			{
-				yTemp++;
+				yNew++;
 			}
 			else if( random <= 15 )
 			{
-				xTemp--;
+				xNew--;
 			}
 			else
 			{
-				yTemp--;
+				yNew--;
 			}
 		}
 
-		if( GetVisibleDataMap( xTemp, yTemp ) == iconWall )
+		if( GetVisibleDataMap( xNew, yNew ) == iconWall )
 		{
-			xTemp = xTemp_0;
-			yTemp = yTemp_0;
+			xNew = xPrev;
+			yNew = yPrev;
 		}
 		else
 		{
-			if( path.size( ) == 0 )
-			{
-				path.emplace_back( );
-				path.back( ).xPosition = xTemp_0;
-				path.back( ).yPosition = yTemp_0;
-				SetHiddenDataMap( xTemp, yTemp, iconPath );
-			}
-
-			path.emplace_back( );
-			path.back( ).xPosition = xTemp;
-			path.back( ).yPosition = yTemp;
-			SetHiddenDataMap( xTemp, yTemp, iconPath );
+			path.emplace_back( xNew, yNew );
+			SetHiddenDataMap( xNew, yNew, iconPath );
 		}
 
-		if( path.size( ) > 0 &&
-			path.back( ).xPosition == exit.back( ).xPosition &&
+		if( path.back( ).xPosition == exit.back( ).xPosition &&
 			path.back( ).yPosition == exit.back( ).yPosition )
 		{
 			break;
@@ -713,12 +341,10 @@ void Room::SetRandomWalls( )
 			{
 				if( GetVisibleDataMap( x, y ) == '-' &&
 					GetVisibleDataMap( x, y ) != iconWall &&
-					GetHiddenDataMap( x, y ) != iconWall &&
+					GetHiddenDataMap( x, y ) != iconPath &&
 					RandomNumberGenerator( 1, 1000 ) == 1 )
 				{
-					wall.emplace_back( );
-					wall.back( ).xPosition = x;
-					wall.back( ).yPosition = y;
+					wall.emplace_back( x, y );
 					SetVisibleDataMap( x, y, iconWall );
 					randomSourceWalls--;
 
@@ -733,9 +359,9 @@ void Room::SetRandomWalls( )
 		}
 	}
 
-	std::cout << "\n";
+	std::cout << "\n\nLoading walls.\n";
 
-	for( int i = 0; i < randomTries; i++ ) // Place extension walls, loop inside of outer walls.
+	for( int i = 0; i < randomTries; i++ ) // Place extension walls.
 	{
 		std::cout << ".";
 
@@ -751,9 +377,7 @@ void Room::SetRandomWalls( )
 					if( GetVisibleDataMap( xTemp, yTemp ) == '-' &&
 						GetHiddenDataMap( xTemp, yTemp ) != iconPath )
 					{
-						wall.emplace_back( );
-						wall.back( ).xPosition = xTemp;
-						wall.back( ).yPosition = yTemp;
+						wall.emplace_back( xTemp, yTemp );
 						SetVisibleDataMap( xTemp, yTemp, iconWall );
 					}
 				}
@@ -761,9 +385,7 @@ void Room::SetRandomWalls( )
 						 GetHiddenDataMap( x, y ) != iconPath &&
 						 CheckEmptySurroundedTile( x, y ) == true )
 				{
-					wall.emplace_back( );
-					wall.back( ).xPosition = x;
-					wall.back( ).yPosition = y;
+					wall.emplace_back( x, y );
 					SetVisibleDataMap( x, y, iconWall );
 				}
 			}
@@ -778,11 +400,9 @@ void Room::SetRandomMonsterPositions( )
 	int yTemp;
 	int infiniteLoopBreaker = 0;
 
-	for( int i = 0; i < monsterAmountDesired; i++ )
+	for( unsigned int i = 0; i < monster.size( ); i++ )
 	{
 		std::cout << ".";
-
-		monster.emplace_back( );
 
 		do
 		{
@@ -796,13 +416,12 @@ void Room::SetRandomMonsterPositions( )
 		}
 		while( GetVisibleDataMap( xTemp, yTemp ) != '-' );
 
-		monster.back( ).xPosition = xTemp;
-		monster.back( ).yPosition = yTemp;
+		monster[i].xPosition = xTemp;
+		monster[i].yPosition = yTemp;
 		SetVisibleDataMap( xTemp, yTemp, iconMonster );
 	}
 }
 
-// Gameloop
 void Room::DrawRoom( )
 {
 	for( int y = 0; y < GetLength( ); y++ )
@@ -957,21 +576,26 @@ void Room::RandomizeMonsterMovement( )
 	}
 }
 
-// Checked during or after gameloop
 bool Room::CheckWinCondition( )
 {
-	if( CheckPosition( player, exit ) == true )
+	for( unsigned int i = 0; i < exit.size( ); i++ )
 	{
-		return true;
+		if( CheckPosition( player, exit[i] ) == true )
+		{
+			return true;
+		}
 	}
 
 	return false;
 }
 bool Room::CheckLoseCondition( )
 {
-	if( CheckPosition( player, monster ) == true )
+	for( unsigned int i = 0; i < monster.size( ); i++ )
 	{
-		return true;
+		if( CheckPosition( player, monster[i] ) == true )
+		{
+			return true;
+		}
 	}
 
 	return false;

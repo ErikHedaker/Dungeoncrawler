@@ -1,12 +1,52 @@
 #include "Room.h"
 #include <iostream>
 #include <string>
+#include <random>
 
 extern const char iconPlayer = '@';
 extern const char iconMonster = 'M';
 extern const char iconWall = '#';
 extern const char iconExit = '=';
 extern const char iconPath = ':';
+
+extern int GetPositiveInteger( )
+{
+	std::string userChoice;
+
+	RETRY:
+	std::cin >> userChoice;
+
+	if( userChoice.size( ) > 9 ) // Manual max int input: 999 999 999, roughly half of the max size for signed int.
+	{
+		std::cout << "Input is too big, try again: ";
+		goto RETRY;
+	}
+
+	for( unsigned int i = 0; i < userChoice.size( ); i++ )
+	{
+		if( isdigit( userChoice[i] ) == false )
+		{
+			std::cout << "Input needs to consist of digits only, try again: ";
+			goto RETRY;
+		}
+	}
+
+	int output = atoi( userChoice.c_str( ) );
+
+	return output;
+}
+extern int RandomNumberGenerator( int min, int max )
+{
+	static std::random_device randomEngine;
+	std::mt19937 generator( randomEngine( ) );
+	std::uniform_int_distribution<int> randomNumber( min, max );
+
+	return randomNumber( generator );
+}
+extern int RandomPositiveNegativeGenerator( )
+{
+	return RandomNumberGenerator( 0, 1 ) ? 1 : -1;
+}
 
 void PrintGameRules( )
 {
@@ -75,7 +115,7 @@ int main( )
 		room[i].SetExits( );
 		room[i].SetOuterWalls( );
 		room[i].SetInvisiblePath( );
-		room[i].SetRandomWalls( );;
+		room[i].SetRandomWalls( );
 		room[i].SetRandomMonsterPositions( );
 
 		while( true )

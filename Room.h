@@ -10,12 +10,10 @@ class Room
 		std::vector<Entity> exit;
 		std::vector<Entity> path;
 
-		/* Checking and data modifying function */
-
+		// Functions used by functions.
 		bool CheckPosition( Entity& current, Entity& search );
 		bool CheckPosition( int xCurrent, int yCurrent, Entity& search );
-		bool CheckPosition( Entity& current, std::vector<Entity>& search );
-		bool CheckPosition( int xCurrent, int yCurrent, std::vector<Entity>& search );
+		bool CheckEmptySurroundedTile( int xCurrent, int yCurrent );
 
 		void SetLength( int input );
 		int GetLength( );
@@ -37,16 +35,6 @@ class Room
 		void BuildFogOfWarDataMap( );
 		void SetFogOfWarDataMap( );
 		char GetFogOfWarDataMap( int x, int y );
-
-		/* Building and Gameloop functions */
-
-		int monsterAmountDesired;
-
-		// Functions used by functions.
-		int GetPositiveInteger( );
-		int RandomNumberGenerator( int min, int max );
-		int RandomPositiveNegativeGenerator( );
-		bool CheckEmptySurroundedTile( int xCurrent, int yCurrent );
 
 		// Configuration
 		void SetRoomSize( int roomMode );
