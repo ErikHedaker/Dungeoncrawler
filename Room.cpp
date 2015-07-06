@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Vector2i.h"
 #include "Room.h"
 #include <iostream>
 #include <string>
@@ -241,10 +240,11 @@ void Room::SetInvisiblePath( )
 	*/
 	Vector2i newPosition = player.GetPosition( );
 	Vector2i oldPosition;
-	//double high = sqrt( GetLength( ) * GetWidth( ) ) * 3;
-	//double low = sqrt( GetLength( ) * GetWidth( ) ) * 2;
-	//int threshold = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
-	//int thresholdCounter = 0;
+	double high = sqrt( GetLength( ) * GetWidth( ) ) * 3;
+	double low = sqrt( GetLength( ) * GetWidth( ) ) * 2;
+	int threshold = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
+	int thresholdCounter = 0;
+	int random;
 
 	if( path.size( ) == 0 )
 	{
@@ -255,56 +255,47 @@ void Room::SetInvisiblePath( )
 	while( true )
 	{
 		oldPosition = newPosition;
+		random = RandomNumberGenerator( 1, 16 );
 
-		//random = RandomNumberGenerator( 1, 16 );
-		//if( thresholdCounter < threshold ) // Equal chance to move in any direction.
-		//{
-		//	if( random <= 4 )
-		//	{
-		//		xNew++;
-		//	}
-		//	else if( random <= 8 )
-		//	{
-		//		yNew++;
-		//	}
-		//	else if( random <= 12 )
-		//	{
-		//		xNew--;
-		//	}
-		//	else
-		//	{
-		//		yNew--;
-		//	}
-
-		//	thresholdCounter++;
-		//}
-		//else // Increased chance to move right and down.
-		//{
-		//	if( random <= 6 )
-		//	{
-		//		xNew++;
-		//	}
-		//	else if( random <= 14 )
-		//	{
-		//		yNew++;
-		//	}
-		//	else if( random <= 15 )
-		//	{
-		//		xNew--;
-		//	}
-		//	else
-		//	{
-		//		yNew--;
-		//	}
-		//}
-
-		if( RandomNumberGenerator( 0, 1 ) == true )
+		if( thresholdCounter < threshold ) // Equal chance to move in any direction.
 		{
-			newPosition.x = RandomPositiveNegativeGenerator( );
+			if( random <= 4 )
+			{
+				newPosition.x++;
+			}
+			else if( random <= 8 )
+			{
+				newPosition.y++;
+			}
+			else if( random <= 12 )
+			{
+				newPosition.x--;
+			}
+			else
+			{
+				newPosition.y--;
+			}
+
+			thresholdCounter++;
 		}
-		else
+		else // Increased chance to move right and down.
 		{
-			newPosition.y = RandomPositiveNegativeGenerator( );
+			if( random <= 6 )
+			{
+				newPosition.x++;
+			}
+			else if( random <= 14 )
+			{
+				newPosition.y++;
+			}
+			else if( random <= 15 )
+			{
+				newPosition.x--;
+			}
+			else
+			{
+				newPosition.y--;
+			}
 		}
 
 		if( GetPositionVisibleDataMap( newPosition ) == iconWall )
@@ -329,10 +320,12 @@ void Room::SetRandomWalls( )
 	Vector2i newPosition;
 	int infiniteLoopBreaker = 0;
 
-	double high_0 = sqrt( GetLength( ) * GetWidth( ) ) * 1.5;
-	double low_0 = sqrt( GetLength( ) * GetWidth( ) ) / 1.5;
-	int randomSourceWalls = RandomNumberGenerator( ( int ) low_0, ( int ) high_0 );
+	double high = sqrt( GetLength( ) * GetWidth( ) ) * 1.5;
+	double low = sqrt( GetLength( ) * GetWidth( ) ) / 1.5;
+	int randomSourceWalls = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
 	int randomTries = RandomNumberGenerator( 5, 10 );
+
+	std::cout << "\nLoading walls.\n";
 
 	while( randomSourceWalls > 0 ) // Place source walls.
 	{
@@ -359,7 +352,7 @@ void Room::SetRandomWalls( )
 		}
 	}
 
-	std::cout << "\n\nLoading walls.\n";
+	std::cout << "\n";
 
 	for( int i = 0; i < randomTries; i++ ) // Place extension walls.
 	{
@@ -374,8 +367,8 @@ void Room::SetRandomWalls( )
 					newPosition.x = iterator.x + RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
 					newPosition.y = iterator.y + RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
 
-					if( GetPositionVisibleDataMap( iterator ) == iconFloor &&
-						GetPositionHiddenDataMap( iterator ) != iconPath )
+					if( GetPositionVisibleDataMap( newPosition ) == iconFloor &&
+						GetPositionHiddenDataMap( newPosition ) != iconPath )
 					{
 						wall.emplace_back( newPosition );
 						UpdateVisibleDataMap( newPosition, iconWall );
@@ -398,6 +391,8 @@ void Room::SetRandomMonsterPositions( )
 {
 	Vector2i newPosition;
 	int infiniteLoopBreaker = 0;
+
+	std::cout << "\nLoading monsters.\n";
 
 	for( unsigned int i = 0; i < monster.size( ); i++ )
 	{
@@ -530,7 +525,6 @@ char Room::TurnOptions( )
 void Room::RandomizeMonsterMovement( )
 {
 	Vector2i newPosition;
-	Vector2i oldPosition;
 	int random;
 
 	for( unsigned int i = 0; i < monster.size( ); i++ )
@@ -538,7 +532,7 @@ void Room::RandomizeMonsterMovement( )
 		while( true )
 		{
 			random = RandomNumberGenerator( 1, 8 );		// 25% to move, 75% to stand still.
-			newPosition = player.GetPosition( );
+			newPosition = monster[i].GetPosition( );
 
 			if( random == 1 )							// Monster moves vertically.
 			{
@@ -553,15 +547,13 @@ void Room::RandomizeMonsterMovement( )
 				break;
 			}
 
-			if( GetPositionVisibleDataMap( newPosition ) != iconWall ||
+			if( GetPositionVisibleDataMap( newPosition ) != iconWall &&
 				GetPositionVisibleDataMap( newPosition ) != iconExit )
 			{
-				oldPosition = monster[i].GetPosition( );
-
-				if( CheckPosition( oldPosition, player.GetPosition( ) ) == false )	// Player movement is executed before monster movement, so
-				{															// clearing the monster's previous position after the player
-					UpdateVisibleDataMap( oldPosition, iconFloor );				// has moved to that position will make the player icon invisible.
-				}															// (this check avoids that)
+				if( CheckPosition( monster[i].GetPosition( ), player.GetPosition( ) ) == false )	// Player movement is executed before monster movement, so
+				{																					// clearing the monster's previous position after the player
+					UpdateVisibleDataMap( monster[i].GetPosition( ), iconFloor );					// has moved to that position will make the player icon invisible.
+				}																					// (this check avoids that)
 
 				monster[i].SetPosition( newPosition );
 				UpdateVisibleDataMap( newPosition, iconMonster );

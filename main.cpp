@@ -108,8 +108,6 @@ int main( )
 		room[i].SetRoomLineOfSight( roomMode );
 		room[i].SetMonsterAmount( roomMode );
 
-		std::cout << "Loading, please wait.\n";
-
 		room[i].BuildHiddenDataMap( );
 		room[i].BuildVisibleDataMap( );
 		room[i].BuildFogOfWarDataMap( );
