@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Room.h"
 #include <iostream>
 #include <string>
@@ -8,6 +10,7 @@ extern const char iconMonster = 'M';
 extern const char iconWall = '#';
 extern const char iconExit = '=';
 extern const char iconPath = ':';
+extern const char iconFloor = '-';
 
 extern int GetPositiveInteger( )
 {
@@ -122,7 +125,7 @@ int main( )
 		{
 			system( "CLS" );
 
-			room[i].SetFogOfWarDataMap( );
+			room[i].UpdateFogOfWarDataMap( );
 
 			room[i].DrawRoom( );
 

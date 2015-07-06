@@ -1,5 +1,8 @@
-#include <vector>
+#pragma once
+
+#include "Vector2i.h"
 #include "Entity.h"
+#include <vector>
 
 class Room
 {
@@ -11,35 +14,34 @@ class Room
 		std::vector<Entity> path;
 
 		// Functions used by functions.
-		bool CheckPosition( Entity& current, Entity& search );
-		bool CheckPosition( int xCurrent, int yCurrent, Entity& search );
-		bool CheckEmptySurroundedTile( int xCurrent, int yCurrent );
+		bool CheckPosition( const Vector2i& current, const Vector2i& search ) const;
+		bool CheckEmptySurroundedTile( const Vector2i& current ) const;
 
-		void SetLength( int input );
-		int GetLength( );
+		void SetLength( const int& length );
+		int GetLength( ) const;
 
-		void SetWidth( int input );
-		int GetWidth( );
+		void SetWidth( const int& width );
+		int GetWidth( ) const;
 
-		void SetLineOfSight( int input );
-		int GetLineOfSight( );
+		void SetLineOfSight( const int& LoS );
+		int GetLineOfSight( ) const;
 
 		void BuildHiddenDataMap( );
-		void SetHiddenDataMap( int x, int y, char value );
-		char GetHiddenDataMap( int x, int y );
+		void UpdateHiddenDataMap( const Vector2i& position, const char& icon );
+		char GetPositionHiddenDataMap( const Vector2i& position ) const;
 
 		void BuildVisibleDataMap( );
-		void SetVisibleDataMap( int x, int y, char value );
-		char GetVisibleDataMap( int x, int y );
+		void UpdateVisibleDataMap( const Vector2i& position, const char& icon );
+		char GetPositionVisibleDataMap( const Vector2i& position ) const;
 
 		void BuildFogOfWarDataMap( );
-		void SetFogOfWarDataMap( );
-		char GetFogOfWarDataMap( int x, int y );
+		void UpdateFogOfWarDataMap( );
+		char GetPositionFogOfWarDataMap( const Vector2i& position ) const;
 
 		// Configuration
-		void SetRoomSize( int roomMode );
-		void SetRoomLineOfSight( int roomMode );
-		void SetMonsterAmount( int roomMode );
+		void SetRoomSize( const int& roomMode );
+		void SetRoomLineOfSight( const int& roomMode );
+		void SetMonsterAmount( const int& roomMode );
 
 		// Automatic
 		void SetPlayerPosition( );
@@ -50,13 +52,13 @@ class Room
 		void SetRandomMonsterPositions( );
 
 		// Gameloop
-		void DrawRoom( );
+		void DrawRoom( ) const;
 		char TurnOptions( );
 		void RandomizeMonsterMovement( );
 
 		// Checked during or after gameloop
-		bool CheckWinCondition( );
-		bool CheckLoseCondition( );
+		bool CheckWinCondition( ) const;
+		bool CheckLoseCondition( ) const;
 
 	private:
 		int _length;

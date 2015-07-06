@@ -1,3 +1,6 @@
+#pragma once
+
+#include "Vector2i.h"
 #include "Room.h"
 #include <iostream>
 #include <string>
@@ -9,40 +12,31 @@ extern const char iconMonster;
 extern const char iconWall;
 extern const char iconExit;
 extern const char iconPath;
+extern const char iconFloor;
 
 extern int GetPositiveInteger( );
 extern int RandomNumberGenerator( int min, int max );
 extern int RandomPositiveNegativeGenerator( );
 
-bool Room::CheckPosition( Entity& current, Entity& search )
+bool Room::CheckPosition( const Vector2i& current, const Vector2i& search ) const
 {
-	if( current.xPosition == search.xPosition &&
-		current.yPosition == search.yPosition )
+	if( current == search )
 	{
 		return true;
 	}
 
 	return false;
 }
-bool Room::CheckPosition( int xCurrent, int yCurrent, Entity& search )
+bool Room::CheckEmptySurroundedTile( const Vector2i& current ) const
 {
-	if( xCurrent == search.xPosition &&
-		yCurrent == search.yPosition )
-	{
-		return true;
-	}
-
-	return false;
-}
-bool Room::CheckEmptySurroundedTile( int xCurrent, int yCurrent )
-{
+	Vector2i iterator;
 	int surroundingWalls = 0;
 
-	for( int y = yCurrent - 1; y <= yCurrent + 1; y++ )
+	for( iterator.y = current.y - 1; iterator.y <= current.y + 1; iterator.y++ )
 	{
-		for( int x = xCurrent - 1; x <= xCurrent + 1; x++ )
+		for( iterator.x = current.x - 1; iterator.x <= current.x + 1; iterator.x++ )
 		{
-			if( GetVisibleDataMap( x, y ) == iconWall )
+			if( GetPositionVisibleDataMap( iterator ) == iconWall )
 			{
 				surroundingWalls++;
 			}
@@ -52,29 +46,29 @@ bool Room::CheckEmptySurroundedTile( int xCurrent, int yCurrent )
 	return surroundingWalls > 4;
 }
 
-void Room::SetLength( int newLength )
+void Room::SetLength( const int& length )
 {
-	_length = newLength;
+	_length = length;
 }
-int Room::GetLength( )
+int Room::GetLength( ) const
 {
 	return _length;
 }
 
-void Room::SetWidth( int newWidth )
+void Room::SetWidth( const int& width )
 {
-	_width = newWidth;
+	_width = width;
 }
-int Room::GetWidth( )
+int Room::GetWidth( ) const
 {
 	return _width;
 }
 
-void Room::SetLineOfSight( int newLOS )
+void Room::SetLineOfSight( const int& LoS )
 {
-	_lineOfSight = newLOS;
+	_lineOfSight = LoS;
 }
-int Room::GetLineOfSight( )
+int Room::GetLineOfSight( ) const
 {
 	return _lineOfSight;
 }
@@ -84,13 +78,13 @@ void Room::BuildHiddenDataMap( )
 	_hiddenDataMap.clear( );
 	_hiddenDataMap.resize( _length, std::vector<char>( _width, '0' ) );
 }
-void Room::SetHiddenDataMap( int x, int y, char value )
+void Room::UpdateHiddenDataMap( const Vector2i& position, const char& icon )
 {
-	_hiddenDataMap[y][x] = value;
+	_hiddenDataMap[position.y][position.x] = icon;
 }
-char Room::GetHiddenDataMap( int x, int y )
+char Room::GetPositionHiddenDataMap( const Vector2i& position ) const
 {
-	return _hiddenDataMap[y][x];
+	return _hiddenDataMap[position.y][position.x];
 }
 
 void Room::BuildVisibleDataMap( )
@@ -98,13 +92,13 @@ void Room::BuildVisibleDataMap( )
 	_visibleDataMap.clear( );
 	_visibleDataMap.resize( _length, std::vector<char>( _width, '-' ) );
 }
-void Room::SetVisibleDataMap( int x, int y, char value )
+void Room::UpdateVisibleDataMap( const Vector2i& position, const char& icon )
 {
-	_visibleDataMap[y][x] = value;
+	_visibleDataMap[position.y][position.x] = icon;
 }
-char Room::GetVisibleDataMap( int x, int y )
+char Room::GetPositionVisibleDataMap( const Vector2i& position ) const
 {
-	return _visibleDataMap[y][x];
+	return _visibleDataMap[position.y][position.x];
 }
 
 void Room::BuildFogOfWarDataMap( )
@@ -112,26 +106,28 @@ void Room::BuildFogOfWarDataMap( )
 	_fogOfWarDataMap.clear( );
 	_fogOfWarDataMap.resize( _length, std::vector<char>( _width, 0 ) );
 }
-void Room::SetFogOfWarDataMap( )
+void Room::UpdateFogOfWarDataMap( )
 {
-	for( int y = 0; y < _length; y++ )
+	Vector2i iterator;
+
+	for( iterator.y = 0; iterator.y < _length; iterator.y++ )
 	{
-		for( int x = 0; x < _width; x++ )
+		for( iterator.x = 0; iterator.x < _width; iterator.x++ )
 		{
-			if( x >= player.xPosition - _lineOfSight && x <= player.xPosition + _lineOfSight &&
-				y >= player.yPosition - _lineOfSight && y <= player.yPosition + _lineOfSight )
+			if( iterator.x >= player.GetPosition( ).x - _lineOfSight && iterator.x <= player.GetPosition( ).x + _lineOfSight &&
+				iterator.y >= player.GetPosition( ).y - _lineOfSight && iterator.y <= player.GetPosition( ).y + _lineOfSight )
 			{
-				_fogOfWarDataMap[y][x] = 1;
+				_fogOfWarDataMap[iterator.y][iterator.x] = 1;
 			}
 		}
 	}
 }
-char Room::GetFogOfWarDataMap( int x, int y )
+char Room::GetPositionFogOfWarDataMap( const Vector2i& position ) const
 {
-	return _fogOfWarDataMap[y][x];
+	return _fogOfWarDataMap[position.y][position.x];
 }
 
-void Room::SetRoomSize( int roomMode )
+void Room::SetRoomSize( const int& roomMode )
 {
 	if( roomMode == 2 )
 	{
@@ -155,7 +151,7 @@ void Room::SetRoomSize( int roomMode )
 
 	}
 }
-void Room::SetRoomLineOfSight( int roomMode )
+void Room::SetRoomLineOfSight( const int& roomMode )
 {
 	if( roomMode == 2 )
 	{
@@ -167,7 +163,7 @@ void Room::SetRoomLineOfSight( int roomMode )
 		SetLineOfSight( 4 );
 	}
 }
-void Room::SetMonsterAmount( int roomMode )
+void Room::SetMonsterAmount( const int& roomMode )
 {
 	if( roomMode == 2 )
 	{
@@ -202,121 +198,126 @@ void Room::SetMonsterAmount( int roomMode )
 
 void Room::SetPlayerPosition( )
 {
-	player.xPosition = 1;
-	player.yPosition = 1;
-	SetVisibleDataMap( 1, 1, iconPlayer );
+	Vector2i newPosition( 1, 1 );
+	player.SetPosition( newPosition );
+	UpdateVisibleDataMap( newPosition, iconPlayer );
 }
 void Room::SetExits( )
 {
-	int xTemp = GetWidth( ) - 2;
-	int yTemp = GetLength( ) - 1;
-	exit.emplace_back( xTemp, yTemp );
-	SetVisibleDataMap( xTemp, yTemp, iconExit );
+	Vector2i newPosition( GetWidth( ) - 2, GetLength( ) - 1 );
+	exit.emplace_back( newPosition );
+	UpdateVisibleDataMap( newPosition, iconExit );
 }
 void Room::SetOuterWalls( )
 {
-	for( int y = 0; y < GetLength( ); y++ )
+	Vector2i iterator;
+
+	for( iterator.y = 0; iterator.y < GetLength( ); iterator.y++ )
 	{
-		for( int x = 0; x < GetWidth( ); x++ )
+		for( iterator.x = 0; iterator.x < GetWidth( ); iterator.x++ )
 		{
-			if( GetVisibleDataMap( x, y ) == '=' )
+			if( GetPositionVisibleDataMap( iterator ) == '=' )
 			{
 				continue;
 			}
-			else if( x == GetWidth( ) - 1 ||
-					 y == GetLength( ) - 1 ||
-					 x == 0 ||
-					 y == 0 )
+			else if( iterator.x == GetWidth( ) - 1 ||
+					 iterator.y == GetLength( ) - 1 ||
+					 iterator.x == 0 ||
+					 iterator.y == 0 )
 			{
-				wall.emplace_back( x, y );
-				SetVisibleDataMap( x, y, iconWall );
+				wall.emplace_back( iterator );
+				UpdateVisibleDataMap( iterator, iconWall );
 			}
 		}
 	}
 }
 void Room::SetInvisiblePath( )
 {
-	// Path from player starting point to exit.
-	// Walls cannot be placed on path.
-	// Player can no longer be cut off from exit due to randomly palced walls.
-	// Function can be replaced by A* algorithm, or similar algorithm.
-
-	int xNew = player.xPosition;
-	int yNew = player.yPosition;
-	int xPrev;
-	int yPrev;
-	int random;
-	double high = sqrt( GetLength( ) * GetWidth( ) ) * 3;
-	double low = sqrt( GetLength( ) * GetWidth( ) ) * 2;
-	int threshold = RandomNumberGenerator( ( int ) low, ( int ) high );
-	int thresholdCounter = 0;
+	/*
+	 Path from player starting point to exit.
+	 Walls cannot be placed on path.
+	 Player can no longer be cut off from exit due to randomly palced walls.
+	 Function can be replaced by A* algorithm, or similar algorithm.
+	*/
+	Vector2i newPosition = player.GetPosition( );
+	Vector2i oldPosition;
+	//double high = sqrt( GetLength( ) * GetWidth( ) ) * 3;
+	//double low = sqrt( GetLength( ) * GetWidth( ) ) * 2;
+	//int threshold = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
+	//int thresholdCounter = 0;
 
 	if( path.size( ) == 0 )
 	{
-		path.emplace_back( player.xPosition, player.yPosition );
-		SetHiddenDataMap( player.xPosition, player.yPosition, iconPath );
+		path.emplace_back( player.GetPosition( ) );
+		UpdateHiddenDataMap( player.GetPosition( ), iconPath );
 	}
 
 	while( true )
 	{
-		xPrev = xNew;
-		yPrev = yNew;
-		random = RandomNumberGenerator( 1, 16 );
+		oldPosition = newPosition;
 
-		if( thresholdCounter < threshold ) // Equal chance to move in any direction.
-		{
-			if( random <= 4 )
-			{
-				xNew++;
-			}
-			else if( random <= 8 )
-			{
-				yNew++;
-			}
-			else if( random <= 12 )
-			{
-				xNew--;
-			}
-			else
-			{
-				yNew--;
-			}
+		//random = RandomNumberGenerator( 1, 16 );
+		//if( thresholdCounter < threshold ) // Equal chance to move in any direction.
+		//{
+		//	if( random <= 4 )
+		//	{
+		//		xNew++;
+		//	}
+		//	else if( random <= 8 )
+		//	{
+		//		yNew++;
+		//	}
+		//	else if( random <= 12 )
+		//	{
+		//		xNew--;
+		//	}
+		//	else
+		//	{
+		//		yNew--;
+		//	}
 
-			thresholdCounter++;
-		}
-		else // Increased chance to move right and down.
-		{
-			if( random <= 6 )
-			{
-				xNew++;
-			}
-			else if( random <= 14 )
-			{
-				yNew++;
-			}
-			else if( random <= 15 )
-			{
-				xNew--;
-			}
-			else
-			{
-				yNew--;
-			}
-		}
+		//	thresholdCounter++;
+		//}
+		//else // Increased chance to move right and down.
+		//{
+		//	if( random <= 6 )
+		//	{
+		//		xNew++;
+		//	}
+		//	else if( random <= 14 )
+		//	{
+		//		yNew++;
+		//	}
+		//	else if( random <= 15 )
+		//	{
+		//		xNew--;
+		//	}
+		//	else
+		//	{
+		//		yNew--;
+		//	}
+		//}
 
-		if( GetVisibleDataMap( xNew, yNew ) == iconWall )
+		if( RandomNumberGenerator( 0, 1 ) == true )
 		{
-			xNew = xPrev;
-			yNew = yPrev;
+			newPosition.x = RandomPositiveNegativeGenerator( );
 		}
 		else
 		{
-			path.emplace_back( xNew, yNew );
-			SetHiddenDataMap( xNew, yNew, iconPath );
+			newPosition.y = RandomPositiveNegativeGenerator( );
 		}
 
-		if( path.back( ).xPosition == exit.back( ).xPosition &&
-			path.back( ).yPosition == exit.back( ).yPosition )
+		if( GetPositionVisibleDataMap( newPosition ) == iconWall )
+		{
+			newPosition = oldPosition;
+		}
+		else
+		{
+			path.emplace_back( newPosition );
+			UpdateHiddenDataMap( newPosition, iconPath );
+		}
+
+		if( path.back( ).GetPosition( ) == exit.back( ).GetPosition( ) )
 		{
 			break;
 		}
@@ -324,8 +325,8 @@ void Room::SetInvisiblePath( )
 }
 void Room::SetRandomWalls( )
 {
-	int xTemp;
-	int yTemp;
+	Vector2i iterator;
+	Vector2i newPosition;
 	int infiniteLoopBreaker = 0;
 
 	double high_0 = sqrt( GetLength( ) * GetWidth( ) ) * 1.5;
@@ -335,17 +336,16 @@ void Room::SetRandomWalls( )
 
 	while( randomSourceWalls > 0 ) // Place source walls.
 	{
-		for( int y = 0; y < GetLength( ); y++ )
+		for( iterator.y = 0; iterator.y < GetLength( ); iterator.y++ )
 		{
-			for( int x = 0; x < GetWidth( ); x++ )
+			for( iterator.x = 0; iterator.x < GetWidth( ); iterator.x++ )
 			{
-				if( GetVisibleDataMap( x, y ) == '-' &&
-					GetVisibleDataMap( x, y ) != iconWall &&
-					GetHiddenDataMap( x, y ) != iconPath &&
+				if( GetPositionVisibleDataMap( iterator ) == iconFloor &&
+					GetPositionHiddenDataMap( iterator ) != iconPath &&
 					RandomNumberGenerator( 1, 1000 ) == 1 )
 				{
-					wall.emplace_back( x, y );
-					SetVisibleDataMap( x, y, iconWall );
+					wall.emplace_back( iterator );
+					UpdateVisibleDataMap( iterator, iconWall );
 					randomSourceWalls--;
 
 					std::cout << ".";
@@ -365,28 +365,28 @@ void Room::SetRandomWalls( )
 	{
 		std::cout << ".";
 
-		for( int y = 1; y < GetLength( ) - 1; y++ )
+		for( iterator.y = 1; iterator.y < GetLength( ) - 1; iterator.y++ )
 		{
-			for( int x = 1; x < GetWidth( ) - 1; x++ )
+			for( iterator.x = 1; iterator.x < GetWidth( ) - 1; iterator.x++ )
 			{
-				if( GetVisibleDataMap( x, y ) == iconWall )
+				if( GetPositionVisibleDataMap( iterator ) == iconWall )
 				{
-					xTemp = x + RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
-					yTemp = y + RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
+					newPosition.x = iterator.x + RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
+					newPosition.y = iterator.y + RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
 
-					if( GetVisibleDataMap( xTemp, yTemp ) == '-' &&
-						GetHiddenDataMap( xTemp, yTemp ) != iconPath )
+					if( GetPositionVisibleDataMap( iterator ) == iconFloor &&
+						GetPositionHiddenDataMap( iterator ) != iconPath )
 					{
-						wall.emplace_back( xTemp, yTemp );
-						SetVisibleDataMap( xTemp, yTemp, iconWall );
+						wall.emplace_back( newPosition );
+						UpdateVisibleDataMap( newPosition, iconWall );
 					}
 				}
-				else if( GetVisibleDataMap( x, y ) == '-' &&
-						 GetHiddenDataMap( x, y ) != iconPath &&
-						 CheckEmptySurroundedTile( x, y ) == true )
+				else if( GetPositionVisibleDataMap( iterator ) == iconFloor &&
+						 GetPositionHiddenDataMap( iterator ) != iconPath &&
+						 CheckEmptySurroundedTile( iterator ) == true )
 				{
-					wall.emplace_back( x, y );
-					SetVisibleDataMap( x, y, iconWall );
+					wall.emplace_back( iterator );
+					UpdateVisibleDataMap( iterator, iconWall );
 				}
 			}
 		}
@@ -396,8 +396,7 @@ void Room::SetRandomWalls( )
 }
 void Room::SetRandomMonsterPositions( )
 {
-	int xTemp;
-	int yTemp;
+	Vector2i newPosition;
 	int infiniteLoopBreaker = 0;
 
 	for( unsigned int i = 0; i < monster.size( ); i++ )
@@ -406,31 +405,32 @@ void Room::SetRandomMonsterPositions( )
 
 		do
 		{
-			xTemp = RandomNumberGenerator( 1, GetWidth( ) - 2 );
-			yTemp = RandomNumberGenerator( 1, GetLength( ) - 2 );
+			newPosition.x = RandomNumberGenerator( 1, GetWidth( ) - 2 );
+			newPosition.y = RandomNumberGenerator( 1, GetLength( ) - 2 );
 
 			if( infiniteLoopBreaker++ > 10000 )
 			{
 				break;
 			}
 		}
-		while( GetVisibleDataMap( xTemp, yTemp ) != '-' );
+		while( GetPositionVisibleDataMap( newPosition ) != iconFloor );
 
-		monster[i].xPosition = xTemp;
-		monster[i].yPosition = yTemp;
-		SetVisibleDataMap( xTemp, yTemp, iconMonster );
+		monster[i].SetPosition( newPosition );
+		UpdateVisibleDataMap( newPosition, iconMonster );
 	}
 }
 
-void Room::DrawRoom( )
+void Room::DrawRoom( ) const
 {
-	for( int y = 0; y < GetLength( ); y++ )
+	Vector2i iterator;
+
+	for( iterator.y = 0; iterator.y < GetLength( ); iterator.y++ )
 	{
-		for( int x = 0; x < GetWidth( ); x++ )
+		for( iterator.x = 0; iterator.x < GetWidth( ); iterator.x++ )
 		{
-			if( GetFogOfWarDataMap( x, y ) == 1 )
+			if( GetPositionFogOfWarDataMap( iterator ) == 1 )
 			{
-				std::cout << GetVisibleDataMap( x, y );
+				std::cout << GetPositionVisibleDataMap( iterator );
 			}
 			else
 			{
@@ -445,8 +445,7 @@ void Room::DrawRoom( )
 }
 char Room::TurnOptions( )
 {
-	int xTemp;
-	int yTemp;
+	Vector2i newPosition;
 	std::string userChoice;
 
 	std::cout << "[W] Go up\n";
@@ -465,8 +464,8 @@ char Room::TurnOptions( )
 		case 'W':
 		case 'w':       // Move up.
 		{
-			xTemp = player.xPosition;
-			yTemp = player.yPosition - 1;
+			newPosition.x = player.GetPosition( ).x;
+			newPosition.y = player.GetPosition( ).y - 1;
 
 			break;
 		}
@@ -474,8 +473,8 @@ char Room::TurnOptions( )
 		case 'S':
 		case 's':       // Move down.
 		{
-			xTemp = player.xPosition;
-			yTemp = player.yPosition + 1;
+			newPosition.x = player.GetPosition( ).x;
+			newPosition.y = player.GetPosition( ).y + 1;
 
 			break;
 		}
@@ -483,8 +482,8 @@ char Room::TurnOptions( )
 		case 'A':
 		case 'a':       // Move left.
 		{
-			xTemp = player.xPosition - 1;
-			yTemp = player.yPosition;
+			newPosition.x = player.GetPosition( ).x - 1;
+			newPosition.y = player.GetPosition( ).y;
 
 			break;
 		}
@@ -492,8 +491,8 @@ char Room::TurnOptions( )
 		case 'D':
 		case 'd':       // Move right.
 		{
-			xTemp = player.xPosition + 1;
-			yTemp = player.yPosition;
+			newPosition.x = player.GetPosition( ).x + 1;
+			newPosition.y = player.GetPosition( ).y;
 
 			break;
 		}
@@ -519,68 +518,64 @@ char Room::TurnOptions( )
 		}
 	}
 
-	if( GetVisibleDataMap( xTemp, yTemp ) != iconWall )
+	if( GetPositionVisibleDataMap( newPosition ) != iconWall )
 	{
-		SetVisibleDataMap( player.xPosition, player.yPosition, '-' );
-		player.xPosition = xTemp;
-		player.yPosition = yTemp;
-		SetVisibleDataMap( player.xPosition, player.yPosition, iconPlayer );
+		UpdateVisibleDataMap( player.GetPosition( ), iconFloor );
+		player.SetPosition( newPosition );
+		UpdateVisibleDataMap( newPosition, iconPlayer );
 	}
 
 	return 0;
 }
 void Room::RandomizeMonsterMovement( )
 {
-	int xTemp;
-	int yTemp;
-	int randomNumber;
+	Vector2i newPosition;
+	Vector2i oldPosition;
+	int random;
 
 	for( unsigned int i = 0; i < monster.size( ); i++ )
 	{
 		while( true )
 		{
-			randomNumber = RandomNumberGenerator( 1, 8 );	// 25% to move, 75% to stand still.
+			random = RandomNumberGenerator( 1, 8 );		// 25% to move, 75% to stand still.
+			newPosition = player.GetPosition( );
 
-			if( randomNumber == 1 )							// Monster moves vertically.
+			if( random == 1 )							// Monster moves vertically.
 			{
-				xTemp = monster[i].xPosition;
-				yTemp = monster[i].yPosition + RandomPositiveNegativeGenerator( );
+				newPosition.x = newPosition.x + RandomPositiveNegativeGenerator( );
 			}
-			else if( randomNumber == 2 )					// Monster moves horizontally.
+			else if( random == 2 )						// Monster moves horizontally.
 			{
-				xTemp = monster[i].xPosition + RandomPositiveNegativeGenerator( );
-				yTemp = monster[i].yPosition;
+				newPosition.y = newPosition.y + RandomPositiveNegativeGenerator( );
 			}
-			else											// Monster stands still.
+			else										// Monster stands still.
 			{
 				break;
 			}
 
-			if( GetVisibleDataMap( xTemp, yTemp ) == '-' ||
-				GetVisibleDataMap( xTemp, yTemp ) == iconPlayer )
+			if( GetPositionVisibleDataMap( newPosition ) != iconWall ||
+				GetPositionVisibleDataMap( newPosition ) != iconExit )
 			{
-				int xTemp_0 = monster[i].xPosition;
-				int yTemp_0 = monster[i].yPosition;
+				oldPosition = monster[i].GetPosition( );
 
-				if( CheckPosition( xTemp_0, yTemp_0, player ) == false )	// Player movement is executed before monster movement, so
+				if( CheckPosition( oldPosition, player.GetPosition( ) ) == false )	// Player movement is executed before monster movement, so
 				{															// clearing the monster's previous position after the player
-					SetVisibleDataMap( xTemp_0, yTemp_0, '-' );				// has moved to that position will make the player icon invisible.
+					UpdateVisibleDataMap( oldPosition, iconFloor );				// has moved to that position will make the player icon invisible.
 				}															// (this check avoids that)
 
-				monster[i].xPosition = xTemp;
-				monster[i].yPosition = yTemp;
-				SetVisibleDataMap( xTemp, yTemp, iconMonster );
+				monster[i].SetPosition( newPosition );
+				UpdateVisibleDataMap( newPosition, iconMonster );
 				break;
 			}
 		}
 	}
 }
 
-bool Room::CheckWinCondition( )
+bool Room::CheckWinCondition( ) const
 {
 	for( unsigned int i = 0; i < exit.size( ); i++ )
 	{
-		if( CheckPosition( player, exit[i] ) == true )
+		if( CheckPosition( player.GetPosition( ), exit[i].GetPosition( ) ) == true )
 		{
 			return true;
 		}
@@ -588,11 +583,11 @@ bool Room::CheckWinCondition( )
 
 	return false;
 }
-bool Room::CheckLoseCondition( )
+bool Room::CheckLoseCondition( ) const
 {
 	for( unsigned int i = 0; i < monster.size( ); i++ )
 	{
-		if( CheckPosition( player, monster[i] ) == true )
+		if( CheckPosition( player.GetPosition( ), monster[i].GetPosition( ) ) == true )
 		{
 			return true;
 		}
