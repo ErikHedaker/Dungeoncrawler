@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Entity.h"
 #include <vector>
 
@@ -12,18 +10,7 @@ class Room
 		std::vector<Entity> exit;
 		std::vector<Entity> path;
 
-		// Functions used by functions.
-		bool CheckPosition( const Vector2i& current, const Vector2i& search ) const;
 		bool CheckEmptySurroundedTile( const Vector2i& current ) const;
-
-		void SetLength( const int& length );
-		int GetLength( ) const;
-
-		void SetWidth( const int& width );
-		int GetWidth( ) const;
-
-		void SetLineOfSight( const int& LoS );
-		int GetLineOfSight( ) const;
 
 		void BuildHiddenDataMap( );
 		void UpdateHiddenDataMap( const Vector2i& position, const char& icon );
@@ -40,7 +27,7 @@ class Room
 		// Configuration
 		void SetRoomSize( const int& roomMode );
 		void SetRoomLineOfSight( const int& roomMode );
-		void SetMonsterAmount( const int& roomMode );
+		void SetRoomMonsterAmount( const int& roomMode );
 
 		// Automatic
 		void SetPlayerPosition( );

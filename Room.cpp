@@ -1,9 +1,6 @@
-#pragma once
-
 #include "Room.h"
 #include <iostream>
 #include <string>
-#include <vector>
 #include <math.h>
 
 extern const char iconPlayer;
@@ -17,15 +14,6 @@ extern int GetPositiveInteger( );
 extern int RandomNumberGenerator( int min, int max );
 extern int RandomPositiveNegativeGenerator( );
 
-bool Room::CheckPosition( const Vector2i& current, const Vector2i& search ) const
-{
-	if( current == search )
-	{
-		return true;
-	}
-
-	return false;
-}
 bool Room::CheckEmptySurroundedTile( const Vector2i& current ) const
 {
 	Vector2i iterator;
@@ -43,33 +31,6 @@ bool Room::CheckEmptySurroundedTile( const Vector2i& current ) const
 	}
 
 	return surroundingWalls > 4;
-}
-
-void Room::SetLength( const int& length )
-{
-	_length = length;
-}
-int Room::GetLength( ) const
-{
-	return _length;
-}
-
-void Room::SetWidth( const int& width )
-{
-	_width = width;
-}
-int Room::GetWidth( ) const
-{
-	return _width;
-}
-
-void Room::SetLineOfSight( const int& LoS )
-{
-	_lineOfSight = LoS;
-}
-int Room::GetLineOfSight( ) const
-{
-	return _lineOfSight;
 }
 
 void Room::BuildHiddenDataMap( )
@@ -113,8 +74,8 @@ void Room::UpdateFogOfWarDataMap( )
 	{
 		for( iterator.x = 0; iterator.x < _width; iterator.x++ )
 		{
-			if( iterator.x >= player.GetPosition( ).x - _lineOfSight && iterator.x <= player.GetPosition( ).x + _lineOfSight &&
-				iterator.y >= player.GetPosition( ).y - _lineOfSight && iterator.y <= player.GetPosition( ).y + _lineOfSight )
+			if( iterator >= player.GetPosition( ) - _lineOfSight &&
+				iterator <= player.GetPosition( ) + _lineOfSight )
 			{
 				_fogOfWarDataMap[iterator.y][iterator.x] = 1;
 			}
@@ -132,12 +93,12 @@ void Room::SetRoomSize( const int& roomMode )
 	{
 		RETRY:
 		std::cout << "Enter the playing Room length: ";
-		SetLength( GetPositiveInteger( ) );
+		_length = GetPositiveInteger( );
 		std::cout << "Enter the playing Room width: ";
-		SetWidth( GetPositiveInteger( ) );
+		_width = GetPositiveInteger( );
 
-		if( GetLength( ) < 3 ||
-			GetWidth( ) < 3 )
+		if( _length < 3 ||
+			_width < 3 )
 		{
 			std::cout << "\nInput is too small, try again.\n\n";
 			goto RETRY;
@@ -145,8 +106,8 @@ void Room::SetRoomSize( const int& roomMode )
 	}
 	else
 	{
-		SetLength( RandomNumberGenerator( 15, 30 ) );
-		SetWidth( RandomNumberGenerator( 50, 100 ) );
+		_length = RandomNumberGenerator( 15, 30 );
+		_width = RandomNumberGenerator( 50, 100 );
 
 	}
 }
@@ -155,19 +116,19 @@ void Room::SetRoomLineOfSight( const int& roomMode )
 	if( roomMode == 2 )
 	{
 		std::cout << "Enter the line of sight range: ";
-		SetLineOfSight( GetPositiveInteger( ) );
+		_lineOfSight = GetPositiveInteger( );
 	}
 	else
 	{
-		SetLineOfSight( 4 );
+		_lineOfSight = 4 ;
 	}
 }
-void Room::SetMonsterAmount( const int& roomMode )
+void Room::SetRoomMonsterAmount( const int& roomMode )
 {
 	if( roomMode == 2 )
 	{
 		int amountMonsters;
-		int minimumMonsters = ( GetLength( ) * GetWidth( ) ) - wall.size( ) - ( GetLength( ) * GetWidth( ) ) / 2;
+		int minimumMonsters = ( _length * _width ) - ( wall.size( ) + ( _length * _width ) / 2 );
 
 		while( true )
 		{
@@ -189,8 +150,8 @@ void Room::SetMonsterAmount( const int& roomMode )
 	}
 	else
 	{
-		double high = sqrt( GetLength( ) * GetWidth( ) ) / 1.5;
-		double low = sqrt( GetLength( ) * GetWidth( ) ) / 3;
+		double high = sqrt( _length * _width ) / 1.5;
+		double low = sqrt( _length * _width ) / 3;
 		monster.resize( RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) ) );
 	}
 }
@@ -203,7 +164,7 @@ void Room::SetPlayerPosition( )
 }
 void Room::SetExits( )
 {
-	Vector2i newPosition( GetWidth( ) - 2, GetLength( ) - 1 );
+	Vector2i newPosition( _width - 2, _length - 1 );
 	exit.emplace_back( newPosition );
 	UpdateVisibleDataMap( newPosition, iconExit );
 }
@@ -211,16 +172,16 @@ void Room::SetOuterWalls( )
 {
 	Vector2i iterator;
 
-	for( iterator.y = 0; iterator.y < GetLength( ); iterator.y++ )
+	for( iterator.y = 0; iterator.y < _length; iterator.y++ )
 	{
-		for( iterator.x = 0; iterator.x < GetWidth( ); iterator.x++ )
+		for( iterator.x = 0; iterator.x < _width; iterator.x++ )
 		{
 			if( GetPositionVisibleDataMap( iterator ) == '=' )
 			{
 				continue;
 			}
-			else if( iterator.x == GetWidth( ) - 1 ||
-					 iterator.y == GetLength( ) - 1 ||
+			else if( iterator.x == _width - 1 ||
+					 iterator.y == _length - 1 ||
 					 iterator.x == 0 ||
 					 iterator.y == 0 )
 			{
@@ -240,8 +201,8 @@ void Room::SetInvisiblePath( )
 	*/
 	Vector2i newPosition = player.GetPosition( );
 	Vector2i oldPosition;
-	double high = sqrt( GetLength( ) * GetWidth( ) ) * 3;
-	double low = sqrt( GetLength( ) * GetWidth( ) ) * 2;
+	double high = sqrt( _length * _width ) * 3;
+	double low = sqrt( _length * _width ) * 2;
 	int threshold = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
 	int thresholdCounter = 0;
 	int random;
@@ -320,8 +281,8 @@ void Room::SetRandomWalls( )
 	Vector2i newPosition;
 	int infiniteLoopBreaker = 0;
 
-	double high = sqrt( GetLength( ) * GetWidth( ) ) * 1.5;
-	double low = sqrt( GetLength( ) * GetWidth( ) ) / 1.5;
+	double high = sqrt( _length * _width ) * 1.5;
+	double low = sqrt( _length * _width ) / 1.5;
 	int randomSourceWalls = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
 	int randomTries = RandomNumberGenerator( 5, 10 );
 
@@ -329,9 +290,9 @@ void Room::SetRandomWalls( )
 
 	while( randomSourceWalls > 0 ) // Place source walls.
 	{
-		for( iterator.y = 0; iterator.y < GetLength( ); iterator.y++ )
+		for( iterator.y = 0; iterator.y < _length; iterator.y++ )
 		{
-			for( iterator.x = 0; iterator.x < GetWidth( ); iterator.x++ )
+			for( iterator.x = 0; iterator.x < _width; iterator.x++ )
 			{
 				if( GetPositionVisibleDataMap( iterator ) == iconFloor &&
 					GetPositionHiddenDataMap( iterator ) != iconPath &&
@@ -358,9 +319,9 @@ void Room::SetRandomWalls( )
 	{
 		std::cout << ".";
 
-		for( iterator.y = 1; iterator.y < GetLength( ) - 1; iterator.y++ )
+		for( iterator.y = 1; iterator.y < _length - 1; iterator.y++ )
 		{
-			for( iterator.x = 1; iterator.x < GetWidth( ) - 1; iterator.x++ )
+			for( iterator.x = 1; iterator.x < _width - 1; iterator.x++ )
 			{
 				if( GetPositionVisibleDataMap( iterator ) == iconWall )
 				{
@@ -398,17 +359,21 @@ void Room::SetRandomMonsterPositions( )
 	{
 		std::cout << ".";
 
-		do
+		while( true )
 		{
-			newPosition.x = RandomNumberGenerator( 1, GetWidth( ) - 2 );
-			newPosition.y = RandomNumberGenerator( 1, GetLength( ) - 2 );
+			newPosition.x = RandomNumberGenerator( 1, _width - 2 );
+			newPosition.y = RandomNumberGenerator( 1, _length - 2 );
 
 			if( infiniteLoopBreaker++ > 10000 )
 			{
 				break;
 			}
+
+			if( GetPositionVisibleDataMap( newPosition ) == iconFloor )
+			{
+				break;
+			}
 		}
-		while( GetPositionVisibleDataMap( newPosition ) != iconFloor );
 
 		monster[i].SetPosition( newPosition );
 		UpdateVisibleDataMap( newPosition, iconMonster );
@@ -419,9 +384,9 @@ void Room::DrawRoom( ) const
 {
 	Vector2i iterator;
 
-	for( iterator.y = 0; iterator.y < GetLength( ); iterator.y++ )
+	for( iterator.y = 0; iterator.y < _length; iterator.y++ )
 	{
-		for( iterator.x = 0; iterator.x < GetWidth( ); iterator.x++ )
+		for( iterator.x = 0; iterator.x < _width; iterator.x++ )
 		{
 			if( GetPositionFogOfWarDataMap( iterator ) == 1 )
 			{
@@ -548,12 +513,13 @@ void Room::RandomizeMonsterMovement( )
 			}
 
 			if( GetPositionVisibleDataMap( newPosition ) != iconWall &&
-				GetPositionVisibleDataMap( newPosition ) != iconExit )
+				GetPositionVisibleDataMap( newPosition ) != iconExit &&
+				GetPositionVisibleDataMap( newPosition ) != iconMonster )
 			{
-				if( CheckPosition( monster[i].GetPosition( ), player.GetPosition( ) ) == false )	// Player movement is executed before monster movement, so
+				if( !( monster[i].GetPosition( ) == player.GetPosition( ) ) )						// Player movement is executed before monster movement, so
 				{																					// clearing the monster's previous position after the player
 					UpdateVisibleDataMap( monster[i].GetPosition( ), iconFloor );					// has moved to that position will make the player icon invisible.
-				}																					// (this check avoids that)
+				}																					// (this update avoids that)
 
 				monster[i].SetPosition( newPosition );
 				UpdateVisibleDataMap( newPosition, iconMonster );
@@ -567,7 +533,7 @@ bool Room::CheckWinCondition( ) const
 {
 	for( unsigned int i = 0; i < exit.size( ); i++ )
 	{
-		if( CheckPosition( player.GetPosition( ), exit[i].GetPosition( ) ) == true )
+		if( player.GetPosition( ) == exit[i].GetPosition( ) )
 		{
 			return true;
 		}
@@ -579,7 +545,7 @@ bool Room::CheckLoseCondition( ) const
 {
 	for( unsigned int i = 0; i < monster.size( ); i++ )
 	{
-		if( CheckPosition( player.GetPosition( ), monster[i].GetPosition( ) ) == true )
+		if( player.GetPosition( ) == monster[i].GetPosition( ) )
 		{
 			return true;
 		}

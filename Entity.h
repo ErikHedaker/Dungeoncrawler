@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Vector2i.h"
 
 class Entity

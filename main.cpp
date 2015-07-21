@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Room.h"
 #include <iostream>
 #include <string>
@@ -106,7 +104,7 @@ int main( )
 
 		room[i].SetRoomSize( roomMode );
 		room[i].SetRoomLineOfSight( roomMode );
-		room[i].SetMonsterAmount( roomMode );
+		room[i].SetRoomMonsterAmount( roomMode );
 
 		room[i].BuildHiddenDataMap( );
 		room[i].BuildVisibleDataMap( );

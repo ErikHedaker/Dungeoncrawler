@@ -1,15 +1,8 @@
-#pragma once
-
 #include "Entity.h"
 
 Entity::Entity( )
 {
 
-}
-Entity::Entity( const int& x, const int &y )
-{
-	_position.x = x;
-	_position.y = y;
 }
 Entity::Entity( const Vector2i& position )
 {
