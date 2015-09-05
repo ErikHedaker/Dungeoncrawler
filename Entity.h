@@ -4,10 +4,9 @@ class Entity
 {
 	public:
 		Entity( );
-		Entity( const int& x, const int &y );
-		Entity( const Vector2i& position );
+		Entity( const Vector2i& newPosition );
 
-		void SetPosition( Vector2i position );
+		void SetPosition( const Vector2i& newPosition );
 		Vector2i GetPosition( ) const;
 
 	private:

@@ -2,17 +2,17 @@ class Vector2i
 {
 	public:
 		Vector2i( );
-		Vector2i( const int& xNew, const int& yNew );
+		Vector2i( int newCol, int newRow );
 
-		int x;
-		int y;
+		int col;
+		int row;
 
-		void operator=( const Vector2i& assign );
 		bool operator==( const Vector2i& compare ) const;
 		bool operator<=( const Vector2i& compare ) const;
 		bool operator>=( const Vector2i& compare ) const;
-		Vector2i& operator+( const Vector2i& add );
-		Vector2i& operator+( const int& add );
-		Vector2i& operator-( const Vector2i& subtract );
-		Vector2i& operator-( const int& subtract );
+		void operator=( const Vector2i& assign );
+		const Vector2i& operator+( const Vector2i& add );
+		const Vector2i& operator+( int add );
+		const Vector2i& operator-( const Vector2i& subtract );
+		const Vector2i& operator-( int subtract );
 };

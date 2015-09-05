@@ -2,53 +2,53 @@
 
 Vector2i::Vector2i( )
 {
-	x = 0;
-	y = 0;
+	col = 0;
+	row = 0;
 }
-Vector2i::Vector2i( const int& xNew, const int& yNew )
+Vector2i::Vector2i( int newCol, int newRow )
 {
-	x = xNew;
-	y = yNew;
+	col = newCol;
+	row = newRow;
 }
 
-void Vector2i::operator=( const Vector2i& assign )
-{
-	x = assign.x;
-	y = assign.y;
-}
 bool Vector2i::operator==( const Vector2i& compare ) const
 {
-	return x == compare.x && y == compare.y;
+	return col == compare.col && row == compare.row;
 }
 bool Vector2i::operator<=( const Vector2i& compare ) const
 {
-	return x <= compare.x && y <= compare.y;
+	return col <= compare.col && row <= compare.row;
 }
 bool Vector2i::operator>=( const Vector2i& compare ) const
 {
-	return x >= compare.x && y >= compare.y;
+	return col >= compare.col && row >= compare.row;
 }
-Vector2i& Vector2i::operator+( const Vector2i& add )
+void Vector2i::operator=( const Vector2i& assign )
 {
-	x += add.x;
-	y += add.y;
+	col = assign.col;
+	row = assign.row;
+}
+const Vector2i& Vector2i::operator+( const Vector2i& add )
+{
+	col += add.col;
+	row += add.row;
 	return *this;
 }
-Vector2i& Vector2i::operator+( const int& add )
+const Vector2i& Vector2i::operator+( int add )
 {
-	x += add;
-	y += add;
+	col += add;
+	row += add;
 	return *this;
 }
-Vector2i& Vector2i::operator-( const Vector2i& subtract )
+const Vector2i& Vector2i::operator-( const Vector2i& subtract )
 {
-	x -= subtract.x;
-	y -= subtract.y;
+	col -= subtract.col;
+	row -= subtract.row;
 	return *this;
 }
-Vector2i& Vector2i::operator-( const int& subtract )
+const Vector2i& Vector2i::operator-( int subtract )
 {
-	x -= subtract;
-	y -= subtract;
+	col -= subtract;
+	row -= subtract;
 	return *this;
 }

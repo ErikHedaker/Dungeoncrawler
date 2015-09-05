@@ -3,27 +3,20 @@
 #include <string>
 #include <math.h>
 
-extern const char iconPlayer;
-extern const char iconMonster;
-extern const char iconWall;
-extern const char iconExit;
-extern const char iconPath;
-extern const char iconFloor;
-
-extern int GetPositiveInteger( );
+extern int GetPositiveInteger( const std::string& context );
 extern int RandomNumberGenerator( int min, int max );
 extern int RandomPositiveNegativeGenerator( );
 
-bool Room::CheckEmptySurroundedTile( const Vector2i& current ) const
+bool Room::EmptySurroundedTile( const Vector2i& current ) const
 {
 	Vector2i iterator;
 	int surroundingWalls = 0;
 
-	for( iterator.y = current.y - 1; iterator.y <= current.y + 1; iterator.y++ )
+	for( iterator.row = current.row - 1; iterator.row <= current.row + 1; iterator.row++ )
 	{
-		for( iterator.x = current.x - 1; iterator.x <= current.x + 1; iterator.x++ )
+		for( iterator.col = current.col - 1; iterator.col <= current.col + 1; iterator.col++ )
 		{
-			if( GetPositionVisibleDataMap( iterator ) == iconWall )
+			if( GetVisibleDataAt( iterator ) == Portrait::Wall )
 			{
 				surroundingWalls++;
 			}
@@ -33,72 +26,70 @@ bool Room::CheckEmptySurroundedTile( const Vector2i& current ) const
 	return surroundingWalls > 4;
 }
 
-void Room::BuildHiddenDataMap( )
+void Room::BuildHiddenData( )
 {
-	_hiddenDataMap.clear( );
-	_hiddenDataMap.resize( _length, std::vector<char>( _width, '0' ) );
+	_hiddenData.clear( );
+	_hiddenData.resize( _maxCols * _maxRows, '0' );
 }
-void Room::UpdateHiddenDataMap( const Vector2i& position, const char& icon )
+void Room::UpdateHiddenDataAt( const Vector2i& position, char icon )
 {
-	_hiddenDataMap[position.y][position.x] = icon;
+	_hiddenData[( position.row * _maxCols ) + position.col] = icon;
 }
-char Room::GetPositionHiddenDataMap( const Vector2i& position ) const
+char Room::GetHiddenDataAt( const Vector2i& position ) const
 {
-	return _hiddenDataMap[position.y][position.x];
-}
-
-void Room::BuildVisibleDataMap( )
-{
-	_visibleDataMap.clear( );
-	_visibleDataMap.resize( _length, std::vector<char>( _width, '-' ) );
-}
-void Room::UpdateVisibleDataMap( const Vector2i& position, const char& icon )
-{
-	_visibleDataMap[position.y][position.x] = icon;
-}
-char Room::GetPositionVisibleDataMap( const Vector2i& position ) const
-{
-	return _visibleDataMap[position.y][position.x];
+	return _hiddenData[( position.row * _maxCols ) + position.col];
 }
 
-void Room::BuildFogOfWarDataMap( )
+void Room::BuildVisibleData( )
 {
-	_fogOfWarDataMap.clear( );
-	_fogOfWarDataMap.resize( _length, std::vector<char>( _width, 0 ) );
+	_visibleData.clear( );
+	_visibleData.resize( _maxCols * _maxRows, '-' );
 }
-void Room::UpdateFogOfWarDataMap( )
+void Room::UpdateVisibleDataAt( const Vector2i& position, char icon )
+{
+	_visibleData[( position.row * _maxCols ) + position.col] = icon;
+}
+char Room::GetVisibleDataAt( const Vector2i& position ) const
+{
+	return _visibleData[( position.row * _maxCols ) + position.col];
+}
+
+void Room::BuildFogOfWarData( )
+{
+	_fogOfWarData.clear( );
+	_fogOfWarData.resize( _maxCols * _maxRows, false );
+}
+void Room::UpdateFogOfWarData( )
 {
 	Vector2i iterator;
 
-	for( iterator.y = 0; iterator.y < _length; iterator.y++ )
+	for( iterator.row = 0; iterator.row < _maxRows; iterator.row++ )
 	{
-		for( iterator.x = 0; iterator.x < _width; iterator.x++ )
+		for( iterator.col = 0; iterator.col < _maxCols; iterator.col++ )
 		{
 			if( iterator >= player.GetPosition( ) - _lineOfSight &&
 				iterator <= player.GetPosition( ) + _lineOfSight )
 			{
-				_fogOfWarDataMap[iterator.y][iterator.x] = 1;
+				_fogOfWarData[ ( iterator.row * _maxCols ) + iterator.col ] = true;
 			}
 		}
 	}
 }
-char Room::GetPositionFogOfWarDataMap( const Vector2i& position ) const
+char Room::GetFogOfWarDataAt( const Vector2i& position ) const
 {
-	return _fogOfWarDataMap[position.y][position.x];
+	return _fogOfWarData[( position.row * _maxCols ) + position.col];
 }
 
-void Room::SetRoomSize( const int& roomMode )
+void Room::SetRoomSize( int gameType )
 {
-	if( roomMode == 2 )
+	if( gameType == 2 )
 	{
 		RETRY:
-		std::cout << "Enter the playing Room length: ";
-		_length = GetPositiveInteger( );
-		std::cout << "Enter the playing Room width: ";
-		_width = GetPositiveInteger( );
+		_maxCols = GetPositiveInteger( "Enter the Room width: " );
+		_maxRows = GetPositiveInteger( "Enter the Room heigth: " );
 
-		if( _length < 3 ||
-			_width < 3 )
+		if( _maxCols < 3 ||
+			_maxRows < 3 )
 		{
 			std::cout << "\nInput is too small, try again.\n\n";
 			goto RETRY;
@@ -106,87 +97,84 @@ void Room::SetRoomSize( const int& roomMode )
 	}
 	else
 	{
-		_length = RandomNumberGenerator( 15, 30 );
-		_width = RandomNumberGenerator( 50, 100 );
-
+		_maxCols = RandomNumberGenerator( 50, 100 );
+		_maxRows = RandomNumberGenerator( 15, 30 );
 	}
 }
-void Room::SetRoomLineOfSight( const int& roomMode )
+void Room::SetRoomLineOfSight( int gameType )
 {
-	if( roomMode == 2 )
+	if( gameType == 2 )
 	{
-		std::cout << "Enter the line of sight range: ";
-		_lineOfSight = GetPositiveInteger( );
+		_lineOfSight = GetPositiveInteger( "Enter the line of sight range: " );
 	}
 	else
 	{
 		_lineOfSight = 4 ;
 	}
 }
-void Room::SetRoomMonsterAmount( const int& roomMode )
+void Room::SetRoomMonsterAmount( int gameType )
 {
-	if( roomMode == 2 )
+	if( gameType == 2 )
 	{
 		int amountMonsters;
-		int minimumMonsters = ( _length * _width ) - ( wall.size( ) + ( _length * _width ) / 2 );
+		int maxMonsters = sqrt( _maxRows * _maxCols ) * 2;
 
 		while( true )
 		{
-			std::cout << "Enter the amount of monsters: ";
-			amountMonsters = GetPositiveInteger( );
+			amountMonsters = GetPositiveInteger( "Enter the amount of monsters: " );
 
-			if( amountMonsters >= minimumMonsters &&
-				amountMonsters != 0 )
+			if( amountMonsters <= maxMonsters )
 			{
-				std::cout << "Too many monsters, try again.\n";
+				monsters.resize( amountMonsters );
+				break;
 			}
 			else
 			{
-				monster.resize( amountMonsters );
-				std::cout << "\n";
-				break;
+				std::cout << "\nToo many monsters, try again.\n\n";
 			}
 		}
 	}
 	else
 	{
-		double high = sqrt( _length * _width ) / 1.5;
-		double low = sqrt( _length * _width ) / 3;
-		monster.resize( RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) ) );
+		double high = sqrt( _maxRows * _maxCols ) / 1.5;
+		double low = sqrt( _maxRows * _maxCols ) / 3;
+		monsters.resize( RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) ) );
 	}
+
+	std::cout << "\n";
 }
 
 void Room::SetPlayerPosition( )
 {
 	Vector2i newPosition( 1, 1 );
 	player.SetPosition( newPosition );
-	UpdateVisibleDataMap( newPosition, iconPlayer );
+	UpdateVisibleDataAt( newPosition, Portrait::Player );
 }
 void Room::SetExits( )
 {
-	Vector2i newPosition( _width - 2, _length - 1 );
-	exit.emplace_back( newPosition );
-	UpdateVisibleDataMap( newPosition, iconExit );
+	Vector2i position( _maxCols - 2, _maxRows - 1 );
+	exits.emplace_back( position );
+	UpdateVisibleDataAt( position, Portrait::Exit );
 }
 void Room::SetOuterWalls( )
 {
 	Vector2i iterator;
 
-	for( iterator.y = 0; iterator.y < _length; iterator.y++ )
+	for( iterator.row = 0; iterator.row < _maxRows; iterator.row++ )
 	{
-		for( iterator.x = 0; iterator.x < _width; iterator.x++ )
+		for( iterator.col = 0; iterator.col < _maxCols; iterator.col++ )
 		{
-			if( GetPositionVisibleDataMap( iterator ) == '=' )
+			if( GetVisibleDataAt( iterator ) == '=' )
 			{
 				continue;
 			}
-			else if( iterator.x == _width - 1 ||
-					 iterator.y == _length - 1 ||
-					 iterator.x == 0 ||
-					 iterator.y == 0 )
+			else if( iterator.row == _maxRows - 1 ||
+					 iterator.col == _maxCols - 1 ||
+					 iterator.row == 0 ||
+					 iterator.col == 0 )
 			{
-				wall.emplace_back( iterator );
-				UpdateVisibleDataMap( iterator, iconWall );
+				walls.emplace_back( iterator );
+				UpdateVisibleDataAt( iterator, Portrait::Wall );
 			}
 		}
 	}
@@ -196,21 +184,22 @@ void Room::SetInvisiblePath( )
 	/*
 	 Path from player starting point to exit.
 	 Walls cannot be placed on path.
-	 Player can no longer be cut off from exit due to randomly palced walls.
+	 player can no longer be cut off from exit due to randomly placed walls.
 	 Function can be replaced by A* algorithm, or similar algorithm.
 	*/
+
 	Vector2i newPosition = player.GetPosition( );
 	Vector2i oldPosition;
-	double high = sqrt( _length * _width ) * 3;
-	double low = sqrt( _length * _width ) * 2;
+	double high = sqrt( _maxCols * _maxRows ) * 3;
+	double low = sqrt( _maxCols * _maxRows ) * 2;
 	int threshold = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
 	int thresholdCounter = 0;
 	int random;
 
-	if( path.size( ) == 0 )
+	if( paths.size( ) == 0 )
 	{
-		path.emplace_back( player.GetPosition( ) );
-		UpdateHiddenDataMap( player.GetPosition( ), iconPath );
+		paths.emplace_back( player.GetPosition( ) );
+		UpdateHiddenDataAt( player.GetPosition( ), Portrait::Path );
 	}
 
 	while( true )
@@ -222,19 +211,19 @@ void Room::SetInvisiblePath( )
 		{
 			if( random <= 4 )
 			{
-				newPosition.x++;
+				newPosition.row++;
 			}
 			else if( random <= 8 )
 			{
-				newPosition.y++;
+				newPosition.col++;
 			}
 			else if( random <= 12 )
 			{
-				newPosition.x--;
+				newPosition.row--;
 			}
 			else
 			{
-				newPosition.y--;
+				newPosition.col--;
 			}
 
 			thresholdCounter++;
@@ -243,33 +232,33 @@ void Room::SetInvisiblePath( )
 		{
 			if( random <= 6 )
 			{
-				newPosition.x++;
+				newPosition.row++;
 			}
 			else if( random <= 14 )
 			{
-				newPosition.y++;
+				newPosition.col++;
 			}
 			else if( random <= 15 )
 			{
-				newPosition.x--;
+				newPosition.row--;
 			}
 			else
 			{
-				newPosition.y--;
+				newPosition.col--;
 			}
 		}
 
-		if( GetPositionVisibleDataMap( newPosition ) == iconWall )
+		if( GetVisibleDataAt( newPosition ) == Portrait::Wall )
 		{
 			newPosition = oldPosition;
 		}
 		else
 		{
-			path.emplace_back( newPosition );
-			UpdateHiddenDataMap( newPosition, iconPath );
+			paths.emplace_back( newPosition );
+			UpdateHiddenDataAt( newPosition, Portrait::Path );
 		}
 
-		if( path.back( ).GetPosition( ) == exit.back( ).GetPosition( ) )
+		if( paths.back( ).GetPosition( ) == exits.back( ).GetPosition( ) )
 		{
 			break;
 		}
@@ -278,70 +267,86 @@ void Room::SetInvisiblePath( )
 void Room::SetRandomWalls( )
 {
 	Vector2i iterator;
-	Vector2i newPosition;
+	Vector2i position;
 	int infiniteLoopBreaker = 0;
+	int sourceWallsLeft = ( _maxCols * _maxRows ) / 20;
+	int extensionWallsLeft = ( _maxCols * _maxRows ) / 4;
 
-	double high = sqrt( _length * _width ) * 1.5;
-	double low = sqrt( _length * _width ) / 1.5;
-	int randomSourceWalls = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
-	int randomTries = RandomNumberGenerator( 5, 10 );
+	std::cout << "\n\nLoading source walls.\n";
 
-	std::cout << "\nLoading walls.\n";
-
-	while( randomSourceWalls > 0 ) // Place source walls.
+	while( sourceWallsLeft > 0 )
 	{
-		for( iterator.y = 0; iterator.y < _length; iterator.y++ )
-		{
-			for( iterator.x = 0; iterator.x < _width; iterator.x++ )
-			{
-				if( GetPositionVisibleDataMap( iterator ) == iconFloor &&
-					GetPositionHiddenDataMap( iterator ) != iconPath &&
-					RandomNumberGenerator( 1, 1000 ) == 1 )
-				{
-					wall.emplace_back( iterator );
-					UpdateVisibleDataMap( iterator, iconWall );
-					randomSourceWalls--;
+		position.col = RandomNumberGenerator( 1, _maxCols - 2 );
+		position.row = RandomNumberGenerator( 1, _maxRows - 2 );
 
-					std::cout << ".";
-				}
-			}
+		if( GetVisibleDataAt( position ) == Portrait::Floor &&
+			GetHiddenDataAt( position ) != Portrait::Path )
+		{
+			walls.emplace_back( position );
+			UpdateVisibleDataAt( position, Portrait::Wall );
+			sourceWallsLeft--;
+
+			std::cout << ".";
 		}
 
-		if( infiniteLoopBreaker++ > 10000 )
+		if( infiniteLoopBreaker++ > _maxCols * _maxRows )
 		{
 			break;
 		}
 	}
 
-	std::cout << "\n";
+	infiniteLoopBreaker = 0;
 
-	for( int i = 0; i < randomTries; i++ ) // Place extension walls.
+	std::cout << "\n\nLoading extension walls.\n";
+
+	while( extensionWallsLeft > 0 )
 	{
-		std::cout << ".";
-
-		for( iterator.y = 1; iterator.y < _length - 1; iterator.y++ )
+		for( int i = 0; i < walls.size( ); i++ )
 		{
-			for( iterator.x = 1; iterator.x < _width - 1; iterator.x++ )
-			{
-				if( GetPositionVisibleDataMap( iterator ) == iconWall )
-				{
-					newPosition.x = iterator.x + RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
-					newPosition.y = iterator.y + RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
+			position = walls[i].GetPosition( );
 
-					if( GetPositionVisibleDataMap( newPosition ) == iconFloor &&
-						GetPositionHiddenDataMap( newPosition ) != iconPath )
-					{
-						wall.emplace_back( newPosition );
-						UpdateVisibleDataMap( newPosition, iconWall );
-					}
-				}
-				else if( GetPositionVisibleDataMap( iterator ) == iconFloor &&
-						 GetPositionHiddenDataMap( iterator ) != iconPath &&
-						 CheckEmptySurroundedTile( iterator ) == true )
-				{
-					wall.emplace_back( iterator );
-					UpdateVisibleDataMap( iterator, iconWall );
-				}
+			if( position.col == _maxCols - 1 ||
+				position.row == _maxRows - 1 ||
+				position.col == 0 ||
+				position.row == 0 )
+			{
+				continue;
+			}
+
+			position.col += RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
+			position.row += RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
+
+			if( GetVisibleDataAt( position ) == Portrait::Floor &&
+				GetHiddenDataAt( position ) != Portrait::Path )
+			{
+				walls.emplace_back( position );
+				UpdateVisibleDataAt( position, Portrait::Wall );
+				extensionWallsLeft--;
+
+				std::cout << ".";
+			}
+		}
+
+		if( infiniteLoopBreaker++ > _maxCols * _maxRows )
+		{
+			break;
+		}
+	}
+
+	std::cout << "\n\nLoading filler walls.\n";
+
+	for( iterator.row = 1; iterator.row < _maxRows - 1; iterator.row++ )
+	{
+		for( iterator.col = 1; iterator.col < _maxCols - 1; iterator.col++ )
+		{
+			if( GetVisibleDataAt( iterator ) == Portrait::Floor &&
+				GetHiddenDataAt( iterator ) != Portrait::Path &&
+				EmptySurroundedTile( iterator ) == true )
+			{
+				walls.emplace_back( iterator );
+				UpdateVisibleDataAt( iterator, Portrait::Wall );
+
+				std::cout << ".";
 			}
 		}
 	}
@@ -350,47 +355,74 @@ void Room::SetRandomWalls( )
 }
 void Room::SetRandomMonsterPositions( )
 {
-	Vector2i newPosition;
+	Vector2i position;
 	int infiniteLoopBreaker = 0;
 
-	std::cout << "\nLoading monsters.\n";
+	std::cout << "\n\nLoading monsters.\n";
 
-	for( unsigned int i = 0; i < monster.size( ); i++ )
+	for( unsigned int i = 0; i < monsters.size( ); i++ )
 	{
 		std::cout << ".";
 
 		while( true )
 		{
-			newPosition.x = RandomNumberGenerator( 1, _width - 2 );
-			newPosition.y = RandomNumberGenerator( 1, _length - 2 );
+			position.col = RandomNumberGenerator( 1, _maxCols - 2 );
+			position.row = RandomNumberGenerator( 1, _maxRows - 2 );
 
 			if( infiniteLoopBreaker++ > 10000 )
 			{
 				break;
 			}
 
-			if( GetPositionVisibleDataMap( newPosition ) == iconFloor )
+			if( GetVisibleDataAt( position ) == Portrait::Floor )
 			{
 				break;
 			}
 		}
 
-		monster[i].SetPosition( newPosition );
-		UpdateVisibleDataMap( newPosition, iconMonster );
+		monsters[i].SetPosition( position );
+		UpdateVisibleDataAt( position, Portrait::Monster );
 	}
 }
 
-void Room::DrawRoom( ) const
+void Room::DrawRoom_Iterator1D( ) const
 {
+	system( "CLS" );
+
+	unsigned int iterator;
+
+	for( iterator = 0; iterator < _maxRows * _maxCols; ++iterator )
+	{
+		if( _fogOfWarData[iterator] == 1 )
+		{
+			std::cout << _visibleData[iterator];
+		}
+		else
+		{
+			std::cout << " ";
+		}
+
+		if( ( iterator + 1 ) % _maxCols == 0 )
+		{
+			std::cout << "\n";
+		}
+	}
+
+	std::cout << "\n";
+}
+void Room::DrawRoom_Iterator2D( ) const
+{
+	system( "CLS" );
+
 	Vector2i iterator;
 
-	for( iterator.y = 0; iterator.y < _length; iterator.y++ )
+	for( iterator.row = 0; iterator.row < _maxRows; iterator.row++ )
 	{
-		for( iterator.x = 0; iterator.x < _width; iterator.x++ )
+		for( iterator.col = 0; iterator.col < _maxCols; iterator.col++ )
 		{
-			if( GetPositionFogOfWarDataMap( iterator ) == 1 )
+			if( GetFogOfWarDataAt( iterator ) == 1 )
 			{
-				std::cout << GetPositionVisibleDataMap( iterator );
+				std::cout << GetVisibleDataAt( iterator );
 			}
 			else
 			{
@@ -415,7 +447,7 @@ char Room::TurnOptions( )
 	std::cout << "[Q] Do nothing\n";
 	std::cout << "[E] Exit to meny\n";
 
-	RETRY:
+	REtry:
 	std::cout << "\nYour choice: ";
 	std::cin >> userChoice;
 
@@ -424,8 +456,8 @@ char Room::TurnOptions( )
 		case 'W':
 		case 'w':       // Move up.
 		{
-			newPosition.x = player.GetPosition( ).x;
-			newPosition.y = player.GetPosition( ).y - 1;
+			newPosition.row = player.GetPosition( ).row - 1;
+			newPosition.col = player.GetPosition( ).col;
 
 			break;
 		}
@@ -433,8 +465,8 @@ char Room::TurnOptions( )
 		case 'S':
 		case 's':       // Move down.
 		{
-			newPosition.x = player.GetPosition( ).x;
-			newPosition.y = player.GetPosition( ).y + 1;
+			newPosition.row = player.GetPosition( ).row + 1;
+			newPosition.col = player.GetPosition( ).col;
 
 			break;
 		}
@@ -442,8 +474,8 @@ char Room::TurnOptions( )
 		case 'A':
 		case 'a':       // Move left.
 		{
-			newPosition.x = player.GetPosition( ).x - 1;
-			newPosition.y = player.GetPosition( ).y;
+			newPosition.row = player.GetPosition( ).row;
+			newPosition.col = player.GetPosition( ).col - 1;
 
 			break;
 		}
@@ -451,8 +483,8 @@ char Room::TurnOptions( )
 		case 'D':
 		case 'd':       // Move right.
 		{
-			newPosition.x = player.GetPosition( ).x + 1;
-			newPosition.y = player.GetPosition( ).y;
+			newPosition.row = player.GetPosition( ).row;
+			newPosition.col = player.GetPosition( ).col + 1;
 
 			break;
 		}
@@ -474,15 +506,15 @@ char Room::TurnOptions( )
 		default:
 		{
 			std::cout << "Invalid input, try again.\n";
-			goto RETRY;
+			goto REtry;
 		}
 	}
 
-	if( GetPositionVisibleDataMap( newPosition ) != iconWall )
+	if( GetVisibleDataAt( newPosition ) != Portrait::Wall )
 	{
-		UpdateVisibleDataMap( player.GetPosition( ), iconFloor );
+		UpdateVisibleDataAt( player.GetPosition( ), Portrait::Floor );
 		player.SetPosition( newPosition );
-		UpdateVisibleDataMap( newPosition, iconPlayer );
+		UpdateVisibleDataAt( newPosition, Portrait::Player );
 	}
 
 	return 0;
@@ -492,37 +524,37 @@ void Room::RandomizeMonsterMovement( )
 	Vector2i newPosition;
 	int random;
 
-	for( unsigned int i = 0; i < monster.size( ); i++ )
+	for( unsigned int i = 0; i < monsters.size( ); i++ )
 	{
 		while( true )
 		{
 			random = RandomNumberGenerator( 1, 8 );		// 25% to move, 75% to stand still.
-			newPosition = monster[i].GetPosition( );
+			newPosition = monsters[i].GetPosition( );
 
 			if( random == 1 )							// Monster moves vertically.
 			{
-				newPosition.x = newPosition.x + RandomPositiveNegativeGenerator( );
+				newPosition.row = newPosition.row + RandomPositiveNegativeGenerator( );
 			}
 			else if( random == 2 )						// Monster moves horizontally.
 			{
-				newPosition.y = newPosition.y + RandomPositiveNegativeGenerator( );
+				newPosition.col = newPosition.col + RandomPositiveNegativeGenerator( );
 			}
 			else										// Monster stands still.
 			{
 				break;
 			}
 
-			if( GetPositionVisibleDataMap( newPosition ) != iconWall &&
-				GetPositionVisibleDataMap( newPosition ) != iconExit &&
-				GetPositionVisibleDataMap( newPosition ) != iconMonster )
+			if( GetVisibleDataAt( newPosition ) != Portrait::Wall &&
+				GetVisibleDataAt( newPosition ) != Portrait::Exit &&
+				GetVisibleDataAt( newPosition ) != Portrait::Monster )
 			{
-				if( !( monster[i].GetPosition( ) == player.GetPosition( ) ) )						// Player movement is executed before monster movement, so
+				if( !( monsters[i].GetPosition( ) == player.GetPosition( ) ) )						// player movement is executed before monster movement, so
 				{																					// clearing the monster's previous position after the player
-					UpdateVisibleDataMap( monster[i].GetPosition( ), iconFloor );					// has moved to that position will make the player icon invisible.
+					UpdateVisibleDataAt( monsters[i].GetPosition( ), Portrait::Floor );				// has moved to that position will make the player icon invisible.
 				}																					// (this update avoids that)
 
-				monster[i].SetPosition( newPosition );
-				UpdateVisibleDataMap( newPosition, iconMonster );
+				monsters[i].SetPosition( newPosition );
+				UpdateVisibleDataAt( newPosition, Portrait::Monster );
 				break;
 			}
 		}
@@ -531,10 +563,15 @@ void Room::RandomizeMonsterMovement( )
 
 bool Room::CheckWinCondition( ) const
 {
-	for( unsigned int i = 0; i < exit.size( ); i++ )
+	for( unsigned int i = 0; i < exits.size( ); i++ )
 	{
-		if( player.GetPosition( ) == exit[i].GetPosition( ) )
+		if( player.GetPosition( ) == exits[i].GetPosition( ) )
 		{
+			std::cout << "You win!";
+			std::cout << "\n\nPress enter to continue: ";
+			std::cin.get( );
+			std::cin.get( );
+
 			return true;
 		}
 	}
@@ -543,10 +580,15 @@ bool Room::CheckWinCondition( ) const
 }
 bool Room::CheckLoseCondition( ) const
 {
-	for( unsigned int i = 0; i < monster.size( ); i++ )
+	for( unsigned int i = 0; i < monsters.size( ); i++ )
 	{
-		if( player.GetPosition( ) == monster[i].GetPosition( ) )
+		if( player.GetPosition( ) == monsters[i].GetPosition( ) )
 		{
+			std::cout << "You lose!";
+			std::cout << "\n\nPress enter to continue: ";
+			std::cin.get( );
+			std::cin.get( );
+
 			return true;
 		}
 	}

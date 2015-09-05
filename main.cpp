@@ -3,23 +3,17 @@
 #include <string>
 #include <random>
 
-extern const char iconPlayer = '@';
-extern const char iconMonster = 'M';
-extern const char iconWall = '#';
-extern const char iconExit = '=';
-extern const char iconPath = ':';
-extern const char iconFloor = '-';
-
-extern int GetPositiveInteger( )
+extern int GetPositiveInteger( const std::string& context )
 {
 	std::string userChoice;
 
 	RETRY:
+	std::cout << context;
 	std::cin >> userChoice;
 
 	if( userChoice.size( ) > 9 ) // Manual max int input: 999 999 999, roughly half of the max size for signed int.
 	{
-		std::cout << "Input is too big, try again: ";
+		std::cout << "\nInput is too big, try again.\n\n";
 		goto RETRY;
 	}
 
@@ -27,14 +21,12 @@ extern int GetPositiveInteger( )
 	{
 		if( isdigit( userChoice[i] ) == false )
 		{
-			std::cout << "Input needs to consist of digits only, try again: ";
+			std::cout << "\nInput needs to consist of digits only, try again.\n\n";
 			goto RETRY;
 		}
 	}
 
-	int output = atoi( userChoice.c_str( ) );
-
-	return output;
+	return atoi( userChoice.c_str( ) );
 }
 extern int RandomNumberGenerator( int min, int max )
 {
@@ -48,107 +40,106 @@ extern int RandomPositiveNegativeGenerator( )
 {
 	return RandomNumberGenerator( 0, 1 ) ? 1 : -1;
 }
+/*
+extern std::vector<Vector2i> AStarPathFindningAlgorithm( Vector2i start, Vector2i goal )
+{
+
+}
+*/
 
 void PrintGameRules( )
 {
 	std::cout << "Win condition: Enter the exit.\n";
 	std::cout << "Lose condition: Enter the same space as a monster.\n\n";
 }
-int SetGameState( )
+int SetGameType( )
 {
 	std::string userChoice;
 
-	std::cout << "Choose the game state.\n";
+	std::cout << "Choose the game type.\n";
 	std::cout << "[1] Randomization mode\n";
 	std::cout << "[2] Configuration mode\n";
 	std::cout << "[3] Exit game\n";
 
-	RETRY:
-	std::cout << "\nYour choice: ";
-	std::cin >> userChoice;
+	while( true )
+	{
+		std::cout << "\nYour choice: ";
+		std::cin >> userChoice;
 
-	if( userChoice[0] == '1' )
-	{
-		return 1;
+		switch( userChoice[0] )
+		{
+			case '1':
+			{
+				return 1;
+			}
+
+			case '2':
+			{
+				return 2;
+			}
+
+			case '3':
+			{
+				std::exit( 0 );
+			}
+
+			default:
+			{
+				std::cout << "\nInvalid input, try again.\n";
+				break;
+			}
+		}
 	}
-	else if( userChoice[0] == '2' )
+}
+
+void GameLoop( Room& room )
+{
+	while( true )
 	{
-		return 2;
+		room.UpdateFogOfWarData( );
+		room.DrawRoom_Iterator1D( );
+
+		if( room.CheckWinCondition( ) == true ||
+			room.CheckLoseCondition( ) == true ||
+			room.TurnOptions( ) == 'E' )
+		{
+			return;
+		}
+
+		room.RandomizeMonsterMovement( );
 	}
-	else if( userChoice[0] == '3' )
-	{
-		std::exit( 0 );
-	}
-	else
-	{
-		std::cout << "Invalid input, try again.\n";
-		goto RETRY;
-	}
+}
+void NewGame( int gameType )
+{
+	Room room;
+
+	system( "CLS" );
+
+	room.SetRoomSize( gameType );
+	room.SetRoomLineOfSight( gameType );
+	room.SetRoomMonsterAmount( gameType );
+
+	room.BuildHiddenData( );
+	room.BuildVisibleData( );
+	room.BuildFogOfWarData( );
+
+	room.SetPlayerPosition( );
+	room.SetExits( );
+	room.SetOuterWalls( );
+	room.SetInvisiblePath( );
+	room.SetRandomWalls( );
+	room.SetRandomMonsterPositions( );
+
+	GameLoop( room );
 }
 
 int main( )
 {
-	std::vector<Room> room;
-	int roomMode;
-
-	MENY:
-	room.clear( );
-	PrintGameRules( );
-	roomMode = SetGameState( );
-
-	for( int i = 0; i < 100; i++ )
+	while( true )
 	{
 		system( "CLS" );
-
-		room.emplace_back( );
-
-		room[i].SetRoomSize( roomMode );
-		room[i].SetRoomLineOfSight( roomMode );
-		room[i].SetRoomMonsterAmount( roomMode );
-
-		room[i].BuildHiddenDataMap( );
-		room[i].BuildVisibleDataMap( );
-		room[i].BuildFogOfWarDataMap( );
-
-		room[i].SetPlayerPosition( );
-		room[i].SetExits( );
-		room[i].SetOuterWalls( );
-		room[i].SetInvisiblePath( );
-		room[i].SetRandomWalls( );
-		room[i].SetRandomMonsterPositions( );
-
-		while( true )
-		{
-			system( "CLS" );
-
-			room[i].UpdateFogOfWarDataMap( );
-
-			room[i].DrawRoom( );
-
-			if( room[i].CheckWinCondition( ) == true )
-			{
-				std::cout << "You win!";
-				std::cout << "\n\nPress enter to continue: ";
-				std::cin.get( );
-				std::cin.get( );
-				break;
-			}
-			else if( room[i].CheckLoseCondition( ) == true )
-			{
-				std::cout << "You lose!";
-				std::cout << "\n\nPress enter to continue: ";
-				std::cin.get( );
-				std::cin.get( );
-				break;
-			}
-
-			if( room[i].TurnOptions( ) == 'E' )
-			{
-				goto MENY;
-			}
-
-			room[i].RandomizeMonsterMovement( );
-		}
+		PrintGameRules( );
+		NewGame( SetGameType( ) );
 	}
 
 	return 0;
