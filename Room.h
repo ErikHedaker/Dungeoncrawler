@@ -32,7 +32,7 @@ class Room
 
 		void BuildFogOfWarData( );
 		void UpdateFogOfWarData( );
-		char GetFogOfWarDataAt( const Vector2i& position ) const;
+		bool GetFogOfWarDataAt( const Vector2i& position ) const;
 
 		/* Configuration */
 		void SetRoomSize( int gameType );

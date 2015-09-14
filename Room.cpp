@@ -70,12 +70,12 @@ void Room::UpdateFogOfWarData( )
 			if( iterator >= player.GetPosition( ) - _lineOfSight &&
 				iterator <= player.GetPosition( ) + _lineOfSight )
 			{
-				_fogOfWarData[ ( iterator.row * _maxCols ) + iterator.col ] = true;
+				_fogOfWarData[( iterator.row * _maxCols ) + iterator.col] = true;
 			}
 		}
 	}
 }
-char Room::GetFogOfWarDataAt( const Vector2i& position ) const
+bool Room::GetFogOfWarDataAt( const Vector2i& position ) const
 {
 	return _fogOfWarData[( position.row * _maxCols ) + position.col];
 }
@@ -117,7 +117,7 @@ void Room::SetRoomMonsterAmount( int gameType )
 	if( gameType == 2 )
 	{
 		int amountMonsters;
-		int maxMonsters = sqrt( _maxRows * _maxCols ) * 2;
+		int maxMonsters = sqrt( _maxRows * _maxCols ) * 11 - 100;
 
 		while( true )
 		{
@@ -164,14 +164,11 @@ void Room::SetOuterWalls( )
 	{
 		for( iterator.col = 0; iterator.col < _maxCols; iterator.col++ )
 		{
-			if( GetVisibleDataAt( iterator ) == '=' )
-			{
-				continue;
-			}
-			else if( iterator.row == _maxRows - 1 ||
-					 iterator.col == _maxCols - 1 ||
-					 iterator.row == 0 ||
-					 iterator.col == 0 )
+			if( GetVisibleDataAt( iterator ) != '=' &&
+				( iterator.row == _maxRows - 1 ||
+				  iterator.col == _maxCols - 1 ||
+				  iterator.row == 0 ||
+				  iterator.col == 0 ) )
 			{
 				walls.emplace_back( iterator );
 				UpdateVisibleDataAt( iterator, Portrait::Wall );
@@ -269,6 +266,7 @@ void Room::SetRandomWalls( )
 	Vector2i iterator;
 	Vector2i position;
 	int infiniteLoopBreaker = 0;
+	int printLoadingBar = 0;
 	int sourceWallsLeft = ( _maxCols * _maxRows ) / 20;
 	int extensionWallsLeft = ( _maxCols * _maxRows ) / 4;
 
@@ -286,10 +284,14 @@ void Room::SetRandomWalls( )
 			UpdateVisibleDataAt( position, Portrait::Wall );
 			sourceWallsLeft--;
 
-			std::cout << ".";
+			if( ++printLoadingBar == 5000 )
+			{
+				printLoadingBar = 0;
+				std::cout << ".";
+			}
 		}
 
-		if( infiniteLoopBreaker++ > _maxCols * _maxRows )
+		if( ++infiniteLoopBreaker > _maxCols * _maxRows )
 		{
 			break;
 		}
@@ -323,11 +325,15 @@ void Room::SetRandomWalls( )
 				UpdateVisibleDataAt( position, Portrait::Wall );
 				extensionWallsLeft--;
 
-				std::cout << ".";
+				if( ++printLoadingBar == 5000 )
+				{
+					printLoadingBar = 0;
+					std::cout << ".";
+				}
 			}
 		}
 
-		if( infiniteLoopBreaker++ > _maxCols * _maxRows )
+		if( ++infiniteLoopBreaker > _maxCols * _maxRows )
 		{
 			break;
 		}
@@ -346,54 +352,61 @@ void Room::SetRandomWalls( )
 				walls.emplace_back( iterator );
 				UpdateVisibleDataAt( iterator, Portrait::Wall );
 
-				std::cout << ".";
+				if( ++printLoadingBar == 5000 )
+				{
+					printLoadingBar = 0;
+					std::cout << ".";
+				}
 			}
 		}
 	}
-
-	std::cout << "\n";
 }
 void Room::SetRandomMonsterPositions( )
 {
 	Vector2i position;
 	int infiniteLoopBreaker = 0;
+	int printLoadingBar = 0;
 
 	std::cout << "\n\nLoading monsters.\n";
 
 	for( unsigned int i = 0; i < monsters.size( ); i++ )
 	{
-		std::cout << ".";
-
 		while( true )
 		{
 			position.col = RandomNumberGenerator( 1, _maxCols - 2 );
 			position.row = RandomNumberGenerator( 1, _maxRows - 2 );
 
-			if( infiniteLoopBreaker++ > 10000 )
+			if( GetVisibleDataAt( position ) == Portrait::Floor )
 			{
+				monsters[i].SetPosition( position );
+				UpdateVisibleDataAt( position, Portrait::Monster );
+
+				if( ++printLoadingBar == 500 )
+				{
+					printLoadingBar = 0;
+					std::cout << ".";
+				}
+
 				break;
 			}
 
-			if( GetVisibleDataAt( position ) == Portrait::Floor )
+			if( infiniteLoopBreaker++ > 100000 )
 			{
 				break;
 			}
 		}
-
-		monsters[i].SetPosition( position );
-		UpdateVisibleDataAt( position, Portrait::Monster );
 	}
 }
 
 void Room::DrawRoom_Iterator1D( ) const
 {
-	system( "CLS" );
-
 	unsigned int iterator;
+
+	system( "CLS" );
 
 	for( iterator = 0; iterator < _maxRows * _maxCols; ++iterator )
 	{
-		if( _fogOfWarData[iterator] == 1 )
+		if( _fogOfWarData[iterator] == true )
 		{
 			std::cout << _visibleData[iterator];
 		}
@@ -412,15 +425,15 @@ void Room::DrawRoom_Iterator1D( ) const
 }
 void Room::DrawRoom_Iterator2D( ) const
 {
-	system( "CLS" );
-
 	Vector2i iterator;
+
+	system( "CLS" );
 
 	for( iterator.row = 0; iterator.row < _maxRows; iterator.row++ )
 	{
 		for( iterator.col = 0; iterator.col < _maxCols; iterator.col++ )
 		{
-			if( GetFogOfWarDataAt( iterator ) == 1 )
+			if( GetFogOfWarDataAt( iterator ) == true )
 			{
 				std::cout << GetVisibleDataAt( iterator );
 			}

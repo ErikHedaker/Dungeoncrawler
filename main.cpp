@@ -41,16 +41,17 @@ extern int RandomPositiveNegativeGenerator( )
 	return RandomNumberGenerator( 0, 1 ) ? 1 : -1;
 }
 /*
-extern std::vector<Vector2i> AStarPathFindningAlgorithm( Vector2i start, Vector2i goal )
+extern std::vector<Vector2i> AStarPathfindingAlgorithm( Vector2i start, Vector2i goal )
 {
 
 }
 */
 
-void PrintGameRules( )
+void PrintStartMessage( )
 {
-	std::cout << "Win condition: Enter the exit.\n";
+	std::cout << "Win  condition: Enter the exit.\n";
 	std::cout << "Lose condition: Enter the same space as a monster.\n\n";
+	std::cout << "Increase your console width and height incase the drawing of your room become misaligned.\n\n";
 }
 int SetGameType( )
 {
@@ -138,7 +139,7 @@ int main( )
 	while( true )
 	{
 		system( "CLS" );
-		PrintGameRules( );
+		PrintStartMessage( );
 		NewGame( SetGameType( ) );
 	}
 
