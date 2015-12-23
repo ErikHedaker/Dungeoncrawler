@@ -10,7 +10,7 @@ void Entity::SetPosition( const Vector2i& position )
 	_position.col = position.col;
 	_position.row = position.row;
 }
-Vector2i Entity::GetPosition( ) const
+const Vector2i Entity::GetPosition( ) const
 {
 	return _position;
 }

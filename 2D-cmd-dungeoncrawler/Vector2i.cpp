@@ -9,48 +9,53 @@ Vector2i::Vector2i( int col, int row ) :
 	row( row )
 { }
 
-bool Vector2i::operator==( const Vector2i& compare ) const
+void Vector2i::operator=( const Vector2i& rhs )
 {
-	return col == compare.col && row == compare.row;
+	col = rhs.col;
+	row = rhs.row;
 }
-bool Vector2i::operator!=( const Vector2i& compare ) const
+
+bool operator==( const Vector2i& lhs, const Vector2i& rhs )
 {
-	return col != compare.col || row != compare.row;
+	return lhs.col == rhs.col && lhs.row == rhs.row;
 }
-bool Vector2i::operator<=( const Vector2i& compare ) const
+bool operator!=( const Vector2i& lhs, const Vector2i& rhs )
 {
-	return col <= compare.col && row <= compare.row;
+	return lhs.col != rhs.col || lhs.row != rhs.row;
 }
-bool Vector2i::operator>=( const Vector2i& compare ) const
+bool operator<=( const Vector2i& lhs, const Vector2i& rhs )
 {
-	return col >= compare.col && row >= compare.row;
+	return lhs.col <= rhs.col && lhs.row <= rhs.row;
 }
-void Vector2i::operator=( const Vector2i& assign )
+bool operator>=( const Vector2i& lhs, const Vector2i& rhs )
 {
-	col = assign.col;
-	row = assign.row;
+	return lhs.col >= rhs.col && lhs.row >= rhs.row;
 }
-const Vector2i& Vector2i::operator+( const Vector2i& add )
+const Vector2i operator+( const Vector2i& lhs, const Vector2i& rhs )
 {
-	col += add.col;
-	row += add.row;
-	return *this;
+	Vector2i result;
+	result.col = lhs.col + rhs.col;
+	result.row = lhs.row + rhs.row;
+	return result;
 }
-const Vector2i& Vector2i::operator+( int add )
+const Vector2i operator+( const Vector2i& lhs, int rhs )
 {
-	col += add;
-	row += add;
-	return *this;
+	Vector2i result;
+	result.col = lhs.col + rhs;
+	result.row = lhs.row + rhs;
+	return result;
 }
-const Vector2i& Vector2i::operator-( const Vector2i& subtract )
+const Vector2i operator-( const Vector2i& lhs, const Vector2i& rhs )
 {
-	col -= subtract.col;
-	row -= subtract.row;
-	return *this;
+	Vector2i result;
+	result.col = lhs.col - rhs.col;
+	result.row = lhs.row - rhs.row;
+	return result;
 }
-const Vector2i& Vector2i::operator-( int subtract )
+const Vector2i operator-( const Vector2i& lhs, int rhs )
 {
-	col -= subtract;
-	row -= subtract;
-	return *this;
+	Vector2i result;
+	result.col = lhs.col - rhs;
+	result.row = lhs.row - rhs;
+	return result;
 }

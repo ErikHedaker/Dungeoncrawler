@@ -10,7 +10,7 @@ class Entity
 		const char portrait;
 
 		void SetPosition( const Vector2i& position );
-		Vector2i GetPosition( ) const;
+		const Vector2i GetPosition( ) const;
 
 	private:
 		Vector2i _position;
