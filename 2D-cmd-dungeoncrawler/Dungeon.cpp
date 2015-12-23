@@ -1,13 +1,11 @@
 #include "Dungeon.h"
+#include "RNG.h"
+#include "AStarAlgorithm.h"
 #include "Portrait.h"
 #include "IO.h"
 #include <math.h>
 #include <algorithm>
 #include <iterator>
-
-extern std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionFinish, const Vector2i& mapSize, const std::vector<Vector2i>& obstacles );
-extern int RandomNumberGenerator( int min, int max );
-extern int RandomPositiveNegativeGenerator( );
 
 void Dungeon::Build( char gameType )
 {
@@ -288,8 +286,8 @@ void Dungeon::SetRandomExtensionWalls( )
 				continue;
 			}
 
-			position.col += RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
-			position.row += RandomNumberGenerator( 0, 1 ) * RandomPositiveNegativeGenerator( );
+			position.col += RandomNumberGenerator( 0, 1 ) * ( RandomNumberGenerator( 0, 1 ) ? 1 : -1 );
+			position.row += RandomNumberGenerator( 0, 1 ) * ( RandomNumberGenerator( 0, 1 ) ? 1 : -1 );
 
 			if( GetEntityDataAt( position ) == nullptr &&
 				GetHiddenDataAt( position ) == nullptr )

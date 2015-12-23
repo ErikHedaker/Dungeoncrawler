@@ -1,3 +1,5 @@
+#pragma once
+
 struct Portrait
 {
 	static const char Player = '@';

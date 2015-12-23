@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Character.h"
 #include <array>
 

@@ -23,9 +23,9 @@ class Dungeon
 		bool GetVisionDataAt( const Vector2i& position ) const;
 
 	private:
+		GameState _state;
 		Vector2i _size;
 		int _lineOfSight;
-		GameState _state;
 
 		/* All types inherit from Entity */
 		std::unique_ptr<Player> _player;	// player needs to be dynamically allocated.

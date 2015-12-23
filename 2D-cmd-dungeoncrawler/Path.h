@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Entity.h"
 
 class Path : public Entity

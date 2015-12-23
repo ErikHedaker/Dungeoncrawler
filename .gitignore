@@ -4,3 +4,5 @@
 *.sdf
 *.sln
 *.v12.suo
+*.tlog
+**/Debug/
