@@ -1,0 +1,6 @@
+﻿  main.cpp
+c:\users\erik\documents\visual studio 2013\projects\2d-cmd-dungeoncrawler\2d-cmd-dungeoncrawler\main.cpp(23): warning C4172: returning address of local variable or temporary
+          c:\users\erik\documents\visual studio 2013\projects\2d-cmd-dungeoncrawler\2d-cmd-dungeoncrawler\main.cpp(22) : while compiling class template member function 'const bool &Array2D<bool>::GetAt(const Vector2i &) const'
+          c:\users\erik\documents\visual studio 2013\projects\2d-cmd-dungeoncrawler\2d-cmd-dungeoncrawler\main.cpp(124) : see reference to function template instantiation 'const bool &Array2D<bool>::GetAt(const Vector2i &) const' being compiled
+          c:\users\erik\documents\visual studio 2013\projects\2d-cmd-dungeoncrawler\2d-cmd-dungeoncrawler\main.cpp(72) : see reference to class template instantiation 'Array2D<bool>' being compiled
+  2D-cmd-dungeoncrawler.vcxproj -> C:\Users\Erik\documents\visual studio 2013\Projects\2D-cmd-dungeoncrawler\Debug\2D-cmd-dungeoncrawler.exe
