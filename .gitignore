@@ -5,4 +5,11 @@
 *.sln
 *.v12.suo
 *.tlog
+
+
 **/Debug/
+*/Debug/
+/2D-cmd-dungeoncrawler/Debug/
+/2D-cmd-dungeoncrawler/Debug
+2D-cmd-dungeoncrawler/Debug/
+2D-cmd-dungeoncrawler/Debug
