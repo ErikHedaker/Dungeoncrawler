@@ -1,20 +1,14 @@
 #include "Entity.h"
 
-Entity::Entity( )
-{
-	_position.col = 0;
-	_position.row = 0;
-}
-Entity::Entity( const Vector2i& newPosition )
-{
-	_position.col = newPosition.col;
-	_position.row = newPosition.row;
-}
+Entity::Entity( const Vector2i& position, char portrait ) :
+	portrait( portrait ),
+	_position( position )
+{ }
 
-void Entity::SetPosition( const Vector2i& newPosition )
+void Entity::SetPosition( const Vector2i& position )
 {
-	_position.col = newPosition.col;
-	_position.row = newPosition.row;
+	_position.col = position.col;
+	_position.row = position.row;
 }
 Vector2i Entity::GetPosition( ) const
 {

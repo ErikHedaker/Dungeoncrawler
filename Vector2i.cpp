@@ -1,19 +1,21 @@
 #include "Vector2i.h"
 
-Vector2i::Vector2i( )
-{
-	col = 0;
-	row = 0;
-}
-Vector2i::Vector2i( int newCol, int newRow )
-{
-	col = newCol;
-	row = newRow;
-}
+Vector2i::Vector2i( ) :
+	col( 0 ),
+	row( 0 )
+{ }
+Vector2i::Vector2i( int col, int row ) :
+	col( col ),
+	row( row )
+{ }
 
 bool Vector2i::operator==( const Vector2i& compare ) const
 {
 	return col == compare.col && row == compare.row;
+}
+bool Vector2i::operator!=( const Vector2i& compare ) const
+{
+	return col != compare.col || row != compare.row;
 }
 bool Vector2i::operator<=( const Vector2i& compare ) const
 {

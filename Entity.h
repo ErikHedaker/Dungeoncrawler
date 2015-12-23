@@ -1,12 +1,15 @@
+#pragma once
+
 #include "Vector2i.h"
 
 class Entity
 {
 	public:
-		Entity( );
-		Entity( const Vector2i& newPosition );
+		Entity( const Vector2i& position, char portrait );
 
-		void SetPosition( const Vector2i& newPosition );
+		const char portrait;
+
+		void SetPosition( const Vector2i& position );
 		Vector2i GetPosition( ) const;
 
 	private:
