@@ -28,7 +28,7 @@ class Dungeon
 		int _lineOfSight;
 
 		/* All types inherit from Entity */
-		std::unique_ptr<Player> _player;	// player needs to be dynamically allocated.
+		std::unique_ptr<Player> _player;	// _player needs to be dynamically allocated.
 		std::list<Monster> _monsters;
 		std::list<Wall> _walls;				// std::list guarantees unchanged
 		std::list<Exit> _exits;				// element addresses as the

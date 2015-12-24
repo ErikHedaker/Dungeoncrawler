@@ -1,3 +1,4 @@
+
 *.vcxproj
 *.vcxproj.filters
 *.opensdf
@@ -13,3 +14,10 @@
 /2D-cmd-dungeoncrawler/Debug
 2D-cmd-dungeoncrawler/Debug/
 2D-cmd-dungeoncrawler/Debug
+
+**/Release/
+*/Release/
+/2D-cmd-dungeoncrawler/Release/
+/2D-cmd-dungeoncrawler/Release
+2D-cmd-dungeoncrawler/Release/
+2D-cmd-dungeoncrawler/Release
