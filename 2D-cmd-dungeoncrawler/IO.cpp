@@ -31,21 +31,20 @@ void IO::OutputString( const std::string& string )
 }
 void IO::OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonSize, Vector2i positionCenter )
 {
-	Vector2i cameraIndentation( WINDOWSIZE.col / 5, WINDOWSIZE.row / 5 );
-	Vector2i cameraOrigo = positionCenter - cameraIndentation;
+	Vector2i screenRadius( WINDOWSIZE.col / 5, WINDOWSIZE.row / 5 );
+	Vector2i cameraOrigo = positionCenter - screenRadius;
+	Vector2i start = cameraOrigo - 1;
+	Vector2i end = cameraOrigo + screenRadius * 2 + 1;
 	Vector2i iterator;
-	Vector2i loopStart( cameraOrigo.col - 1, cameraOrigo.row - 1 );
-	Vector2i loopEnd( cameraOrigo.col + cameraIndentation.col + cameraIndentation.col + 1,
-					  cameraOrigo.row + cameraIndentation.row + cameraIndentation.row + 1 );
 
-	for( iterator.row = loopStart.row; iterator.row < loopEnd.row; iterator.row++ )
+	for( iterator.row = start.row; iterator.row <= end.row; iterator.row++ )
 	{
-		for( iterator.col = loopStart.col; iterator.col < loopEnd.col; iterator.col++ )
+		for( iterator.col = start.col; iterator.col <= end.col; iterator.col++ )
 		{
-			if( iterator.col == loopStart.col ||
-				iterator.row == loopStart.row ||
-				iterator.col == loopEnd.col - 1 ||
-				iterator.row == loopEnd.row - 1 )
+			if( iterator.col == start.col ||
+				iterator.row == start.row ||
+				iterator.col == end.col ||
+				iterator.row == end.row )
 			{
 				std::cout << "\\";
 			}

@@ -59,3 +59,17 @@ const Vector2i operator-( const Vector2i& lhs, int rhs )
 	result.row = lhs.row - rhs;
 	return result;
 }
+const Vector2i operator*( const Vector2i& lhs, const Vector2i& rhs )
+{
+	Vector2i result;
+	result.col = lhs.col * rhs.col;
+	result.row = lhs.row * rhs.row;
+	return result;
+}
+const Vector2i operator*( const Vector2i& lhs, int rhs )
+{
+	Vector2i result;
+	result.col = lhs.col * rhs;
+	result.row = lhs.row * rhs;
+	return result;
+}

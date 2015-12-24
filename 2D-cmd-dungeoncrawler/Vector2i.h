@@ -20,3 +20,5 @@ const Vector2i operator+( const Vector2i& lhs, const Vector2i& rhs );
 const Vector2i operator+( const Vector2i& lhs, int rhs );
 const Vector2i operator-( const Vector2i& lhs, const Vector2i& rhs );
 const Vector2i operator-( const Vector2i& lhs, int rhs );
+const Vector2i operator*( const Vector2i& lhs, const Vector2i& rhs );
+const Vector2i operator*( const Vector2i& lhs, int rhs );
