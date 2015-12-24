@@ -1,12 +1,11 @@
 #include "Character.h"
-
-extern int RandomNumberGenerator( int min, int max );
+#include "RNG.h"
 
 Character::Character( const Vector2i& position, char portrait ) :
 	Entity( position, portrait )
 { }
 
-void Character::Move( Orientation orientation )
+void Character::Move( const Orientation& orientation )
 {
 	Vector2i position = GetPosition( );
 	_positionPrev = GetPosition( );
@@ -43,8 +42,8 @@ void Character::MoveTowards( const Vector2i& position )
 }
 void Character::MoveProbability( int north, int east, int south, int west, int still )
 {
-	int sumProbability = north + east + south + west + still;
-	int random = RandomNumberGenerator( 1, sumProbability );
+	const int sumProbability = north + east + south + west + still;
+	const int random = RandomNumberGenerator( 1, sumProbability );
 
 	if( random <= north )
 	{

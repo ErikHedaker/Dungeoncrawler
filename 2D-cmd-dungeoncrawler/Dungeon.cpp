@@ -37,7 +37,6 @@ void Dungeon::GameLoop( )
 	{
 		UpdateVisionData( );
 		IO::OutputClearScreen( );
-		//IO::OutputHiddenDungeon( *this, _size );
 		IO::OutputDungeonCentered( *this, _size, _player->GetPosition( ) );
 		IO::OutputTurnOptions( );
 		PlayerTurn( IO::InputValidChar( "\nYour choice: ", std::vector<char>{ 'W', 'w', 'A', 'a', 'S', 's', 'D', 'd', 'Q', 'q', 'E', 'e' } ) );
@@ -126,7 +125,7 @@ void Dungeon::SetDungeonMonsterAmount( char gameType )
 
 	if( gameType == '1' ) // Configuration
 	{
-		int maxMonsters = static_cast<int>( sqrt( _size.col * _size.row ) * 11.0 - 100.0 );
+		const int maxMonsters = static_cast<int>( sqrt( _size.col * _size.row ) * 11.0 - 100.0 );
 
 		while( true )
 		{
@@ -145,8 +144,8 @@ void Dungeon::SetDungeonMonsterAmount( char gameType )
 	}
 	else // Randomization
 	{
-		double high = sqrt( _size.col * _size.row ) / 1.5;
-		double low = sqrt( _size.col * _size.row ) / 3;
+		const double high = sqrt( _size.col * _size.row ) / 1.5;
+		const double low = sqrt( _size.col * _size.row ) / 3;
 		amountMonsters = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
 		_monsters.resize( amountMonsters, Monster( Vector2i( -1, -1 ), Portrait::Monster ) );
 	}
@@ -184,7 +183,7 @@ void Dungeon::SetExits( )
 {
 	Vector2i iterator;
 	std::vector<Vector2i> positionValid;
-	int exitAmount = 3;
+	const int exitAmount = 3;
 	int randomIndex;
 
 	for( iterator.row = 0; iterator.row < _size.row; iterator.row++ )
@@ -403,7 +402,7 @@ void Dungeon::PlayerTurn( char choice )
 		}
 	}
 }
-void Dungeon::PlayerMovement( Orientation orientation )
+void Dungeon::PlayerMovement( const Orientation& orientation )
 {
 	UpdateEntityDataAt( _player->GetPosition( ), nullptr );
 

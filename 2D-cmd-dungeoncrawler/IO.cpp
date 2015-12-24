@@ -29,12 +29,12 @@ void IO::OutputString( const std::string& string )
 	/* We can't have all these cout operations sprinkled around like cocaine, now can we? */
 	std::cout << string;
 }
-void IO::OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonSize, Vector2i positionCenter )
+void IO::OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonSize, const Vector2i& positionCenter )
 {
-	Vector2i screenRadius( WINDOWSIZE.col / 5, WINDOWSIZE.row / 5 );
-	Vector2i cameraOrigo = positionCenter - screenRadius;
-	Vector2i start = cameraOrigo - 1;
-	Vector2i end = cameraOrigo + screenRadius * 2 + 1;
+	const Vector2i screenRadius( WINDOWSIZE.col / 5, WINDOWSIZE.row / 5 );
+	const Vector2i cameraOrigo = positionCenter - screenRadius;
+	const Vector2i start = cameraOrigo - 1;
+	const Vector2i end = cameraOrigo + screenRadius * 2 + 1;
 	Vector2i iterator;
 
 	for( iterator.row = start.row; iterator.row <= end.row; iterator.row++ )
@@ -136,7 +136,7 @@ void IO::OutputTurnOptions( )
 	std::cout << "[Q] Do nothing\n";
 	std::cout << "[E] Exit to meny\n";
 }
-void IO::OutputGameState( GameState state )
+void IO::OutputGameState( const GameState& state )
 {
 	if( state == GameState::Won )
 	{

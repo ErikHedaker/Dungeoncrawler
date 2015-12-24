@@ -65,7 +65,7 @@ class Dungeon
 
 		/* GameLoop */
 		void PlayerTurn( char choice );
-		void PlayerMovement( Orientation orientation );
+		void PlayerMovement( const Orientation& orientation );
 		void RandomMonsterMovement( );
 		bool CheckGameState( ) const;
 };
