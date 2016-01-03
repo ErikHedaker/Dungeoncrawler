@@ -26,7 +26,7 @@ void SetWindow( int Width, int Height )
 
 int main( )
 {
-	std::vector<char> gameTypeChoices { '1', '2', '3' };
+	const std::vector<char> gameTypeChoices { '1', '2', '3' };
 
 	SetWindow( WINDOW_SIZE.col, WINDOW_SIZE.row );
 

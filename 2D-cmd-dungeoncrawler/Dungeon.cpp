@@ -36,15 +36,15 @@ void Dungeon::Build( char gameType )
 }
 void Dungeon::GameLoop( )
 {
-	std::vector<char> playerTurnChoices { 'W', 'w', 'A', 'a', 'S', 's', 'D', 'd', 'Q', 'q', 'E', 'e' };
+	const std::vector<char> playerTurnChoices { 'W', 'w', 'A', 'a', 'S', 's', 'D', 'd', 'Q', 'q', 'E', 'e' };
 
 	while( true )
 	{
 		UpdateVisionData( );
 		Output::ClearScreen( );
-		//Output::DungeonCentered( *this, _dungeonSize, _player->GetPosition( ) );
+		Output::DungeonCentered( *this, _dungeonSize, _player->GetPosition( ) );
 		//Output::DungeonFull( *this, _dungeonSize );
-		Output::DungeonFullHidden( *this, _dungeonSize );
+		//Output::DungeonFullHidden( *this, _dungeonSize );
 		Output::PlayerStatus( *_player );
 		Output::TurnOptions( );
 		PlayerTurn( Input::ValidChar( "\nYour choice: ", playerTurnChoices ) );

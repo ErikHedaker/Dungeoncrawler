@@ -1,11 +1,11 @@
 #include "AStarAlgorithmNew.h"
 
 SquareGrid::SquareGrid( const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions ) :
-gridSize( gridSize )
+	gridSize( gridSize )
 {
-	for( const auto& obstaclePosition : obstaclePositions )
+	for( const auto& position : obstaclePositions )
 	{
-		obstacles.insert( obstaclePosition );
+		obstacles.insert( position );
 	}
 }
 bool SquareGrid::InBounds( const Vector2i& position ) const
@@ -52,6 +52,20 @@ const std::array<Vector2i, 4> SquareGrid::DIRS =
 	Vector2i( 0, 1 )	/* East  */
 };
 
+Node::Node( const Vector2i& position, int priority ) :
+	position( position ),
+	priority( priority )
+{ }
+
+bool CompareNodes::operator()( const Node& lhs, const Node& rhs )
+{
+	return lhs.priority > rhs.priority;
+}
+bool operator<( const Node& lhs, const Node& rhs )
+{
+	return lhs.priority > rhs.priority;
+}
+
 int Heuristic( const Vector2i& a, const Vector2i& b )
 {
 	return abs( a.col - b.col ) + abs( a.row - b.row );
@@ -60,40 +74,42 @@ int Heuristic( const Vector2i& a, const Vector2i& b )
 std::vector<Vector2i> AStarAlgorithmNew( const Vector2i& positionStart, const Vector2i& positionFinish, const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions )
 {
 	/*
-	http://www.redblobgames.com/pathfinding/a-star/implementation.html
-	Algorithm copied from source and then rewritten.
+		http://www.redblobgames.com/pathfinding/a-star/implementation.html
+		Algorithm copied from source and then rewritten.
 	*/
 
 	SquareGrid grid( gridSize, obstaclePositions );
-	std::unordered_map<Vector2i, Vector2i> positionPrevious;
+	//std::priority_queue<Node, std::vector<Node>, CompareNodes> pQueue;
+	std::priority_queue<Node> pQueue;
+	std::unordered_map<Vector2i, Vector2i> positionCameFrom;
 	std::unordered_map<Vector2i, int> positionCost;
-	ModifiedPriorityQueue<Vector2i> frontier;
-	frontier.Put( positionStart, 0 );
 
-	positionPrevious[positionStart] = positionStart;
+	pQueue.emplace( positionStart, 0 );
+	positionCameFrom[positionStart] = positionStart;
 	positionCost[positionStart] = 0;
 
-	while( !frontier.Empty( ) )
+	while( !pQueue.empty( ) )
 	{
-		Vector2i positionCurrent = frontier.Get( );
+		Node current = pQueue.top( );
+		pQueue.pop( );
 
-		if( positionCurrent == positionFinish )
+		if( current.position == positionFinish )
 		{
 			break;
 		}
 
-		for( const auto& next : grid.GetValidNeighbors( positionCurrent ) )
+		for( const auto& next : grid.GetValidNeighbors( current.position ) )
 		{
-			int costNew = positionCost[positionCurrent] + 1; // Position-in-grid cost goes here if needed.
+			int costNew = positionCost[current.position] + 1; // Position-in-grid cost goes here if needed.
 
-			if( !positionCost.count( next ) || costNew < positionCost[next] )
+			if( !positionCost.count( next ) ||
+				costNew < positionCost[next] )
 			{
-				int priority;
+				int priority = costNew + Heuristic( next, positionFinish );
 
+				pQueue.emplace( next, priority );
+				positionCameFrom[next] = current.position;
 				positionCost[next] = costNew;
-				priority = costNew + Heuristic( next, positionFinish );
-				frontier.Put( next, priority );
-				positionPrevious[next] = positionCurrent;
 			}
 		}
 	}
@@ -106,7 +122,7 @@ std::vector<Vector2i> AStarAlgorithmNew( const Vector2i& positionStart, const Ve
 
 	while( positionCurrent != positionStart )
 	{
-		positionCurrent = positionPrevious[positionCurrent];
+		positionCurrent = positionCameFrom[positionCurrent];
 		path.push_back( positionCurrent );
 	}
 

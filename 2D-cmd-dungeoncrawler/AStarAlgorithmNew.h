@@ -37,27 +37,6 @@ namespace std
 	};
 }
 
-template<typename T, typename Number = int>
-struct ModifiedPriorityQueue
-{
-	std::priority_queue<std::pair<Number, T>, std::vector<std::pair<Number, T>>, std::greater<std::pair<Number, T>>> elements;
-
-	bool Empty( )
-	{
-		return elements.empty( );
-	}
-	void Put( const T& item, const Number& priority )
-	{
-		elements.emplace( priority, item );
-	}
-	const T Get( )
-	{
-		const T itemBest = elements.top( ).second;
-		elements.pop( );
-		return itemBest;
-	}
-};
-
 struct SquareGrid
 {
 	SquareGrid( const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions );
@@ -70,6 +49,20 @@ struct SquareGrid
 	bool Passable( const Vector2i& position ) const;
 	const std::vector<Vector2i> GetValidNeighbors( const Vector2i& position ) const;
 };
+
+struct Node
+{
+	Node( const Vector2i& position, int priority );
+
+	Vector2i position;
+	int priority;
+};
+
+struct CompareNodes
+{
+	bool operator()( const Node& lhs, const Node& rhs );
+};
+bool operator>( const Node& lhs, const Node& rhs );
 
 int Heuristic( const Vector2i& a, const Vector2i& b );
 
