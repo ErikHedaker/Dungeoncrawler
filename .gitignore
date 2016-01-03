@@ -9,12 +9,6 @@
 *.pdb
 *.ilk
 
-Release/*.pdb
-Release/*.ilk
-
-Debug/*.pdb
-Debug/*.ilk
-
 **/Debug/
 */Debug/
 /2D-cmd-dungeoncrawler/Debug/
