@@ -1,24 +1,28 @@
 #pragma once
 
 #include "Dungeon.h"
-#include "GameState.h"
+#include "Enums.h"
 #include <vector>
 
-class IO
+struct Input
 {
-	public:
-		static void OutputClearScreen( );
-		static void OutputStartMessage( );
-		static void OutputGameTypes( );
-		static void OutputString( const std::string& string );
-		static void OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonSize, const Vector2i& positionCenter );
-		static void OutputDungeon( const Dungeon& dungeon, const Vector2i& dungeonSize );
-		static void OutputHiddenDungeon( const Dungeon& dungeon, const Vector2i& dungeonSize );
-		static void OutputTurnOptions( );
-		static void OutputGameState( const GameState& state );
+	static void Enter( );
+	static char ValidChar( const std::string& context, const std::vector<char>& validChoices );
+	static int PositiveInteger( const std::string& context );
+};
 
-		static void InputEnter( );
-		static char InputValidChar( const std::string& context, const std::vector<char>& validChoices );
-		static int InputPositiveInteger( const std::string& context );
-		
+struct Output
+{
+	static void ClearScreen( );
+	static void GameTypes( );
+	static void String( const std::string& string );
+	static void DungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonSize, const Vector2i& positionCenter );
+	static void DungeonFull( const Dungeon& dungeon, const Vector2i& dungeonSize );
+	static void DungeonFullHidden( const Dungeon& dungeon, const Vector2i& dungeonSize );
+	static void PlayerStatus( const Player& player );
+	static void TurnOptions( );
+	static void GameStateEnd( const GameState& state );
+	static void BattleScreenStart( const Character& attacker, const Character& defender );
+	static void BattleScreenEnd( const Character& winner, const Character& loser );
+	static void AsciiArtSpider( );
 };

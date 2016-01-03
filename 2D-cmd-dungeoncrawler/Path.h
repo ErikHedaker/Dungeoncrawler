@@ -5,5 +5,6 @@
 class Path : public Entity
 {
 	public:
-		Path( const Vector2i& position, char portrait );
+		Path( );
+		Path( const Vector2i& position );
 };

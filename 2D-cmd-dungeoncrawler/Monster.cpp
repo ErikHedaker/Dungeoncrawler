@@ -1,5 +1,9 @@
 #include "Monster.h"
+#include "Enums.h"
 
-Monster::Monster( const Vector2i& position, char portrait ) :
-	Character( position, portrait )
+Monster::Monster( ) :
+	Character( Vector2i( -1, -1 ), Portrait::Monster )
+{ }
+Monster::Monster( const Vector2i& position ) :
+	Character( position, Portrait::Monster )
 { }

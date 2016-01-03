@@ -5,8 +5,7 @@
 #include "Wall.h"
 #include "Exit.h"
 #include "Path.h"
-#include "Orientation.h"
-#include "GameState.h"
+#include "Enums.h"
 #include <vector>
 #include <list>
 #include <memory>
@@ -14,29 +13,31 @@
 class Dungeon
 {
 	public:
+		Dungeon( Player* player );
+
 		void Build( char gameType );
 		void GameLoop( );
 
-		/* Used in IO::OutputDungeon */
-		const Entity* const GetEntityDataAt( const Vector2i& position ) const;
-		const Entity* const GetHiddenDataAt( const Vector2i& position ) const;
+		/* Used in Output::Dungeon */
+		Entity* const GetEntityDataAt( const Vector2i& position ) const;
+		Entity* const GetHiddenDataAt( const Vector2i& position ) const;
 		bool GetVisionDataAt( const Vector2i& position ) const;
 
 	private:
 		GameState _state;
-		Vector2i _size;
+		Vector2i _dungeonSize;
 		int _lineOfSight;
 
 		/* All types inherit from Entity */
-		std::unique_ptr<Player> _player;	// _player needs to be dynamically allocated.
-		std::list<Monster> _monsters;
-		std::list<Wall> _walls;				// std::list guarantees unchanged
-		std::list<Exit> _exits;				// element addresses as the
-		std::list<Path> _paths;				// container grows, unlike std::vector.
+		std::list<Monster> _monsters;		// std::list guarantees unchanged
+		std::list<Wall> _walls;				// element addresses as the
+		std::list<Exit> _exits;				// container grows, unlike std::vector.
+		std::list<Path> _paths;
+		Player* _player;					// Non-owning pointer.
 
 		/* 1D arrays interpreted as 2D space */
-		std::vector<Entity*> _entityData;	// non-owning pointers.
-		std::vector<Entity*> _hiddenData;
+		std::vector<Entity*> _entityData;	// Non-owning pointers.
+		std::vector<Entity*> _hiddenData;	// Non-owning pointers.
 		std::vector<bool> _visionData;
 
 		void UpdateEntityDataAt( const Vector2i& position, Entity* entity );
@@ -67,5 +68,6 @@ class Dungeon
 		void PlayerTurn( char choice );
 		void PlayerMovement( const Orientation& orientation );
 		void RandomMonsterMovement( );
+		void UpdateCharacters( );
 		bool CheckGameState( ) const;
 };

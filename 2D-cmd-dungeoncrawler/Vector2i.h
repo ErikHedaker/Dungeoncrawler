@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 class Vector2i
 {
 	public:
@@ -10,15 +12,28 @@ class Vector2i
 		int row;
 
 		void operator=( const Vector2i& rhs );
+		void operator=( int rhs );
+		void operator+=( const Vector2i& rhs );
+		void operator+=( int rhs );
+		void operator-=( const Vector2i& rhs );
+		void operator-=( int rhs );
+		void operator*=( const Vector2i& rhs );
+		void operator*=( int rhs );
+		void operator/=( const Vector2i& rhs );
+		void operator/=( int rhs );
 };
 
 bool operator==( const Vector2i& lhs, const Vector2i& rhs );
 bool operator!=( const Vector2i& lhs, const Vector2i& rhs );
 bool operator<=( const Vector2i& lhs, const Vector2i& rhs );
 bool operator>=( const Vector2i& lhs, const Vector2i& rhs );
+bool operator<( const Vector2i& lhs, const Vector2i& rhs );
+bool operator>( const Vector2i& lhs, const Vector2i& rhs );
 const Vector2i operator+( const Vector2i& lhs, const Vector2i& rhs );
 const Vector2i operator+( const Vector2i& lhs, int rhs );
 const Vector2i operator-( const Vector2i& lhs, const Vector2i& rhs );
 const Vector2i operator-( const Vector2i& lhs, int rhs );
 const Vector2i operator*( const Vector2i& lhs, const Vector2i& rhs );
 const Vector2i operator*( const Vector2i& lhs, int rhs );
+const Vector2i operator/( const Vector2i& lhs, const Vector2i& rhs );
+const Vector2i operator/( const Vector2i& lhs, int rhs );

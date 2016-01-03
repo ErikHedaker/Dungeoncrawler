@@ -1,37 +1,72 @@
 #include "IO.h"
-#include "Portrait.h"
+#include "Enums.h"
 #include <iostream>
 #include <string>
 #include <algorithm>
 
-extern const Vector2i WINDOWSIZE;
+extern const Vector2i WINDOW_SIZE;
 
-void IO::OutputClearScreen( )
+void Input::Enter( )
+{
+	/* First one doesn't wait for user input */
+	std::cin.get( );
+	std::cin.get( );
+}
+char Input::ValidChar( const std::string& context, const std::vector<char>& valid )
+{
+	std::string choice;
+
+	while( true )
+	{
+		Output::String( context );
+		std::cin >> choice;
+
+		if( std::find( valid.begin( ), valid.end( ), choice[0] ) != valid.end( ) )
+		{
+			break;
+		}
+	}
+
+	return choice[0];
+}
+int Input::PositiveInteger( const std::string& context )
+{
+	std::string choice;
+
+	while( true )
+	{
+		Output::String( context );
+		std::cin >> choice;
+
+		if( choice.size( ) < 10 &&
+			std::all_of( choice.begin( ), choice.end( ), ::isdigit ) )
+		{
+			break;
+		}
+	}
+
+	return std::stoi( choice );
+}
+
+void Output::ClearScreen( )
 {
 	/* Some day I will switch to a framework like ncurses and get rid of this abomination */
 	system( "CLS" );
 }
-void IO::OutputStartMessage( )
-{
-	std::cout << "Win condition: Enter the exit.\n";
-	std::cout << "Lose condition: Enter the same space as a monster.\n\n";
-	//std::cout << "Increase your console width and height incase the drawing of your dungeon become misaligned.\n\n";
-}
-void IO::OutputGameTypes( )
+void Output::GameTypes( )
 {
 	std::cout << "Choose the game type.\n\n";
 	std::cout << "[1] Configuration mode\n";
 	std::cout << "[2] Randomization mode\n";
 	std::cout << "[3] Exit game\n";
 }
-void IO::OutputString( const std::string& string )
+void Output::String( const std::string& string )
 {
-	/* We can't have all these cout operations sprinkled around like cocaine, now can we? */
 	std::cout << string;
 }
-void IO::OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonSize, const Vector2i& positionCenter )
+void Output::DungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonSize, const Vector2i& positionCenter )
 {
-	const Vector2i screenRadius( WINDOWSIZE.col / 5, WINDOWSIZE.row / 5 );
+	const Vector2i screenRadius = WINDOW_SIZE / 5;	// Drawn screen is not 1:1 ratio to the window screen.
 	const Vector2i cameraOrigo = positionCenter - screenRadius;
 	const Vector2i start = cameraOrigo - 1;
 	const Vector2i end = cameraOrigo + screenRadius * 2 + 1;
@@ -56,11 +91,11 @@ void IO::OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonS
 			{
 				if( dungeon.GetEntityDataAt( iterator ) != nullptr )
 				{
-					std::cout << dungeon.GetEntityDataAt( iterator )->portrait;
+					std::cout << static_cast<std::underlying_type<Portrait>::type>( dungeon.GetEntityDataAt( iterator )->portrait );
 				}
 				else
 				{
-					std::cout << Portrait::Floor;
+					std::cout << static_cast<std::underlying_type<Portrait>::type>( Portrait::Floor );
 				}
 			}
 			else
@@ -74,7 +109,7 @@ void IO::OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonS
 
 	std::cout << "\n";
 }
-void IO::OutputDungeon( const Dungeon& dungeon, const Vector2i& dungeonSize )
+void Output::DungeonFull( const Dungeon& dungeon, const Vector2i& dungeonSize )
 {
 	Vector2i iterator;
 
@@ -86,11 +121,11 @@ void IO::OutputDungeon( const Dungeon& dungeon, const Vector2i& dungeonSize )
 			{
 				if( dungeon.GetEntityDataAt( iterator ) != nullptr )
 				{
-					std::cout << dungeon.GetEntityDataAt( iterator )->portrait;
+					std::cout << static_cast<std::underlying_type<Portrait>::type>( dungeon.GetEntityDataAt( iterator )->portrait );
 				}
 				else
 				{
-					std::cout << Portrait::Floor;
+					std::cout << static_cast<std::underlying_type<Portrait>::type>( Portrait::Floor );
 				}
 			}
 			else
@@ -104,7 +139,7 @@ void IO::OutputDungeon( const Dungeon& dungeon, const Vector2i& dungeonSize )
 
 	std::cout << "\n";
 }
-void IO::OutputHiddenDungeon( const Dungeon& dungeon, const Vector2i& dungeonSize )
+void Output::DungeonFullHidden( const Dungeon& dungeon, const Vector2i& dungeonSize )
 {
 	Vector2i iterator;
 
@@ -114,7 +149,7 @@ void IO::OutputHiddenDungeon( const Dungeon& dungeon, const Vector2i& dungeonSiz
 		{
 			if( dungeon.GetHiddenDataAt( iterator ) != nullptr )
 			{
-				std::cout << dungeon.GetHiddenDataAt( iterator )->portrait;
+				std::cout << static_cast<std::underlying_type<Portrait>::type>( dungeon.GetHiddenDataAt( iterator )->portrait );
 			}
 			else
 			{
@@ -127,7 +162,14 @@ void IO::OutputHiddenDungeon( const Dungeon& dungeon, const Vector2i& dungeonSiz
 
 	std::cout << "\n";
 }
-void IO::OutputTurnOptions( )
+void Output::PlayerStatus( const Player& player )
+{
+	std::cout << "Health: " << player.GetHealth( ) << "\n";
+	std::cout << "Mana: " << player.GetMana( ) << "\n";
+	std::cout << "\n";
+
+}
+void Output::TurnOptions( )
 {
 	std::cout << "[W] Go up\n";
 	std::cout << "[S] Go down\n";
@@ -136,7 +178,7 @@ void IO::OutputTurnOptions( )
 	std::cout << "[Q] Do nothing\n";
 	std::cout << "[E] Exit to meny\n";
 }
-void IO::OutputGameState( const GameState& state )
+void Output::GameStateEnd( const GameState& state )
 {
 	if( state == GameState::Won )
 	{
@@ -149,45 +191,57 @@ void IO::OutputGameState( const GameState& state )
 		std::cout << "\n\nPress enter to continue: ";
 	}
 }
-
-void IO::InputEnter( )
+void Output::AsciiArtSpider( )
 {
-	/* First one doesn't wait for user input */
-	std::cin.get( );
-	std::cin.get( );
+	std::cout << "\n	  ;               ,";
+	std::cout << "\n        ,;                 '.";
+	std::cout << "\n       ;:                   :;";
+	std::cout << "\n       ::                    :;";
+	std::cout << "\n      ::                     ::";
+	std::cout << "\n      ':                     ,:";
+	std::cout << "\n      :.                    ,:";
+	std::cout << "\n   ;' ::                    ::  ,";
+	std::cout << "\n  .'  ';                   ;'   '.";
+	std::cout << "\n  ::    :;                 ;:    ::";
+	std::cout << "\n   ;      :;.             ,;:     ::";
+	std::cout << "\n   :;      :;:           ,;\"      ::\"";
+	std::cout << "\n   ::.      ':;  ;.,.;  ;:'    ,.;:";
+	std::cout << "\n    \"'\"...   '::,:::::;:;.; \"\"'";
+	std::cout << "\n       '\"\"\"....;:::::::;,,;.; \"\"\"";
+	std::cout << "\n   .:::.....'\"':::::::::;\",..;::::;.";
+	std::cout << "\n ;:' '\"\"'\"\";.,;:::::::::;.'\"\"\"\"\"\"  ';";
+	std::cout << "\n ::'         ;::;:::;:::;.         ':;";
+	std::cout << "\n::         ,;:::::::::::;:..        ::";
+	std::cout << "\n;'     ,;;:;::::::::::::::;\":;..    ':.";
+	std::cout << "\n::     ;:\"  ::::::\"\"\"'::::::   \":   ::";
+	std::cout << "\n :.    ::   :::::;   '::::::  ::   ';";
+	std::cout << "\n  ;    ::   ::::::;  :::::::  ;:   ;";
+	std::cout << "\n  :    ::   :::::\"'  '':::   :;'   '";
+	std::cout << "\n  '   ::    :::::::::::':\"   ::";
+	std::cout << "\n      ::     ':::::::::\"'    ::";
+	std::cout << "\n      ':       \"\"\"\"\"\"\"'      ::";
+	std::cout << "\n       ::                   ;:";
+	std::cout << "\n      ':;                 ;:\"";
+	std::cout << "\n	';              ,;'";
+	std::cout << "\n          \"'           '";
 }
-char IO::InputValidChar( const std::string& context, const std::vector<char>& valid )
+void Output::BattleScreenStart( const Character& attacker, const Character& defender )
 {
-	std::string choice;
+	char attackerPortrait = static_cast<std::underlying_type<Portrait>::type>( attacker.portrait );
+	char defenderPortrait = static_cast<std::underlying_type<Portrait>::type>( defender.portrait );
 
-	while( true )
-	{
-		IO::OutputString( context );
-		std::cin >> choice;
-
-		if( std::find( valid.begin( ), valid.end( ), choice[0] ) != valid.end( ) )
-		{
-			break;
-		}
-	}
-
-	return choice[0];
+	Output::ClearScreen( );
+	Output::AsciiArtSpider( );
+	std::cout << "\n\n";
+	std::cout << attackerPortrait << " has engaged " << defenderPortrait;
 }
-int IO::InputPositiveInteger( const std::string& context )
+void Output::BattleScreenEnd( const Character& winner, const Character& loser )
 {
-	std::string choice;
+	char winnerPortrait = static_cast<std::underlying_type<Portrait>::type>( winner.portrait );
+	char loserPortrait = static_cast<std::underlying_type<Portrait>::type>( loser.portrait );
 
-	while( true )
-	{
-		IO::OutputString( context );
-		std::cin >> choice;
-
-		if( choice.size( ) < 10 &&
-			std::all_of( choice.begin( ), choice.end( ), ::isdigit ) )
-		{
-			break;
-		}
-	}
-
-	return std::stoi( choice );
+	std::cout << "\n";
+	std::cout << loserPortrait << " has lost to " << winnerPortrait;
+	std::cout << "\n\nPress enter to continue: ";
+	Input::Enter( );
 }

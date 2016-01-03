@@ -6,6 +6,8 @@
 *.sln
 *.v12.suo
 *.tlog
+*.pdb
+*.ilk
 
 
 **/Debug/

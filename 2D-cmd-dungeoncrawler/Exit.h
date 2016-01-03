@@ -5,5 +5,6 @@
 class Exit : public Entity
 {
 	public:
-		Exit( const Vector2i& position, char portrait );
+		Exit( );
+		Exit( const Vector2i& position );
 };

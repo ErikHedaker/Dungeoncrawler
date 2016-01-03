@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <Windows.h>
 
-extern const Vector2i WINDOWSIZE( 100, 50 );
+extern const Vector2i WINDOW_SIZE( 100, 50 );
 
 void SetWindow( int Width, int Height )
 {
@@ -26,18 +26,21 @@ void SetWindow( int Width, int Height )
 
 int main( )
 {
-	SetWindow( WINDOWSIZE.col, WINDOWSIZE.row );
+	std::vector<char> gameTypeChoices { '1', '2', '3' };
+
+	SetWindow( WINDOW_SIZE.col, WINDOW_SIZE.row );
+
 
 	while( true )
 	{
-		Dungeon dungeon;
+		Player player( Vector2i( -1, -1 ), 100.0f, 0.10f, 50.0f, 100.0f, 100.0f );
+		Dungeon dungeon( &player );
 		char gameType;
 
-		IO::OutputClearScreen( );
-		IO::OutputStartMessage( );
-		IO::OutputGameTypes( );
+		Output::ClearScreen( );
+		Output::GameTypes( );
 
-		gameType = IO::InputValidChar( "\nYour choice: ", std::vector<char>{ '1', '2', '3' } );
+		gameType = Input::ValidChar( "\nYour choice: ", gameTypeChoices );
 		if( gameType == '3' )
 		{
 			break;
