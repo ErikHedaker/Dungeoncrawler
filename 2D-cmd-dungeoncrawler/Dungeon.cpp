@@ -42,9 +42,9 @@ void Dungeon::GameLoop( )
 	{
 		UpdateVisionData( );
 		Output::ClearScreen( );
-		Output::DungeonCentered( *this, _dungeonSize, _player->GetPosition( ) );
+		//Output::DungeonCentered( *this, _dungeonSize, _player->GetPosition( ) );
 		//Output::DungeonFull( *this, _dungeonSize );
-		//Output::DungeonFullHidden( *this, _dungeonSize );
+		Output::DungeonFullHidden( *this, _dungeonSize );
 		Output::PlayerStatus( *_player );
 		Output::TurnOptions( );
 		PlayerTurn( Input::ValidChar( "\nYour choice: ", playerTurnChoices ) );
@@ -290,6 +290,7 @@ void Dungeon::SetRandomSourceWalls( )
 void Dungeon::SetRandomExtensionWalls( )
 {
 	Vector2i position;
+	Vector2i positionMin( 0, 0 );
 	int extensionWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 3;
 
 	while( extensionWallsLeft > 0 )
@@ -301,7 +302,7 @@ void Dungeon::SetRandomExtensionWalls( )
 			position.col += RandomNumberGenerator( 0, 1 ) * ( RandomNumberGenerator( 0, 1 ) ? 1 : -1 );
 			position.row += RandomNumberGenerator( 0, 1 ) * ( RandomNumberGenerator( 0, 1 ) ? 1 : -1 );
 
-			if( position >= Vector2i( 0, 0 ) &&
+			if( position >= positionMin &&
 				position <= _dungeonSize - 1 &&
 				GetEntityDataAt( position ) == nullptr &&
 				GetHiddenDataAt( position ) == nullptr )
@@ -423,18 +424,20 @@ void Dungeon::PlayerMovement( const Orientation& orientation )
 
 	_player->Move( orientation );
 
-	if( GetEntityDataAt( _player->GetPosition( ) ) != nullptr &&
-		GetEntityDataAt( _player->GetPosition( ) )->portrait == Portrait::Wall )
+	auto cachedResult = GetEntityDataAt( _player->GetPosition( ) );
+
+	if( cachedResult != nullptr &&
+		cachedResult->portrait == Portrait::Wall )
 	{
 		_player->RevertPosition( );
 	}
-	else if( GetEntityDataAt( _player->GetPosition( ) ) != nullptr &&
-			 GetEntityDataAt( _player->GetPosition( ) )->portrait == Portrait::Exit )
+	else if( cachedResult != nullptr &&
+			 cachedResult->portrait == Portrait::Exit )
 	{
 		_state = GameState::Won;
 	}
-	else if( GetEntityDataAt( _player->GetPosition( ) ) != nullptr &&
-			 GetEntityDataAt( _player->GetPosition( ) )->portrait == Portrait::Monster )
+	else if( cachedResult != nullptr &&
+			 cachedResult->portrait == Portrait::Monster )
 	{
 		Monster* monster = static_cast<Monster*>( GetEntityDataAt( _player->GetPosition( ) ) );
 		_player->Attack( monster );
@@ -444,20 +447,25 @@ void Dungeon::RandomMonsterMovement( )
 {
 	for( auto& monster : _monsters )
 	{
-		/* If monster is alive, it will be re-entered into _entityData in Dungeon::UpdateCharacters( ) */
 		UpdateEntityDataAt( monster.GetPosition( ), nullptr );
 
 		monster.MoveProbability( 1, 1, 1, 1, 12 ); // 25% to move, 75% to stand still.
 
-		if( GetEntityDataAt( monster.GetPosition( ) ) != nullptr &&
-			GetEntityDataAt( monster.GetPosition( ) ) != _player )
+		auto cachedResult = GetEntityDataAt( monster.GetPosition( ) );
+
+		if( cachedResult != nullptr &&
+			cachedResult != _player )
 		{
 			monster.RevertPosition( );
 		}
-		else if( GetEntityDataAt( monster.GetPosition( ) ) != nullptr &&
-				 GetEntityDataAt( monster.GetPosition( ) ) == _player )
+		else if( cachedResult != nullptr &&
+				 cachedResult == _player )
 		{
 			monster.Attack( _player );
+		}
+		else
+		{
+			UpdateEntityDataAt( monster.GetPosition( ), &monster );
 		}
 	}
 }

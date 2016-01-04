@@ -87,6 +87,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 	while( !pQueue.empty( ) )
 	{
 		Node current = pQueue.top( );
+
 		pQueue.pop( );
 
 		if( current.position == positionFinish )
@@ -108,18 +109,6 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 				positionCost[next] = newCost;
 			}
 		}
-
-		if( !pQueue.empty( ) )
-		{
-			Node best = pQueue.top( );
-
-			while( !pQueue.empty( ) )
-			{
-				pQueue.pop( );
-			}
-
-			pQueue.push( best );
-		}
 	}
 
 	/* Reconstruct path */
@@ -139,9 +128,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 		{
 			Output::String( "\n\n" );
 			Output::String( e.what( ) );
-			Output::String( "\n\nIncomplete path\n" );
-			Output::String( "\nPress Enter to continue: " );
-			Input::Enter( );
+			Output::String( " (incomplete path).\n" );
 			break;
 		}
 	}

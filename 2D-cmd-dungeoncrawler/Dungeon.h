@@ -33,11 +33,11 @@ class Dungeon
 		std::list<Wall> _walls;				// element addresses as the
 		std::list<Exit> _exits;				// container grows, unlike std::vector.
 		std::list<Path> _paths;
-		Player* _player;					// Non-owning pointer.
+		Player* _player;					// Non-owning pointer, Player exist outside of Dungeon.
 
 		/* 1D arrays interpreted as 2D space */
-		std::vector<Entity*> _entityData;	// Non-owning pointers.
-		std::vector<Entity*> _hiddenData;	// Non-owning pointers.
+		std::vector<Entity*> _entityData;	// Non-owning pointers, points to _monster, _walls, _exits and _player.
+		std::vector<Entity*> _hiddenData;	// Non-owning pointers, points to _paths.
 		std::vector<bool> _visionData;
 
 		void UpdateEntityDataAt( const Vector2i& position, Entity* entity );
