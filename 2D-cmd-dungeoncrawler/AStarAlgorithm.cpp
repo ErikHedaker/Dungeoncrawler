@@ -1,4 +1,5 @@
-#include "AStarAlgorithmNew.h"
+#include "AStarAlgorithm.h"
+#include "IO.h"
 
 SquareGrid::SquareGrid( const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions ) :
 	gridSize( gridSize )
@@ -53,9 +54,10 @@ const std::array<Vector2i, 4> SquareGrid::DIRS =
 };
 
 Node::Node( const Vector2i& position, int priority ) :
-	position( position ),
-	priority( priority )
-{ }
+position( position ),
+priority( priority )
+{
+}
 
 bool CompareNodes::operator()( const Node& lhs, const Node& rhs )
 {
@@ -71,11 +73,11 @@ int Heuristic( const Vector2i& a, const Vector2i& b )
 	return abs( a.col - b.col ) + abs( a.row - b.row );
 }
 
-std::vector<Vector2i> AStarAlgorithmNew( const Vector2i& positionStart, const Vector2i& positionFinish, const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions )
+std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionFinish, const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions )
 {
 	/*
-		http://www.redblobgames.com/pathfinding/a-star/implementation.html
-		Algorithm copied from source and then rewritten.
+	http://www.redblobgames.com/pathfinding/a-star/implementation.html
+	Algorithm copied from source and then rewritten.
 	*/
 
 	SquareGrid grid( gridSize, obstaclePositions );
@@ -112,6 +114,18 @@ std::vector<Vector2i> AStarAlgorithmNew( const Vector2i& positionStart, const Ve
 				positionCost[next] = costNew;
 			}
 		}
+
+		if( !pQueue.empty( ) )
+		{
+			Node best = pQueue.top( );
+
+			while( !pQueue.empty( ) )
+			{
+				pQueue.pop( );
+			}
+
+			pQueue.push( best );
+		}
 	}
 
 	/* Reconstruct path */
@@ -122,8 +136,20 @@ std::vector<Vector2i> AStarAlgorithmNew( const Vector2i& positionStart, const Ve
 
 	while( positionCurrent != positionStart )
 	{
-		positionCurrent = positionCameFrom[positionCurrent];
-		path.push_back( positionCurrent );
+		try
+		{
+			positionCurrent = positionCameFrom.at( positionCurrent );
+			path.push_back( positionCurrent );
+		}
+		catch( const std::out_of_range& e )
+		{
+			Output::String( "\n\n" );
+			Output::String( e.what( ) );
+			Output::String( "\n\nIncomplete path\n" );
+			Output::String( "\nPress Enter to continue: " );
+			Input::Enter( );
+			break;
+		}
 	}
 
 	std::reverse( path.begin( ), path.end( ) );

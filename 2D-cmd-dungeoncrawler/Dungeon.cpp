@@ -1,6 +1,6 @@
 #include "Dungeon.h"
 #include "RNG.h"
-#include "AStarAlgorithmNew.h"
+#include "AStarAlgorithm.h"
 #include "IO.h"
 #include <math.h>
 #include <algorithm>
@@ -204,7 +204,12 @@ void Dungeon::SetExits( )
 				iterator.col == _dungeonSize.col - 1 ||
 				iterator.row == _dungeonSize.row - 1 )
 			{
-				positionValid.push_back( iterator );
+				/* Check if position is not in a corner */
+				if( ( iterator.col != 0 || iterator.col != _dungeonSize.col - 1 ) &&
+					( iterator.row != 0 || iterator.row != _dungeonSize.row - 1 ) )
+				{
+					positionValid.push_back( iterator );
+				}
 			}
 		}
 	}
@@ -251,7 +256,7 @@ void Dungeon::SetHiddenPath( )
 			positionWalls.push_back( wall.GetPosition( ) );
 		}
 
-		positionPaths = AStarAlgorithmNew( _player->GetPosition( ), exit.GetPosition( ), _dungeonSize, positionWalls );
+		positionPaths = AStarAlgorithm( _player->GetPosition( ), exit.GetPosition( ), _dungeonSize, positionWalls );
 
 		for( const auto& path : positionPaths )
 		{

@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <functional>
 
-/* 
+/*
 	https://www.quora.com/How-can-I-declare-an-unordered-set-of-pair-of-int-int-in-C++11
 	Functions copied from source and then rewritten.
 */
@@ -66,4 +66,4 @@ bool operator>( const Node& lhs, const Node& rhs );
 
 int Heuristic( const Vector2i& a, const Vector2i& b );
 
-std::vector<Vector2i> AStarAlgorithmNew( const Vector2i& positionStart, const Vector2i& positionFinish, const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions );
+std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionFinish, const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions );

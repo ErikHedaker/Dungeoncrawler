@@ -1,8 +1,8 @@
 #include "Vector2i.h"
 
 Vector2i::Vector2i( ) :
-	col( 0 ),
-	row( 0 )
+	col( -1 ),
+	row( -1 )
 { }
 Vector2i::Vector2i( int col, int row ) :
 	col( col ),
