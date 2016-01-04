@@ -47,10 +47,10 @@ const std::vector<Vector2i> SquareGrid::GetValidNeighbors( const Vector2i& posit
 
 const std::array<Vector2i, 4> SquareGrid::DIRS =
 {
-	Vector2i( 1, 0 ),	/* South */
-	Vector2i( 0, -1 ),	/* West  */
-	Vector2i( -1, 0 ),	/* North */
-	Vector2i( 0, 1 )	/* East  */
+	Vector2i( 1, 0 ),	/* East */
+	Vector2i( 0, -1 ),	/* North  */
+	Vector2i( -1, 0 ),	/* West */
+	Vector2i( 0, 1 )	/* South  */
 };
 
 Node::Node( const Vector2i& position, int priority ) :
@@ -63,9 +63,9 @@ bool CompareNodes::operator()( const Node& lhs, const Node& rhs )
 	return lhs.priority > rhs.priority;
 }
 
-int Heuristic( const Vector2i& a, const Vector2i& b )
+int Heuristic( const Vector2i& positionFrom, const Vector2i& positionTo )
 {
-	return abs( a.col - b.col ) + abs( a.row - b.row );
+	return abs( positionFrom.col - positionTo.col ) + abs( positionFrom.row - positionTo.row );
 }
 
 std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionFinish, const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions )
@@ -76,19 +76,19 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 	*/
 
 	SquareGrid grid( gridSize, obstaclePositions );
-	std::priority_queue<Node, std::vector<Node>, CompareNodes> pQueue;
+	std::priority_queue<Node, std::vector<Node>, CompareNodes> activeNodes;
 	std::unordered_map<Vector2i, Vector2i> positionCameFrom;
 	std::unordered_map<Vector2i, int> positionCost;
 
-	pQueue.emplace( positionStart, 0 );
+	activeNodes.emplace( positionStart, 0 );
 	positionCameFrom[positionStart] = positionStart;
 	positionCost[positionStart] = 0;
 
-	while( !pQueue.empty( ) )
+	while( !activeNodes.empty( ) )
 	{
-		Node current = pQueue.top( );
+		Node current = activeNodes.top( );
 
-		pQueue.pop( );
+		activeNodes.pop( );
 
 		if( current.position == positionFinish )
 		{
@@ -97,14 +97,14 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 
 		for( const auto& next : grid.GetValidNeighbors( current.position ) )
 		{
-			int newCost = positionCost[current.position] + 1; // Position-in-grid cost goes here if needed.
+			int newCost = positionCost[current.position] + 1; /* Position-in-grid cost goes here if needed. */
 
-			if( !positionCost.count( next ) ||
+			if( !positionCost.count( next ) /* Node hasn't been visited before */ ||
 				newCost < positionCost[next] )
 			{
 				int priority = newCost + Heuristic( next, positionFinish );
 
-				pQueue.emplace( next, priority );
+				activeNodes.emplace( next, priority );
 				positionCameFrom[next] = current.position;
 				positionCost[next] = newCost;
 			}
