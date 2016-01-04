@@ -54,16 +54,11 @@ const std::array<Vector2i, 4> SquareGrid::DIRS =
 };
 
 Node::Node( const Vector2i& position, int priority ) :
-position( position ),
-priority( priority )
-{
-}
+	position( position ),
+	priority( priority )
+{ }
 
 bool CompareNodes::operator()( const Node& lhs, const Node& rhs )
-{
-	return lhs.priority > rhs.priority;
-}
-bool operator<( const Node& lhs, const Node& rhs )
 {
 	return lhs.priority > rhs.priority;
 }
@@ -76,13 +71,12 @@ int Heuristic( const Vector2i& a, const Vector2i& b )
 std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionFinish, const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions )
 {
 	/*
-	http://www.redblobgames.com/pathfinding/a-star/implementation.html
-	Algorithm copied from source and then rewritten.
+		http://www.redblobgames.com/pathfinding/a-star/implementation.html
+		Algorithm copied from source and then rewritten.
 	*/
 
 	SquareGrid grid( gridSize, obstaclePositions );
-	//std::priority_queue<Node, std::vector<Node>, CompareNodes> pQueue;
-	std::priority_queue<Node> pQueue;
+	std::priority_queue<Node, std::vector<Node>, CompareNodes> pQueue;
 	std::unordered_map<Vector2i, Vector2i> positionCameFrom;
 	std::unordered_map<Vector2i, int> positionCost;
 
@@ -102,16 +96,16 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 
 		for( const auto& next : grid.GetValidNeighbors( current.position ) )
 		{
-			int costNew = positionCost[current.position] + 1; // Position-in-grid cost goes here if needed.
+			int newCost = positionCost[current.position] + 1; // Position-in-grid cost goes here if needed.
 
 			if( !positionCost.count( next ) ||
-				costNew < positionCost[next] )
+				newCost < positionCost[next] )
 			{
-				int priority = costNew + Heuristic( next, positionFinish );
+				int priority = newCost + Heuristic( next, positionFinish );
 
 				pQueue.emplace( next, priority );
 				positionCameFrom[next] = current.position;
-				positionCost[next] = costNew;
+				positionCost[next] = newCost;
 			}
 		}
 
