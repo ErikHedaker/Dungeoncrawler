@@ -292,15 +292,25 @@ void Dungeon::SetRandomExtensionWalls( )
 	Vector2i position;
 	Vector2i positionMin( 0, 0 );
 	int extensionWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 3;
+	int index;
+	const std::array<Vector2i, 8> neighborDirection =
+	{
+		Vector2i( 0, -1 ),
+		Vector2i( 1, -1 ),
+		Vector2i( 1, 0 ),
+		Vector2i( 1, 1 ),
+		Vector2i( 0, 1 ),
+		Vector2i( -1, 1 ),
+		Vector2i( -1, 0 ),
+		Vector2i( -1, -1 )
+	};
 
 	while( extensionWallsLeft > 0 )
 	{
 		for( auto& wall : _walls )
 		{
-			position = wall.GetPosition( );
-
-			position.col += RandomNumberGenerator( 0, 1 ) * ( RandomNumberGenerator( 0, 1 ) ? 1 : -1 );
-			position.row += RandomNumberGenerator( 0, 1 ) * ( RandomNumberGenerator( 0, 1 ) ? 1 : -1 );
+			index = RandomNumberGenerator( 0, 7 );
+			position = wall.GetPosition( ) + neighborDirection[index];
 
 			if( position >= positionMin &&
 				position <= _dungeonSize - 1 &&
