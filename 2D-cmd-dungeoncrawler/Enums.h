@@ -10,7 +10,15 @@ enum class Portrait : char
 	Floor = '-'
 };
 
-enum class GameState
+enum class Orientation
+{
+	North,
+	South,
+	East,
+	West
+};
+
+enum class GameStatus
 {
 	Neutral,
 	Menu,
@@ -18,10 +26,9 @@ enum class GameState
 	Won
 };
 
-enum class Orientation
+enum class GameType
 {
-	North,
-	South,
-	East,
-	West
+	Randomized,
+	MinorConfiguration,
+	MajorConfiguration
 };

@@ -15,18 +15,21 @@ class Dungeon
 	public:
 		Dungeon( Player* player );
 
-		void Build( char gameType );
+		void Build( const GameType& type );
 		void GameLoop( );
 
 		/* Used in Output::Dungeon */
-		Entity* const GetEntityDataAt( const Vector2i& position ) const;
-		Entity* const GetHiddenDataAt( const Vector2i& position ) const;
+		const Entity* const GetEntityDataAt( const Vector2i& position ) const;
+		const Entity* const GetHiddenDataAt( const Vector2i& position ) const;
 		bool GetVisionDataAt( const Vector2i& position ) const;
 
+		/* Helper functions */
+		bool InBounds( const Vector2i& position ) const;
+		bool FloorSurroundedWalls( const Vector2i& position, int threshold ) const;
+
 	private:
-		GameState _state;
+		GameStatus _status;
 		Vector2i _dungeonSize;
-		int _lineOfSight;
 
 		/* All types inherit from Entity */
 		std::list<Monster> _monsters;		// std::list guarantees unchanged
@@ -42,12 +45,12 @@ class Dungeon
 
 		void UpdateEntityDataAt( const Vector2i& position, Entity* entity );
 		void UpdateHiddenDataAt( const Vector2i& position, Entity* entity );
-		void UpdateVisionData( );
+		void UpdateVisionDataAt( const Vector2i& position, int lineOfSight );
 
 		/* Configuration */
-		void SetDungeonSize( char gameType );
-		void SetDungeonLineOfSight( char gameType );
-		void SetDungeonMonsterAmount( char gameType );
+		void SetDungeonSize( const GameType& type );
+		void SetPlayerLineOfSight( const GameType& type );
+		void SetMonsterAmount( const GameType& type );
 
 		/* Resize containers */
 		void BuildEntityData( );
@@ -69,5 +72,5 @@ class Dungeon
 		void PlayerMovement( const Orientation& orientation );
 		void RandomMonsterMovement( );
 		void UpdateCharacters( );
-		bool CheckGameState( ) const;
+		bool CheckGameStatus( ) const;
 };

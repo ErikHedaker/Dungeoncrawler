@@ -26,27 +26,47 @@ void SetWindow( int Width, int Height )
 
 int main( )
 {
-	const std::vector<char> gameTypeChoices { '1', '2', '3' };
+	const std::vector<char> menuChoices { '1', '2', '3' };
 
 	SetWindow( WINDOW_SIZE.col, WINDOW_SIZE.row );
 
-
-	while( true )
+	while( true ) /* Menu (sort of). */
 	{
 		Player player( Vector2i( -1, -1 ), 100.0f, 0.10f, 50.0f, 100.0f, 100.0f );
 		Dungeon dungeon( &player );
-		char gameType;
+		GameType state;
 
 		Output::ClearScreen( );
 		Output::GameTypes( );
 
-		gameType = Input::ValidChar( "\nYour choice: ", gameTypeChoices );
-		if( gameType == '3' )
+		switch( Input::ValidChar( "\nYour choice: ", menuChoices ) )
 		{
-			break;
+			case '1':
+			{
+				state = GameType::Randomized;
+
+				break;
+			}
+			case '2':
+			{
+				state = GameType::MinorConfiguration;
+
+				break;
+			}
+			case '3':
+			{
+				exit( 0 );
+			}
+			default:
+			{
+				Output::String( "\nSomething went wrong." );
+				Input::Enter( );
+
+				break;
+			}
 		}
 
-		dungeon.Build( gameType );
+		dungeon.Build( state );
 		dungeon.GameLoop( );
 	}
 

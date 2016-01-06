@@ -56,8 +56,8 @@ void Output::ClearScreen( )
 void Output::GameTypes( )
 {
 	std::cout << "Choose the game type.\n\n";
-	std::cout << "[1] Configuration mode\n";
-	std::cout << "[2] Randomization mode\n";
+	std::cout << "[1] Randomized\n";
+	std::cout << "[2] Configurated\n";
 	std::cout << "[3] Exit game\n";
 }
 void Output::String( const std::string& string )
@@ -68,25 +68,22 @@ void Output::DungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonSiz
 {
 	const Vector2i screenRadius = WINDOW_SIZE / 5;	// Drawn screen is not 1:1 ratio to the window screen.
 	const Vector2i cameraOrigo = positionCenter - screenRadius;
-	const Vector2i start = cameraOrigo - 1;
-	const Vector2i end = cameraOrigo + screenRadius * 2 + 1;
+	const Vector2i iteratorBegin = cameraOrigo - 1;
+	const Vector2i iteratorEnd = cameraOrigo + screenRadius * 2 + 1;
 	Vector2i iterator;
 
-	for( iterator.row = start.row; iterator.row <= end.row; iterator.row++ )
+	for( iterator.row = iteratorBegin.row; iterator.row <= iteratorEnd.row; iterator.row++ )
 	{
-		for( iterator.col = start.col; iterator.col <= end.col; iterator.col++ )
+		for( iterator.col = iteratorBegin.col; iterator.col <= iteratorEnd.col; iterator.col++ )
 		{
-			if( iterator.col == start.col ||
-				iterator.row == start.row ||
-				iterator.col == end.col ||
-				iterator.row == end.row )
+			if( iterator.col == iteratorBegin.col ||
+				iterator.row == iteratorBegin.row ||
+				iterator.col == iteratorEnd.col ||
+				iterator.row == iteratorEnd.row )
 			{
 				std::cout << "\\";
 			}
-			else if( iterator.col >= 0 &&
-					 iterator.row >= 0 &&
-					 iterator.col <= dungeonSize.col - 1 &&
-					 iterator.row <= dungeonSize.row - 1 &&
+			else if( dungeon.InBounds( iterator ) &&
 					 dungeon.GetVisionDataAt( iterator ) == true )
 			{
 				if( dungeon.GetEntityDataAt( iterator ) != nullptr )
@@ -178,14 +175,14 @@ void Output::TurnOptions( )
 	std::cout << "[Q] Do nothing\n";
 	std::cout << "[E] Exit to meny\n";
 }
-void Output::GameStateEnd( const GameState& state )
+void Output::GameStatusEnd( const GameStatus& status )
 {
-	if( state == GameState::Won )
+	if( status == GameStatus::Won )
 	{
 		std::cout << "\nYou win!";
 		std::cout << "\n\nPress enter to continue: ";
 	}
-	else if( state == GameState::Lost )
+	else if( status == GameStatus::Lost )
 	{
 		std::cout << "\nYou lose!";
 		std::cout << "\n\nPress enter to continue: ";

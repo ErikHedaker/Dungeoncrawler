@@ -10,11 +10,11 @@ Dungeon::Dungeon( Player* player ) :
 	_player( player )
 { }
 
-void Dungeon::Build( char gameType )
+void Dungeon::Build( const GameType& type )
 {
-	SetDungeonSize( gameType );
-	SetDungeonLineOfSight( gameType );
-	SetDungeonMonsterAmount( gameType );
+	SetDungeonSize( type );
+	SetPlayerLineOfSight( type );
+	SetMonsterAmount(type );
 
 	BuildEntityData( );
 	BuildHiddenData( );
@@ -40,7 +40,7 @@ void Dungeon::GameLoop( )
 
 	while( true )
 	{
-		UpdateVisionData( );
+		UpdateVisionDataAt( _player->GetPosition( ), _player->GetLineOfSight( ) );
 		Output::ClearScreen( );
 		Output::DungeonCentered( *this, _dungeonSize, _player->GetPosition( ) );
 		//Output::DungeonFull( *this, _dungeonSize );
@@ -51,11 +51,48 @@ void Dungeon::GameLoop( )
 		RandomMonsterMovement( );
 		UpdateCharacters( );
 
-		if( CheckGameState( ) )
+		if( CheckGameStatus( ) )
 		{
 			break;
 		}
 	}
+}
+
+bool Dungeon::InBounds( const Vector2i& position ) const
+{
+	return
+		position.col >= 0 &&
+		position.row >= 0 &&
+		position.col <= _dungeonSize.col - 1 &&
+		position.row <= _dungeonSize.row - 1;
+}
+bool Dungeon::FloorSurroundedWalls( const Vector2i& position, int threshold ) const
+{
+	static const std::array<Vector2i, 8> directions =
+	{
+		Vector2i( 0, -1 ),
+		Vector2i( 1, -1 ),
+		Vector2i( 1, 0 ),
+		Vector2i( 1, 1 ),
+		Vector2i( 0, 1 ),
+		Vector2i( -1, 1 ),
+		Vector2i( -1, 0 ),
+		Vector2i( -1, -1 )
+	};
+	int surroundingWalls = 0;
+	Vector2i positionNeighbor;
+
+	for( const auto& direction : directions )
+	{
+		positionNeighbor = position + direction;
+
+		if( GetEntityDataAt( positionNeighbor ) != nullptr )
+		{
+			surroundingWalls++;
+		}
+	}
+
+	return surroundingWalls > threshold;
 }
 
 void Dungeon::UpdateEntityDataAt( const Vector2i& position, Entity* entity )
@@ -66,16 +103,17 @@ void Dungeon::UpdateHiddenDataAt( const Vector2i& position, Entity* entity )
 {
 	_hiddenData[( position.row * _dungeonSize.col ) + position.col] = entity;
 }
-void Dungeon::UpdateVisionData( )
+void Dungeon::UpdateVisionDataAt( const Vector2i& position, int lineOfSight )
 {
+	const Vector2i iteratorBegin = position - lineOfSight;
+	const Vector2i iteratorEnd = position + lineOfSight;
 	Vector2i iterator;
 
-	for( iterator.row = 0; iterator.row < _dungeonSize.row; iterator.row++ )
+	for( iterator.row = iteratorBegin.row; iterator.row <= iteratorEnd.row; iterator.row++ )
 	{
-		for( iterator.col = 0; iterator.col < _dungeonSize.col; iterator.col++ )
+		for( iterator.col = iteratorBegin.col; iterator.col <= iteratorEnd.col; iterator.col++ )
 		{
-			if( iterator >= _player->GetPosition( ) - _lineOfSight &&
-				iterator <= _player->GetPosition( ) + _lineOfSight )
+			if( InBounds( iterator ) )
 			{
 				_visionData[( iterator.row * _dungeonSize.col ) + iterator.col] = true;
 			}
@@ -83,11 +121,11 @@ void Dungeon::UpdateVisionData( )
 	}
 }
 
-Entity* const Dungeon::GetEntityDataAt( const Vector2i& position ) const
+const Entity* const Dungeon::GetEntityDataAt( const Vector2i& position ) const
 {
 	return _entityData[( position.row * _dungeonSize.col ) + position.col];
 }
-Entity* const Dungeon::GetHiddenDataAt( const Vector2i& position ) const
+const Entity* const Dungeon::GetHiddenDataAt( const Vector2i& position ) const
 {
 	return _hiddenData[( position.row * _dungeonSize.col ) + position.col];
 }
@@ -96,70 +134,117 @@ bool Dungeon::GetVisionDataAt( const Vector2i& position ) const
 	return _visionData[( position.row * _dungeonSize.col ) + position.col];
 }
 
-void Dungeon::SetDungeonSize( char gameType )
+void Dungeon::SetDungeonSize( const GameType& type )
 {
-	if( gameType == '1' ) // Configuration
+	switch( type )
 	{
-		RETRY:
-		_dungeonSize.col = Input::PositiveInteger( "\nEnter the Dungeon width: " );
-		_dungeonSize.row = Input::PositiveInteger( "Enter the Dungeon heigth: " );
-
-		if( _dungeonSize.col < 3 ||
-			_dungeonSize.row < 3 )
+		case GameType::Randomized:
 		{
-			Output::String( "\nDungeon size is too small, try again.\n" );
-			goto RETRY;
+			_dungeonSize.col = RandomNumberGenerator( 40, 80 );
+			_dungeonSize.row = RandomNumberGenerator( 40, 80 );
+
+			break;
+		}
+		case GameType::MinorConfiguration:
+		{
+			while( true )
+			{
+				_dungeonSize.col = Input::PositiveInteger( "\nEnter the Dungeon width: " );
+				_dungeonSize.row = Input::PositiveInteger( "Enter the Dungeon heigth: " );
+
+				if( _dungeonSize.col > 2 &&
+					_dungeonSize.row > 2 )
+				{
+					break;
+				}
+				else
+				{
+					Output::String( "\nDungeon size is too small, try again.\n" );
+				}
+			}
+
+			break;
+		}
+		default:
+		{
+			Output::String( "\nSomething went wrong." );
+			Input::Enter( );
+
+			break;
 		}
 	}
-	else // Randomization
-	{
-		_dungeonSize.col = RandomNumberGenerator( 40, 80 );
-		_dungeonSize.row = RandomNumberGenerator( 40, 80 );
-	}
 }
-void Dungeon::SetDungeonLineOfSight( char gameType )
+void Dungeon::SetPlayerLineOfSight( const GameType& type )
 {
-	if( gameType == '1' ) // Configuration
+	switch( type )
 	{
-		_lineOfSight = Input::PositiveInteger( "Enter the line of sight range: " );
-	}
-	else // Randomization
-	{
-		_lineOfSight = 5;
+		case GameType::Randomized: /* Not really randomized */
+		{
+			_player->SetLineOfSight( 5 );
+
+			break;
+		}
+		case GameType::MinorConfiguration:
+		{
+			_player->SetLineOfSight( Input::PositiveInteger( "Enter the line of sight range: " ) );
+
+			break;
+		}
+		default:
+		{
+			Output::String( "\nSomething went wrong." );
+			Input::Enter( );
+
+			break;
+		}
 	}
 }
-void Dungeon::SetDungeonMonsterAmount( char gameType )
+void Dungeon::SetMonsterAmount( const GameType& type )
 {
 	int amountMonsters;
 
-	if( gameType == '1' ) // Configuration
+	switch( type )
 	{
-		const int maxMonsters = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) * 11.0 - 100.0 );
-
-		while( true )
+		case GameType::Randomized:
 		{
-			amountMonsters = Input::PositiveInteger( "Enter the amount of monsters: " );
+			const double high = sqrt( _dungeonSize.col * _dungeonSize.row ) / 1.5;
+			const double low = sqrt( _dungeonSize.col * _dungeonSize.row ) / 3;
 
-			if( amountMonsters <= maxMonsters )
+			amountMonsters = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
+			_monsters.resize( amountMonsters, Monster( ) );
+
+			break;
+		}
+		case GameType::MinorConfiguration:
+		{
+			const int maxMonsters = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) * 10.5 - 100.0 ); /* 5 monsters in 10 * 10 grid */
+
+			while( true )
 			{
-				_monsters.resize( amountMonsters, Monster( ) );
-				break;
+				amountMonsters = Input::PositiveInteger( "Enter the amount of monsters: " );
+
+				if( amountMonsters <= maxMonsters )
+				{
+					_monsters.resize( amountMonsters, Monster( ) );
+
+					break;
+				}
+				else
+				{
+					Output::String( "\nToo many monsters, try again.\n\n" );
+				}
 			}
-			else
-			{
-				Output::String( "\nToo many monsters, try again.\n\n" );
-			}
+
+			break;
+		}
+		default:
+		{
+			Output::String( "\nSomething went wrong." );
+			Input::Enter( );
+
+			break;
 		}
 	}
-	else // Randomization
-	{
-		const double high = sqrt( _dungeonSize.col * _dungeonSize.row ) / 1.5;
-		const double low = sqrt( _dungeonSize.col * _dungeonSize.row ) / 3;
-		amountMonsters = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
-		_monsters.resize( amountMonsters, Monster( ) );
-	}
-
-	Output::String( "\n" );
 }
 
 void Dungeon::BuildEntityData( )
@@ -192,8 +277,8 @@ void Dungeon::SetExits( )
 {
 	Vector2i iterator;
 	std::vector<Vector2i> positionValid;
-	const int exitAmount = 3;
-	int randomIndex;
+	const int exitAmount = 2;
+	int index;
 
 	for( iterator.row = 0; iterator.row < _dungeonSize.row; iterator.row++ )
 	{
@@ -216,10 +301,10 @@ void Dungeon::SetExits( )
 
 	for( int i = 0; i < exitAmount; i++ )
 	{
-		randomIndex = RandomNumberGenerator( 0, positionValid.size( ) - 1 );
-		_exits.emplace_back( positionValid[randomIndex] );
-		UpdateEntityDataAt( positionValid[randomIndex], &_exits.back( ) );
-		positionValid.erase( positionValid.begin( ) + randomIndex );
+		index = RandomNumberGenerator( 0, positionValid.size( ) - 1 );
+		_exits.emplace_back( positionValid[index] );
+		UpdateEntityDataAt( positionValid[index], &_exits.back( ) );
+		positionValid.erase( positionValid.begin( ) + index );
 	}
 }
 void Dungeon::SetOuterWalls( )
@@ -270,8 +355,8 @@ void Dungeon::SetHiddenPath( )
 }
 void Dungeon::SetRandomSourceWalls( )
 {
+	int sourceWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 10;
 	Vector2i position;
-	int sourceWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 30;
 
 	while( sourceWallsLeft > 0 )
 	{
@@ -289,11 +374,7 @@ void Dungeon::SetRandomSourceWalls( )
 }
 void Dungeon::SetRandomExtensionWalls( )
 {
-	Vector2i position;
-	Vector2i positionMin( 0, 0 );
-	int extensionWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 3;
-	int index;
-	const std::array<Vector2i, 8> neighborDirection =
+	const std::array<Vector2i, 8> directions =
 	{
 		Vector2i( 0, -1 ),
 		Vector2i( 1, -1 ),
@@ -304,21 +385,24 @@ void Dungeon::SetRandomExtensionWalls( )
 		Vector2i( -1, 0 ),
 		Vector2i( -1, -1 )
 	};
+	int extensionWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 4;
+	int index;
+	Vector2i positionNeighbor;
+
 
 	while( extensionWallsLeft > 0 )
 	{
 		for( auto& wall : _walls )
 		{
 			index = RandomNumberGenerator( 0, 7 );
-			position = wall.GetPosition( ) + neighborDirection[index];
+			positionNeighbor = wall.GetPosition( ) + directions[index];
 
-			if( position >= positionMin &&
-				position <= _dungeonSize - 1 &&
-				GetEntityDataAt( position ) == nullptr &&
-				GetHiddenDataAt( position ) == nullptr )
+			if( InBounds( positionNeighbor ) &&
+				GetEntityDataAt( positionNeighbor ) == nullptr &&
+				GetHiddenDataAt( positionNeighbor ) == nullptr )
 			{
-				_walls.emplace_back( position );
-				UpdateEntityDataAt( position, &_walls.back( ) );
+				_walls.emplace_back( positionNeighbor );
+				UpdateEntityDataAt( positionNeighbor, &_walls.back( ) );
 				extensionWallsLeft--;
 			}
 		}
@@ -326,32 +410,18 @@ void Dungeon::SetRandomExtensionWalls( )
 }
 void Dungeon::SetFillerWalls( )
 {
+	const int amount = 2;
 	Vector2i iterator;
-	Vector2i iteratorSurround;
-	int surroundingWalls;
-
-	for( iterator.row = 1; iterator.row < _dungeonSize.row - 1; iterator.row++ )
+	
+	for( int i = 0; i < amount; i++ )
 	{
-		for( iterator.col = 1; iterator.col < _dungeonSize.col - 1; iterator.col++ )
+		for( iterator.row = 1; iterator.row < _dungeonSize.row - 1; iterator.row++ )
 		{
-			if( GetEntityDataAt( iterator ) == nullptr &&
-				GetHiddenDataAt( iterator ) == nullptr )
+			for( iterator.col = 1; iterator.col < _dungeonSize.col - 1; iterator.col++ )
 			{
-				surroundingWalls = 0;
-
-				for( iteratorSurround.row = iterator.row - 1; iteratorSurround.row <= iterator.row + 1; iteratorSurround.row++ )
-				{
-					for( iteratorSurround.col = iterator.col - 1; iteratorSurround.col <= iterator.col + 1; iteratorSurround.col++ )
-					{
-						if( GetEntityDataAt( iteratorSurround ) != nullptr &&
-							GetEntityDataAt( iteratorSurround )->portrait == Portrait::Wall )
-						{
-							surroundingWalls++;
-						}
-					}
-				}
-
-				if( surroundingWalls > 4 )
+				if( GetEntityDataAt( iterator ) == nullptr &&
+					GetHiddenDataAt( iterator ) == nullptr &&
+					FloorSurroundedWalls( iterator, 4 ) )
 				{
 					_walls.emplace_back( iterator );
 					UpdateEntityDataAt( iterator, &_walls.back( ) );
@@ -390,6 +460,7 @@ void Dungeon::PlayerTurn( char choice )
 		case 'w':
 		{
 			PlayerMovement( Orientation::North );
+
 			break;
 		}
 
@@ -397,6 +468,7 @@ void Dungeon::PlayerTurn( char choice )
 		case 'a':
 		{
 			PlayerMovement( Orientation::West );
+
 			break;
 		}
 
@@ -404,6 +476,7 @@ void Dungeon::PlayerTurn( char choice )
 		case 's':
 		{
 			PlayerMovement( Orientation::South );
+
 			break;
 		}
 
@@ -411,6 +484,7 @@ void Dungeon::PlayerTurn( char choice )
 		case 'd':
 		{
 			PlayerMovement( Orientation::East );
+
 			break;
 		}
 
@@ -423,7 +497,16 @@ void Dungeon::PlayerTurn( char choice )
 		case 'E':
 		case 'e':
 		{
-			_state = GameState::Menu;
+			_status = GameStatus::Menu;
+
+			break;
+		}
+		default:
+		{
+			Output::String( "\nSomething went wrong." );
+			Input::Enter( );
+
+			break;
 		}
 	}
 }
@@ -434,22 +517,29 @@ void Dungeon::PlayerMovement( const Orientation& orientation )
 
 	_player->Move( orientation );
 
-	auto cachedResult = GetEntityDataAt( _player->GetPosition( ) );
+	auto entityCached = GetEntityDataAt( _player->GetPosition( ) );
 
-	if( cachedResult != nullptr &&
-		cachedResult->portrait == Portrait::Wall )
+	if( entityCached != nullptr &&
+		entityCached->portrait == Portrait::Wall )
 	{
 		_player->RevertPosition( );
 	}
-	else if( cachedResult != nullptr &&
-			 cachedResult->portrait == Portrait::Exit )
+	else if( entityCached != nullptr &&
+			 entityCached->portrait == Portrait::Exit )
 	{
-		_state = GameState::Won;
+		_status = GameStatus::Won;
 	}
-	else if( cachedResult != nullptr &&
-			 cachedResult->portrait == Portrait::Monster )
+	else if( entityCached != nullptr &&
+			 entityCached->portrait == Portrait::Monster )
 	{
-		Monster* monster = static_cast<Monster*>( GetEntityDataAt( _player->GetPosition( ) ) );
+		/* 
+			const_cast is fine here because the object that the pointer points to is mutable (a monster in this case).
+			While I try to be as const correct as possible, this is only one time I need to access and modify a monster directly from a pointer.
+			My only other option would be to search all monster for the same position as the entity pointer, which would be inefficient.
+		*/
+
+		auto entity = const_cast<Entity*>( GetEntityDataAt( _player->GetPosition( ) ) );
+		auto monster = static_cast<Monster*>( entity );
 		_player->Attack( monster );
 	}
 }
@@ -459,17 +549,17 @@ void Dungeon::RandomMonsterMovement( )
 	{
 		UpdateEntityDataAt( monster.GetPosition( ), nullptr );
 
-		monster.MoveProbability( 1, 1, 1, 1, 12 ); // 25% to move, 75% to stand still.
+		monster.MoveProbability( 1, 1, 1, 1, 12 ); /* 25% to move, 75% to stand still. */
 
-		auto cachedResult = GetEntityDataAt( monster.GetPosition( ) );
+		auto entityCached = GetEntityDataAt( monster.GetPosition( ) );
 
-		if( cachedResult != nullptr &&
-			cachedResult != _player )
+		if( entityCached != nullptr &&
+			entityCached != _player )
 		{
 			monster.RevertPosition( );
 		}
-		else if( cachedResult != nullptr &&
-				 cachedResult == _player )
+		else if( entityCached != nullptr &&
+				 entityCached == _player )
 		{
 			monster.Attack( _player );
 		}
@@ -495,25 +585,25 @@ void Dungeon::UpdateCharacters( )
 
 	if( _player->GetAlive( ) == false )
 	{
-		_state = GameState::Lost;
+		_status = GameStatus::Lost;
 	}
 	else
 	{
 		UpdateEntityDataAt( _player->GetPosition( ), _player );
 	}
 }
-bool Dungeon::CheckGameState( ) const
+bool Dungeon::CheckGameStatus( ) const
 {
 
-	if( _state == GameState::Won ||
-		_state == GameState::Lost )
+	if( _status == GameStatus::Won ||
+		_status == GameStatus::Lost )
 	{
-		Output::GameStateEnd( _state );
+		Output::GameStatusEnd( _status );
 		Input::Enter( );
 		
 		return true;
 	}
-	else if( _state == GameState::Menu )
+	else if( _status == GameStatus::Menu )
 	{
 		return true;
 	}

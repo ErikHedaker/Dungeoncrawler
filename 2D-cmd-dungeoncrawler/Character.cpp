@@ -35,21 +35,32 @@ void Character::Move( const Orientation& orientation )
 		case Orientation::North:
 		{
 			position.row = position.row - 1;
+
 			break;
 		}
 		case Orientation::South:
 		{
 			position.row = position.row + 1;
+
 			break;
 		}
 		case Orientation::East:
 		{
 			position.col = position.col + 1;
+
 			break;
 		}
 		case Orientation::West:
 		{
 			position.col = position.col - 1;
+
+			break;
+		}
+		default:
+		{
+			Output::String( "\nSomething went wrong." );
+			Input::Enter( );
+
 			break;
 		}
 	}
@@ -85,6 +96,7 @@ void Character::MoveProbability( int north, int east, int south, int west, int s
 void Character::RevertPosition( )
 {
 	Vector2i positionPrev = GetPosition( );
+
 	SetPosition( _positionPrev );
 	_positionPrev = positionPrev;
 }

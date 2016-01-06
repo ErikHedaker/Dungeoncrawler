@@ -8,4 +8,10 @@ class Player : public Character
 		Player( );
 		Player( const Vector2i& position );
 		Player( const Vector2i& position, float speed, float armor, float damage, float health, float mana );
+		
+		int GetLineOfSight( ) const;
+		void SetLineOfSight( int value );
+
+	private:
+		int _lineOfSight;
 };

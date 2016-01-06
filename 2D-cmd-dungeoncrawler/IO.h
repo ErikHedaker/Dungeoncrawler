@@ -21,7 +21,7 @@ struct Output
 	static void DungeonFullHidden( const Dungeon& dungeon, const Vector2i& dungeonSize );
 	static void PlayerStatus( const Player& player );
 	static void TurnOptions( );
-	static void GameStateEnd( const GameState& state );
+	static void GameStatusEnd( const GameStatus& status );
 	static void BattleScreenStart( const Character& attacker, const Character& defender );
 	static void BattleScreenEnd( const Character& winner, const Character& loser );
 	static void AsciiArtSpider( );

@@ -2,25 +2,24 @@
 
 #include <utility>
 
-class Vector2i
+struct Vector2i
 {
-	public:
-		Vector2i( );
-		Vector2i( int col, int row );
+	Vector2i( );
+	Vector2i( int col, int row );
 
-		int col;
-		int row;
+	int col;
+	int row;
 
-		void operator=( const Vector2i& rhs );
-		void operator=( int rhs );
-		void operator+=( const Vector2i& rhs );
-		void operator+=( int rhs );
-		void operator-=( const Vector2i& rhs );
-		void operator-=( int rhs );
-		void operator*=( const Vector2i& rhs );
-		void operator*=( int rhs );
-		void operator/=( const Vector2i& rhs );
-		void operator/=( int rhs );
+	void operator=( const Vector2i& rhs );
+	void operator=( int rhs );
+	void operator+=( const Vector2i& rhs );
+	void operator+=( int rhs );
+	void operator-=( const Vector2i& rhs );
+	void operator-=( int rhs );
+	void operator*=( const Vector2i& rhs );
+	void operator*=( int rhs );
+	void operator/=( const Vector2i& rhs );
+	void operator/=( int rhs );
 };
 
 bool operator==( const Vector2i& lhs, const Vector2i& rhs );

@@ -49,8 +49,8 @@ struct SquareGrid
 	SquareGrid( const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions );
 
 	const Vector2i gridSize;
+	const std::array<Vector2i, 4> directions;
 	std::unordered_set<Vector2i> obstacles;
-	static const std::array<Vector2i, 4> DIRS;
 
 	bool InBounds( const Vector2i& position ) const;
 	bool Passable( const Vector2i& position ) const;

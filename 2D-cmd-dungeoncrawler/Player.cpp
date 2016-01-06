@@ -10,3 +10,12 @@ Player::Player( const Vector2i& position ) :
 Player::Player( const Vector2i& position, float speed, float armor, float damage, float health, float mana ) :
 	Character( position, Portrait::Player, speed, armor, damage, health, mana )
 { }
+
+int Player::GetLineOfSight( ) const
+{
+	return _lineOfSight;
+}
+void Player::SetLineOfSight( int value )
+{
+	_lineOfSight = value;
+}
