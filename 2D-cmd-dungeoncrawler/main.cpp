@@ -26,7 +26,7 @@ void SetWindow( int Width, int Height )
 
 int main( )
 {
-	const std::vector<char> menuChoices { '1', '2', '3' };
+	const std::vector<char> menuChoices { '1', '2', '3', '4' };
 
 	SetWindow( WINDOW_SIZE.col, WINDOW_SIZE.row );
 
@@ -34,7 +34,7 @@ int main( )
 	{
 		Player player( Vector2i( -1, -1 ), 100.0f, 0.10f, 50.0f, 100.0f, 100.0f );
 		Dungeon dungeon( &player );
-		GameType state;
+		GameType type;
 
 		Output::ClearScreen( );
 		Output::GameTypes( );
@@ -43,17 +43,23 @@ int main( )
 		{
 			case '1':
 			{
-				state = GameType::Randomized;
+				dungeon.BuildDungeon( GameType::Randomized );
 
 				break;
 			}
 			case '2':
 			{
-				state = GameType::MinorConfiguration;
+				dungeon.BuildDungeon( GameType::MinorConfiguration );
 
 				break;
 			}
 			case '3':
+			{
+				dungeon.LoadDungeon( "dungeonSave.txt" );
+
+				break;
+			}
+			case '4':
 			{
 				exit( 0 );
 			}
@@ -66,7 +72,6 @@ int main( )
 			}
 		}
 
-		dungeon.Build( state );
 		dungeon.GameLoop( );
 	}
 

@@ -56,9 +56,10 @@ void Output::ClearScreen( )
 void Output::GameTypes( )
 {
 	std::cout << "Choose the game type.\n\n";
-	std::cout << "[1] Randomized\n";
-	std::cout << "[2] Configurated\n";
-	std::cout << "[3] Exit game\n";
+	std::cout << "[1] New dungeon (randomized)\n";
+	std::cout << "[2] New dungeon (minor configuration)\n";
+	std::cout << "[3] Load dungeon\n";
+	std::cout << "[4] Exit\n";
 }
 void Output::String( const std::string& string )
 {
@@ -88,11 +89,11 @@ void Output::DungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonSiz
 			{
 				if( dungeon.GetEntityDataAt( iterator ) != nullptr )
 				{
-					std::cout << static_cast<std::underlying_type<Portrait>::type>( dungeon.GetEntityDataAt( iterator )->portrait );
+					std::cout << dungeon.GetEntityDataAt( iterator )->portrait;
 				}
 				else
 				{
-					std::cout << static_cast<std::underlying_type<Portrait>::type>( Portrait::Floor );
+					std::cout << Portrait::Floor;
 				}
 			}
 			else
@@ -118,11 +119,11 @@ void Output::DungeonFull( const Dungeon& dungeon, const Vector2i& dungeonSize )
 			{
 				if( dungeon.GetEntityDataAt( iterator ) != nullptr )
 				{
-					std::cout << static_cast<std::underlying_type<Portrait>::type>( dungeon.GetEntityDataAt( iterator )->portrait );
+					std::cout << dungeon.GetEntityDataAt( iterator )->portrait;
 				}
 				else
 				{
-					std::cout << static_cast<std::underlying_type<Portrait>::type>( Portrait::Floor );
+					std::cout << Portrait::Floor;
 				}
 			}
 			else
@@ -146,7 +147,7 @@ void Output::DungeonFullHidden( const Dungeon& dungeon, const Vector2i& dungeonS
 		{
 			if( dungeon.GetHiddenDataAt( iterator ) != nullptr )
 			{
-				std::cout << static_cast<std::underlying_type<Portrait>::type>( dungeon.GetHiddenDataAt( iterator )->portrait );
+				std::cout << dungeon.GetHiddenDataAt( iterator )->portrait;
 			}
 			else
 			{
@@ -173,7 +174,7 @@ void Output::TurnOptions( )
 	std::cout << "[A] Go left\n";
 	std::cout << "[D] Go Right\n";
 	std::cout << "[Q] Do nothing\n";
-	std::cout << "[E] Exit to meny\n";
+	std::cout << "[E] Save and exit to meny\n";
 }
 void Output::GameStatusEnd( const GameStatus& status )
 {
@@ -224,21 +225,15 @@ void Output::AsciiArtSpider( )
 }
 void Output::BattleScreenStart( const Character& attacker, const Character& defender )
 {
-	char attackerPortrait = static_cast<std::underlying_type<Portrait>::type>( attacker.portrait );
-	char defenderPortrait = static_cast<std::underlying_type<Portrait>::type>( defender.portrait );
-
 	Output::ClearScreen( );
 	Output::AsciiArtSpider( );
 	std::cout << "\n\n";
-	std::cout << attackerPortrait << " has engaged " << defenderPortrait;
+	std::cout << attacker.portrait << " has engaged " << defender.portrait;
 }
 void Output::BattleScreenEnd( const Character& winner, const Character& loser )
 {
-	char winnerPortrait = static_cast<std::underlying_type<Portrait>::type>( winner.portrait );
-	char loserPortrait = static_cast<std::underlying_type<Portrait>::type>( loser.portrait );
-
 	std::cout << "\n";
-	std::cout << loserPortrait << " has lost to " << winnerPortrait;
+	std::cout << loser.portrait << " has lost to " << winner.portrait;
 	std::cout << "\n\nPress enter to continue: ";
 	Input::Enter( );
 }

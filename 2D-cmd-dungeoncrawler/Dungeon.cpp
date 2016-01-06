@@ -5,23 +5,28 @@
 #include <math.h>
 #include <algorithm>
 #include <iterator>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <iostream>
 
 Dungeon::Dungeon( Player* player ) :
-	_player( player )
+	_player( player ),
+	_status( GameStatus::Neutral )
 { }
 
-void Dungeon::Build( const GameType& type )
+void Dungeon::BuildDungeon( const GameType& type )
 {
 	SetDungeonSize( type );
 	SetPlayerLineOfSight( type );
 	SetMonsterAmount(type );
 
-	BuildEntityData( );
-	BuildHiddenData( );
-	BuildVisionData( );
+	ResizeEntityData( );
+	ResizeHiddenData( );
+	ResizeVisionData( );
 
-	SetPlayer( );
-	SetExits( );
+	SetRandomPlayerPosition( );
+	SetRandomExits( );
 	SetOuterWalls( );
 	Output::String( "\nLoading path." );
 	SetHiddenPath( );
@@ -38,7 +43,7 @@ void Dungeon::GameLoop( )
 {
 	const std::vector<char> playerTurnChoices { 'W', 'w', 'A', 'a', 'S', 's', 'D', 'd', 'Q', 'q', 'E', 'e' };
 
-	while( true )
+	while( CheckGameStatus( ) )
 	{
 		UpdateVisionDataAt( _player->GetPosition( ), _player->GetLineOfSight( ) );
 		Output::ClearScreen( );
@@ -50,12 +55,61 @@ void Dungeon::GameLoop( )
 		PlayerTurn( Input::ValidChar( "\nYour choice: ", playerTurnChoices ) );
 		RandomMonsterMovement( );
 		UpdateCharacters( );
-
-		if( CheckGameStatus( ) )
-		{
-			break;
-		}
 	}
+}
+
+void Dungeon::SaveDungeon( const std::string& fileName )
+{
+	std::ofstream outFile;
+	Vector2i iterator;
+
+	outFile.open( "dungeonSave.txt", std::ios::out | std::ios::trunc );
+
+	if( !outFile.is_open( ) )
+	{
+		Output::String( "\nSomething went wrong." );
+		Input::Enter( );
+	}
+
+	WriteDungeonSize( outFile );
+	Output::String( "\nWriting entity data." );
+	WriteEntityData( outFile );
+	Output::String( "\nWriting hidden data." );
+	WriteHiddenData( outFile );
+	Output::String( "\nWriting vision data." );
+	WriteVisionData( outFile );
+
+	outFile.close( );
+}
+void Dungeon::LoadDungeon( const std::string& fileName )
+{
+	std::ifstream inFile;
+	std::string line;
+
+	inFile.open( fileName, std::ios::in );
+
+	if( !inFile.is_open( ) )
+	{
+		Output::String( "\nSomething went wrong." );
+		Input::Enter( );
+	}
+
+	ReadDungeonSize( inFile );
+
+	ResizeEntityData( );
+	ResizeHiddenData( );
+	ResizeVisionData( );
+
+	Output::String( "\nReading entity data." );
+	ReadEntityData( inFile );
+	Output::String( "\nReading hidden data." );
+	ReadHiddenData( inFile );
+	Output::String( "\nReading vision data." );
+	ReadVisionData( inFile );
+
+	_player->SetLineOfSight( 5 ); // temporary
+
+	inFile.close( );
 }
 
 bool Dungeon::InBounds( const Vector2i& position ) const
@@ -95,13 +149,17 @@ bool Dungeon::FloorSurroundedWalls( const Vector2i& position, int threshold ) co
 	return surroundingWalls > threshold;
 }
 
-void Dungeon::UpdateEntityDataAt( const Vector2i& position, Entity* entity )
+void Dungeon::SetEntityDataAt( const Vector2i& position, Entity* entity )
 {
 	_entityData[( position.row * _dungeonSize.col ) + position.col] = entity;
 }
-void Dungeon::UpdateHiddenDataAt( const Vector2i& position, Entity* entity )
+void Dungeon::SetHiddenDataAt( const Vector2i& position, Entity* entity )
 {
 	_hiddenData[( position.row * _dungeonSize.col ) + position.col] = entity;
+}
+void Dungeon::SetVisionDataAt( const Vector2i& position, bool vision )
+{
+	_visionData[( position.row * _dungeonSize.col ) + position.col] = vision;
 }
 void Dungeon::UpdateVisionDataAt( const Vector2i& position, int lineOfSight )
 {
@@ -211,7 +269,7 @@ void Dungeon::SetMonsterAmount( const GameType& type )
 			const double low = sqrt( _dungeonSize.col * _dungeonSize.row ) / 3;
 
 			amountMonsters = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
-			_monsters.resize( amountMonsters, Monster( ) );
+			_monsters.resize( amountMonsters );
 
 			break;
 		}
@@ -225,7 +283,7 @@ void Dungeon::SetMonsterAmount( const GameType& type )
 
 				if( amountMonsters <= maxMonsters )
 				{
-					_monsters.resize( amountMonsters, Monster( ) );
+					_monsters.resize( amountMonsters );
 
 					break;
 				}
@@ -247,23 +305,23 @@ void Dungeon::SetMonsterAmount( const GameType& type )
 	}
 }
 
-void Dungeon::BuildEntityData( )
+void Dungeon::ResizeEntityData( )
 {
 	_entityData.clear( );
 	_entityData.resize( _dungeonSize.col * _dungeonSize.row, nullptr );
 }
-void Dungeon::BuildHiddenData( )
+void Dungeon::ResizeHiddenData( )
 {
 	_hiddenData.clear( );
 	_hiddenData.resize( _dungeonSize.col * _dungeonSize.row, nullptr );
 }
-void Dungeon::BuildVisionData( )
+void Dungeon::ResizeVisionData( )
 {
 	_visionData.clear( );
 	_visionData.resize( _dungeonSize.col * _dungeonSize.row, false );
 }
 
-void Dungeon::SetPlayer( )
+void Dungeon::SetRandomPlayerPosition( )
 {
 	Vector2i position;
 
@@ -271,9 +329,9 @@ void Dungeon::SetPlayer( )
 	position.row = RandomNumberGenerator( 1, _dungeonSize.row - 2 );
 
 	_player->SetPosition( position );
-	UpdateEntityDataAt( position, _player );
+	SetEntityDataAt( position, _player );
 }
-void Dungeon::SetExits( )
+void Dungeon::SetRandomExits( )
 {
 	Vector2i iterator;
 	std::vector<Vector2i> positionValid;
@@ -303,7 +361,7 @@ void Dungeon::SetExits( )
 	{
 		index = RandomNumberGenerator( 0, positionValid.size( ) - 1 );
 		_exits.emplace_back( positionValid[index] );
-		UpdateEntityDataAt( positionValid[index], &_exits.back( ) );
+		SetEntityDataAt( positionValid[index], &_exits.back( ) );
 		positionValid.erase( positionValid.begin( ) + index );
 	}
 }
@@ -323,7 +381,7 @@ void Dungeon::SetOuterWalls( )
 					iterator.row == _dungeonSize.row - 1 )
 				{
 					_walls.emplace_back( iterator );
-					UpdateEntityDataAt( iterator, &_walls.back( ) );
+					SetEntityDataAt( iterator, &_walls.back( ) );
 				}
 			}
 		}
@@ -348,7 +406,7 @@ void Dungeon::SetHiddenPath( )
 			if( GetHiddenDataAt( path ) == nullptr )
 			{
 				_paths.emplace_back( path );
-				UpdateHiddenDataAt( path, &_paths.back( ) );
+				SetHiddenDataAt( path, &_paths.back( ) );
 			}
 		}
 	}
@@ -367,7 +425,7 @@ void Dungeon::SetRandomSourceWalls( )
 			GetHiddenDataAt( position ) == nullptr )
 		{
 			_walls.emplace_back( position );
-			UpdateEntityDataAt( position, &_walls.back( ) );
+			SetEntityDataAt( position, &_walls.back( ) );
 			sourceWallsLeft--;
 		}
 	}
@@ -385,7 +443,7 @@ void Dungeon::SetRandomExtensionWalls( )
 		Vector2i( -1, 0 ),
 		Vector2i( -1, -1 )
 	};
-	int extensionWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 4;
+	int extensionWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 5;
 	int index;
 	Vector2i positionNeighbor;
 
@@ -402,7 +460,7 @@ void Dungeon::SetRandomExtensionWalls( )
 				GetHiddenDataAt( positionNeighbor ) == nullptr )
 			{
 				_walls.emplace_back( positionNeighbor );
-				UpdateEntityDataAt( positionNeighbor, &_walls.back( ) );
+				SetEntityDataAt( positionNeighbor, &_walls.back( ) );
 				extensionWallsLeft--;
 			}
 		}
@@ -410,7 +468,7 @@ void Dungeon::SetRandomExtensionWalls( )
 }
 void Dungeon::SetFillerWalls( )
 {
-	const int amount = 2;
+	const int amount = 5;
 	Vector2i iterator;
 	
 	for( int i = 0; i < amount; i++ )
@@ -424,7 +482,7 @@ void Dungeon::SetFillerWalls( )
 					FloorSurroundedWalls( iterator, 4 ) )
 				{
 					_walls.emplace_back( iterator );
-					UpdateEntityDataAt( iterator, &_walls.back( ) );
+					SetEntityDataAt( iterator, &_walls.back( ) );
 				}
 			}
 		}
@@ -444,9 +502,219 @@ void Dungeon::SetRandomMonsterPositions( )
 			if( GetEntityDataAt( position ) == nullptr )
 			{
 				monster.SetPosition( position );
-				UpdateEntityDataAt( position, &monster );
+				SetEntityDataAt( position, &monster );
 
 				break;
+			}
+		}
+	}
+}
+
+void Dungeon::WriteDungeonSize( std::ofstream& stream )
+{
+	stream << _dungeonSize.col << '\n';
+	stream << _dungeonSize.row << '\n';
+}
+void Dungeon::WriteEntityData( std::ofstream& stream )
+{
+	Vector2i iterator;
+
+	for( iterator.row = 0; iterator.row < _dungeonSize.row; iterator.row++ )
+	{
+		for( iterator.col = 0; iterator.col < _dungeonSize.col; iterator.col++ )
+		{
+			if( GetEntityDataAt( iterator ) != nullptr )
+			{
+				stream << GetEntityDataAt( iterator )->portrait;
+			}
+			else
+			{
+				stream << Portrait::Floor;
+			}
+		}
+
+		stream << '\n';
+	}
+}
+void Dungeon::WriteHiddenData( std::ofstream& stream )
+{
+	Vector2i iterator;
+
+	for( iterator.row = 0; iterator.row < _dungeonSize.row; iterator.row++ )
+	{
+		for( iterator.col = 0; iterator.col < _dungeonSize.col; iterator.col++ )
+		{
+			if( GetHiddenDataAt( iterator ) != nullptr )
+			{
+				stream << GetHiddenDataAt( iterator )->portrait;
+			}
+			else
+			{
+				stream << ' ';
+			}
+		}
+
+		stream << '\n';
+	}
+}
+void Dungeon::WriteVisionData( std::ofstream& stream )
+{
+	Vector2i iterator;
+
+	for( iterator.row = 0; iterator.row < _dungeonSize.row; iterator.row++ )
+	{
+		for( iterator.col = 0; iterator.col < _dungeonSize.col; iterator.col++ )
+		{
+			stream << GetVisionDataAt( iterator );
+		}
+
+		stream << '\n';
+	}
+}
+
+void Dungeon::ReadDungeonSize( std::ifstream& stream )
+{
+	std::string line;
+
+	std::getline( stream, line );
+	_dungeonSize.col = std::stoi( line );
+
+	std::getline( stream, line );
+	_dungeonSize.row = std::stoi( line );
+}
+void Dungeon::ReadEntityData( std::ifstream& stream )
+{
+	std::string line;
+	Vector2i iterator;
+
+	for( iterator.row = 0; iterator.row < _dungeonSize.row; iterator.row++ )
+	{
+		std::getline( stream, line );
+
+		for( iterator.col = 0; iterator.col < _dungeonSize.col; iterator.col++ )
+		{
+			switch( line[iterator.col] )
+			{
+				case Portrait::Wall:
+				{
+					_walls.emplace_back( iterator );
+					SetEntityDataAt( iterator, &_walls.back( ) );
+
+					break;
+				}
+				case Portrait::Exit:
+				{
+					_exits.emplace_back( iterator );
+					SetEntityDataAt( iterator, &_exits.back( ) );
+
+					break;
+				}
+				case Portrait::Monster:
+				{
+					_monsters.emplace_back( iterator );
+					SetEntityDataAt( iterator, &_walls.back( ) );
+
+					break;
+				}
+				case Portrait::Player:
+				{
+					_player->SetPosition( iterator );
+					SetEntityDataAt( iterator, _player );
+
+					break;
+				}
+				case Portrait::Floor:
+				{
+					SetEntityDataAt( iterator, nullptr );
+
+					break;
+				}
+				default:
+				{
+					Output::String( "\nSomething went wrong." );
+					Output::String( "\nline: " );
+					Output::String( line );
+					Input::Enter( );
+
+					break;
+				}
+			}
+		}
+	}
+}
+void Dungeon::ReadHiddenData( std::ifstream& stream )
+{
+	std::string line;
+	Vector2i iterator;
+
+	for( iterator.row = 0; iterator.row < _dungeonSize.row; iterator.row++ )
+	{
+		std::getline( stream, line );
+
+		for( iterator.col = 0; iterator.col < _dungeonSize.col; iterator.col++ )
+		{
+			switch( line[iterator.col] )
+			{
+				case Portrait::Path:
+				{
+					_paths.emplace_back( iterator );
+					SetHiddenDataAt( iterator, &_paths.back( ) );
+
+					break;
+				}
+				case ' ':
+				{
+					SetHiddenDataAt( iterator, nullptr );
+
+					break;
+				}
+				default:
+				{
+					Output::String( "\nSomething went wrong." );
+					Output::String( "\nline: " );
+					Output::String( line );
+					Input::Enter( );
+
+					break;
+				}
+			}
+		}
+	}
+}
+void Dungeon::ReadVisionData( std::ifstream& stream )
+{
+	std::string line;
+	Vector2i iterator;
+
+	for( iterator.row = 0; iterator.row < _dungeonSize.row; iterator.row++ )
+	{
+		std::getline( stream, line );
+
+		for( iterator.col = 0; iterator.col < _dungeonSize.col; iterator.col++ )
+		{
+			switch( line[iterator.col] )
+			{
+				case '1':
+				{
+					SetVisionDataAt( iterator, true );
+
+					break;
+				}
+				case '0':
+				{
+					SetVisionDataAt( iterator, false );
+
+					break;
+				}
+				default:
+				{
+					Output::String( "\nSomething went wrong." );
+					Output::String( "\nline: " );
+					Output::String( line );
+					Input::Enter( );
+
+					break;
+				}
 			}
 		}
 	}
@@ -497,6 +765,7 @@ void Dungeon::PlayerTurn( char choice )
 		case 'E':
 		case 'e':
 		{
+			SaveDungeon( "dungeonSave.txt" );
 			_status = GameStatus::Menu;
 
 			break;
@@ -513,41 +782,54 @@ void Dungeon::PlayerTurn( char choice )
 void Dungeon::PlayerMovement( const Orientation& orientation )
 {
 	/* If player is alive, it will be re-entered into _entityData in Dungeon::UpdateCharacters( ) */
-	UpdateEntityDataAt( _player->GetPosition( ), nullptr );
+	SetEntityDataAt( _player->GetPosition( ), nullptr );
 
 	_player->Move( orientation );
 
 	auto entityCached = GetEntityDataAt( _player->GetPosition( ) );
 
-	if( entityCached != nullptr &&
-		entityCached->portrait == Portrait::Wall )
+	if( entityCached != nullptr )
 	{
-		_player->RevertPosition( );
-	}
-	else if( entityCached != nullptr &&
-			 entityCached->portrait == Portrait::Exit )
-	{
-		_status = GameStatus::Won;
-	}
-	else if( entityCached != nullptr &&
-			 entityCached->portrait == Portrait::Monster )
-	{
-		/* 
-			const_cast is fine here because the object that the pointer points to is mutable (a monster in this case).
-			While I try to be as const correct as possible, this is only one time I need to access and modify a monster directly from a pointer.
-			My only other option would be to search all monster for the same position as the entity pointer, which would be inefficient.
-		*/
+		switch( entityCached->portrait )
+		{
+			case Portrait::Wall:
+			{
+				_player->RevertPosition( );
 
-		auto entity = const_cast<Entity*>( GetEntityDataAt( _player->GetPosition( ) ) );
-		auto monster = static_cast<Monster*>( entity );
-		_player->Attack( monster );
+				break;
+			}
+			case Portrait::Exit:
+			{
+				_status = GameStatus::Won;
+				
+				break;
+			}
+			case Portrait::Monster:
+			{
+				/*
+				const_cast is fine here because the object that the pointer points to is mutable (a monster in this case).
+				While I try to be as const correct as possible, this is only one time I need to access and modify a monster directly from a const pointer.
+				My only other option would be to search all monsters for the same position as the entity pointer, which would be inefficient.
+				*/
+
+				auto entity = const_cast<Entity*>( GetEntityDataAt( _player->GetPosition( ) ) );
+				auto monster = static_cast<Monster*>( entity );
+				_player->Attack( monster );
+
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
 	}
 }
 void Dungeon::RandomMonsterMovement( )
 {
 	for( auto& monster : _monsters )
 	{
-		UpdateEntityDataAt( monster.GetPosition( ), nullptr );
+		SetEntityDataAt( monster.GetPosition( ), nullptr );
 
 		monster.MoveProbability( 1, 1, 1, 1, 12 ); /* 25% to move, 75% to stand still. */
 
@@ -565,7 +847,7 @@ void Dungeon::RandomMonsterMovement( )
 		}
 		else
 		{
-			UpdateEntityDataAt( monster.GetPosition( ), &monster );
+			SetEntityDataAt( monster.GetPosition( ), &monster );
 		}
 	}
 }
@@ -579,7 +861,7 @@ void Dungeon::UpdateCharacters( )
 		}
 		else
 		{
-			UpdateEntityDataAt( it->GetPosition( ), &( *it ) );
+			SetEntityDataAt( it->GetPosition( ), &( *it ) );
 		}
 	}
 
@@ -589,7 +871,7 @@ void Dungeon::UpdateCharacters( )
 	}
 	else
 	{
-		UpdateEntityDataAt( _player->GetPosition( ), _player );
+		SetEntityDataAt( _player->GetPosition( ), _player );
 	}
 }
 bool Dungeon::CheckGameStatus( ) const
@@ -601,14 +883,14 @@ bool Dungeon::CheckGameStatus( ) const
 		Output::GameStatusEnd( _status );
 		Input::Enter( );
 		
-		return true;
+		return false;
 	}
 	else if( _status == GameStatus::Menu )
 	{
-		return true;
+		return false;
 	}
 	else
 	{
-		return false;
+		return true;
 	}
 }

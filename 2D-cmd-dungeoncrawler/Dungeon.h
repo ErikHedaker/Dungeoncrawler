@@ -9,14 +9,18 @@
 #include <vector>
 #include <list>
 #include <memory>
+#include <fstream>
 
 class Dungeon
 {
 	public:
 		Dungeon( Player* player );
 
-		void Build( const GameType& type );
+		void BuildDungeon( const GameType& type );
 		void GameLoop( );
+
+		void SaveDungeon( const std::string& fileName );
+		void LoadDungeon( const std::string& fileName );
 
 		/* Used in Output::Dungeon */
 		const Entity* const GetEntityDataAt( const Vector2i& position ) const;
@@ -43,8 +47,9 @@ class Dungeon
 		std::vector<Entity*> _hiddenData;	// Non-owning pointers, points to _paths.
 		std::vector<bool> _visionData;
 
-		void UpdateEntityDataAt( const Vector2i& position, Entity* entity );
-		void UpdateHiddenDataAt( const Vector2i& position, Entity* entity );
+		void SetEntityDataAt( const Vector2i& position, Entity* entity );
+		void SetHiddenDataAt( const Vector2i& position, Entity* entity );
+		void SetVisionDataAt( const Vector2i& position, bool vision );
 		void UpdateVisionDataAt( const Vector2i& position, int lineOfSight );
 
 		/* Configuration */
@@ -53,19 +58,31 @@ class Dungeon
 		void SetMonsterAmount( const GameType& type );
 
 		/* Resize containers */
-		void BuildEntityData( );
-		void BuildHiddenData( );
-		void BuildVisionData( );
+		void ResizeEntityData( );
+		void ResizeHiddenData( );
+		void ResizeVisionData( );
 
 		/* Build Dungeon */
-		void SetPlayer( );
-		void SetExits( );
+		void SetRandomPlayerPosition( );
+		void SetRandomExits( );
 		void SetOuterWalls( );
 		void SetHiddenPath( );
 		void SetRandomSourceWalls( );
 		void SetRandomExtensionWalls( );
 		void SetFillerWalls( );
 		void SetRandomMonsterPositions( );
+
+		/* Write to save file */
+		void WriteDungeonSize( std::ofstream& stream );
+		void WriteEntityData( std::ofstream& stream );
+		void WriteHiddenData( std::ofstream& stream );
+		void WriteVisionData( std::ofstream& stream );
+
+		/* Read from save file */
+		void ReadDungeonSize( std::ifstream& stream );
+		void ReadEntityData( std::ifstream& stream );
+		void ReadHiddenData( std::ifstream& stream );
+		void ReadVisionData( std::ifstream& stream );
 
 		/* GameLoop */
 		void PlayerTurn( char choice );

@@ -1,6 +1,6 @@
 #include "Entity.h"
 
-Entity::Entity( const Vector2i& position, const Portrait& portrait ) :
+Entity::Entity( const Vector2i& position, char portrait ) :
 	_position( position ),
 	portrait( portrait )
 { }

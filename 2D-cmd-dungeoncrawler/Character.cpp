@@ -2,7 +2,7 @@
 #include "RNG.h"
 #include "IO.h"
 
-Character::Character( const Vector2i& position, const Portrait& portrait ) :
+Character::Character( const Vector2i& position, char portrait ) :
 	Entity( position, portrait ),
 	_baseSpeed( 10.0f ),
 	_baseArmor( 0.10f ),
@@ -13,7 +13,7 @@ Character::Character( const Vector2i& position, const Portrait& portrait ) :
 	_armor( nullptr ),
 	_weapon( nullptr )
 { }
-Character::Character( const Vector2i& position, const Portrait& portrait, float speed, float armor, float damage, float health, float mana ) :
+Character::Character( const Vector2i& position, char portrait, float speed, float armor, float damage, float health, float mana ) :
 	Entity( position, portrait ),
 	_baseSpeed( speed ),
 	_baseArmor( armor ),

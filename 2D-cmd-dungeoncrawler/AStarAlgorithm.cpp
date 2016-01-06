@@ -96,7 +96,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 
 		for( const auto& next : grid.GetValidNeighbors( current.position ) )
 		{
-			const int newCost = positionCost[current.position] + 1; /* Position-in-grid cost goes here if needed. */
+			const int newCost = positionCost[current.position] + 1; /* Position-in-grid cost goes here for weighted grid. */
 
 			if( !positionCost.count( next ) /* Node hasn't been visited before */ ||
 				newCost < positionCost[next] )
