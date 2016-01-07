@@ -3,6 +3,7 @@
 
 SquareGrid::SquareGrid( const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions ) :
 	gridSize( gridSize ),
+	obstacles( obstaclePositions.begin( ), obstaclePositions.end( ) ),
 	directions
 	( { {
 		Vector2i( 1, 0 ),
@@ -10,12 +11,7 @@ SquareGrid::SquareGrid( const Vector2i& gridSize, const std::vector<Vector2i>& o
 		Vector2i( -1, 0 ),
 		Vector2i( 0, 1 )
 	} } )
-{
-	for( const auto& position : obstaclePositions )
-	{
-		obstacles.insert( position );
-	}
-}
+{ }
 bool SquareGrid::InBounds( const Vector2i& position ) const
 {
 	return
@@ -57,7 +53,7 @@ Node::Node( const Vector2i& position, int priority ) :
 	priority( priority )
 { }
 
-bool CompareNodes::operator()( const Node& lhs, const Node& rhs )
+bool CompareNodes::operator()( const Node& lhs, const Node& rhs ) const
 {
 	return lhs.priority > rhs.priority;
 }
@@ -77,7 +73,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 	std::priority_queue<Node, std::vector<Node>, CompareNodes> activeNodes;
 	std::unordered_map<Vector2i, Vector2i> positionCameFrom;
 	std::unordered_map<Vector2i, int> positionCost;
-	SquareGrid grid( gridSize, obstaclePositions );
+	const SquareGrid grid( gridSize, obstaclePositions );
 
 	activeNodes.emplace( positionStart, 0 );
 	positionCameFrom[positionStart] = positionStart;

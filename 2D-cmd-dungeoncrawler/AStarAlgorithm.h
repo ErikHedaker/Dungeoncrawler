@@ -67,7 +67,7 @@ struct Node
 
 struct CompareNodes
 {
-	bool operator()( const Node& lhs, const Node& rhs );
+	bool operator()( const Node& lhs, const Node& rhs ) const;
 };
 
 int Heuristic( const Vector2i& positionFrom, const Vector2i& positionTo );

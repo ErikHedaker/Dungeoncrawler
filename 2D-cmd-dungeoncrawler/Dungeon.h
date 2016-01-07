@@ -14,15 +14,15 @@
 class Dungeon
 {
 	public:
-		Dungeon( Player* player );
+		Dungeon( );
 
 		void BuildDungeon( const GameType& type );
 		void GameLoop( );
 
-		void SaveDungeon( const std::string& fileName );
+		void SaveDungeon( const std::string& fileName ) const;
 		void LoadDungeon( const std::string& fileName );
 
-		/* Used in Output::Dungeon */
+		/* Public because they're used in Output::Dungeon */
 		const Entity* const GetEntityDataAt( const Vector2i& position ) const;
 		const Entity* const GetHiddenDataAt( const Vector2i& position ) const;
 		bool GetVisionDataAt( const Vector2i& position ) const;
@@ -34,13 +34,14 @@ class Dungeon
 	private:
 		GameStatus _status;
 		Vector2i _dungeonSize;
+		bool _spawnMonsters;
 
 		/* All types inherit from Entity */
 		std::list<Monster> _monsters;		// std::list guarantees unchanged
 		std::list<Wall> _walls;				// element addresses as the
 		std::list<Exit> _exits;				// container grows, unlike std::vector.
 		std::list<Path> _paths;
-		Player* _player;					// Non-owning pointer, Player exist outside of Dungeon.
+		std::unique_ptr<Player> _player;
 
 		/* 1D arrays interpreted as 2D space */
 		std::vector<Entity*> _entityData;	// Non-owning pointers, points to _monster, _walls, _exits and _player.
@@ -54,8 +55,7 @@ class Dungeon
 
 		/* Configuration */
 		void SetDungeonSize( const GameType& type );
-		void SetPlayerLineOfSight( const GameType& type );
-		void SetMonsterAmount( const GameType& type );
+		void SetSpawnMonsters( const GameType& type );
 
 		/* Resize containers */
 		void ResizeEntityData( );
@@ -63,20 +63,20 @@ class Dungeon
 		void ResizeVisionData( );
 
 		/* Build Dungeon */
-		void SetRandomPlayerPosition( );
+		void SetPlayer( );
 		void SetRandomExits( );
 		void SetOuterWalls( );
 		void SetHiddenPath( );
 		void SetRandomSourceWalls( );
 		void SetRandomExtensionWalls( );
 		void SetFillerWalls( );
-		void SetRandomMonsterPositions( );
+		void SetRandomMonsters( );
 
 		/* Write to save file */
-		void WriteDungeonSize( std::ofstream& stream );
-		void WriteEntityData( std::ofstream& stream );
-		void WriteHiddenData( std::ofstream& stream );
-		void WriteVisionData( std::ofstream& stream );
+		void WriteDungeonSize( std::ofstream& stream ) const;
+		void WriteEntityData( std::ofstream& stream ) const;
+		void WriteHiddenData( std::ofstream& stream ) const;
+		void WriteVisionData( std::ofstream& stream ) const;
 
 		/* Read from save file */
 		void ReadDungeonSize( std::ifstream& stream );

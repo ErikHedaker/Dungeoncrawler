@@ -23,53 +23,76 @@ void SetWindow( int Width, int Height )
 	SetConsoleScreenBufferSize( Handle, coord );            // Set Buffer Size 
 	SetConsoleWindowInfo( Handle, TRUE, &Rect );            // Set Window Size 
 }
-
-int main( )
+void Menu( Dungeon& dungeon )
 {
 	const std::vector<char> menuChoices { '1', '2', '3', '4' };
 
+	switch( Input::ValidChar( "\nYour choice: ", menuChoices ) )
+	{
+		case '1':
+		{
+			dungeon.BuildDungeon( GameType::Randomized );
+
+			break;
+		}
+		case '2':
+		{
+			dungeon.BuildDungeon( GameType::MinorConfiguration );
+
+			break;
+		}
+		case '3':
+		{
+			dungeon.LoadDungeon( "dungeonSave.txt" );
+
+			break;
+		}
+		case '4':
+		{
+			exit( 0 );
+		}
+		default:
+		{
+			Output::String( "\nSomething went wrong." );
+			Input::Enter( );
+
+			break;
+		}
+	}
+}
+
+int main( )
+{
 	SetWindow( WINDOW_SIZE.col, WINDOW_SIZE.row );
 
 	while( true ) /* Menu (sort of). */
 	{
-		Player player( Vector2i( -1, -1 ), 100.0f, 0.10f, 50.0f, 100.0f, 100.0f );
-		Dungeon dungeon( &player );
-		GameType type;
+		Dungeon dungeon;
 
 		Output::ClearScreen( );
 		Output::GameTypes( );
 
-		switch( Input::ValidChar( "\nYour choice: ", menuChoices ) )
+		try
 		{
-			case '1':
-			{
-				dungeon.BuildDungeon( GameType::Randomized );
+			Menu( dungeon );
+		}
+		catch( const std::exception& e )
+		{
+			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\nReason: " );
+			Output::String( e.what( ) );
+			Output::String( "\nPress enter to continue: " );
+			Input::Enter( );
 
-				break;
-			}
-			case '2':
-			{
-				dungeon.BuildDungeon( GameType::MinorConfiguration );
+			continue;
+		}
+		catch( ... )
+		{
+			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\nPress enter to continue: " );
+			Input::Enter( );
 
-				break;
-			}
-			case '3':
-			{
-				dungeon.LoadDungeon( "dungeonSave.txt" );
-
-				break;
-			}
-			case '4':
-			{
-				exit( 0 );
-			}
-			default:
-			{
-				Output::String( "\nSomething went wrong." );
-				Input::Enter( );
-
-				break;
-			}
+			continue;
 		}
 
 		dungeon.GameLoop( );

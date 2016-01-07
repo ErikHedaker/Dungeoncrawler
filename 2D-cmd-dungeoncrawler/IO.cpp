@@ -56,9 +56,9 @@ void Output::ClearScreen( )
 void Output::GameTypes( )
 {
 	std::cout << "Choose the game type.\n\n";
-	std::cout << "[1] New dungeon (randomized)\n";
-	std::cout << "[2] New dungeon (minor configuration)\n";
-	std::cout << "[3] Load dungeon\n";
+	std::cout << "[1] Build new dungeon (randomized)\n";
+	std::cout << "[2] Build new dungeon (minor configuration)\n";
+	std::cout << "[3] Load dungeon from file\n";
 	std::cout << "[4] Exit\n";
 }
 void Output::String( const std::string& string )

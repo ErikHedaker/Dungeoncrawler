@@ -10,22 +10,21 @@
 #include <string>
 #include <iostream>
 
-Dungeon::Dungeon( Player* player ) :
-	_player( player ),
-	_status( GameStatus::Neutral )
+Dungeon::Dungeon( ) :
+	_status( GameStatus::Neutral ),
+	_spawnMonsters( true )
 { }
 
 void Dungeon::BuildDungeon( const GameType& type )
 {
 	SetDungeonSize( type );
-	SetPlayerLineOfSight( type );
-	SetMonsterAmount(type );
+	SetSpawnMonsters( type );
 
 	ResizeEntityData( );
 	ResizeHiddenData( );
 	ResizeVisionData( );
 
-	SetRandomPlayerPosition( );
+	SetPlayer( );
 	SetRandomExits( );
 	SetOuterWalls( );
 	Output::String( "\nLoading path." );
@@ -37,7 +36,7 @@ void Dungeon::BuildDungeon( const GameType& type )
 	Output::String( "\nLoading filler walls." );
 	SetFillerWalls( );
 	Output::String( "\nLoading monster positions." );
-	SetRandomMonsterPositions( );
+	SetRandomMonsters( );
 }
 void Dungeon::GameLoop( )
 {
@@ -58,10 +57,9 @@ void Dungeon::GameLoop( )
 	}
 }
 
-void Dungeon::SaveDungeon( const std::string& fileName )
+void Dungeon::SaveDungeon( const std::string& fileName ) const
 {
 	std::ofstream outFile;
-	Vector2i iterator;
 
 	outFile.open( "dungeonSave.txt", std::ios::out | std::ios::trunc );
 
@@ -84,14 +82,12 @@ void Dungeon::SaveDungeon( const std::string& fileName )
 void Dungeon::LoadDungeon( const std::string& fileName )
 {
 	std::ifstream inFile;
-	std::string line;
 
 	inFile.open( fileName, std::ios::in );
 
 	if( !inFile.is_open( ) )
 	{
-		Output::String( "\nSomething went wrong." );
-		Input::Enter( );
+		throw std::exception( std::string( "Couldn't open file " + fileName ).c_str( ) );
 	}
 
 	ReadDungeonSize( inFile );
@@ -106,8 +102,6 @@ void Dungeon::LoadDungeon( const std::string& fileName )
 	ReadHiddenData( inFile );
 	Output::String( "\nReading vision data." );
 	ReadVisionData( inFile );
-
-	_player->SetLineOfSight( 5 ); // temporary
 
 	inFile.close( );
 }
@@ -232,64 +226,42 @@ void Dungeon::SetDungeonSize( const GameType& type )
 		}
 	}
 }
-void Dungeon::SetPlayerLineOfSight( const GameType& type )
+void Dungeon::SetSpawnMonsters( const GameType& type )
 {
-	switch( type )
-	{
-		case GameType::Randomized: /* Not really randomized */
-		{
-			_player->SetLineOfSight( 5 );
-
-			break;
-		}
-		case GameType::MinorConfiguration:
-		{
-			_player->SetLineOfSight( Input::PositiveInteger( "Enter the line of sight range: " ) );
-
-			break;
-		}
-		default:
-		{
-			Output::String( "\nSomething went wrong." );
-			Input::Enter( );
-
-			break;
-		}
-	}
-}
-void Dungeon::SetMonsterAmount( const GameType& type )
-{
-	int amountMonsters;
-
 	switch( type )
 	{
 		case GameType::Randomized:
 		{
-			const double high = sqrt( _dungeonSize.col * _dungeonSize.row ) / 1.5;
-			const double low = sqrt( _dungeonSize.col * _dungeonSize.row ) / 3;
-
-			amountMonsters = RandomNumberGenerator( static_cast<int>( low ), static_cast<int>( high ) );
-			_monsters.resize( amountMonsters );
+			_spawnMonsters = true;
 
 			break;
 		}
 		case GameType::MinorConfiguration:
 		{
-			const int maxMonsters = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) * 10.5 - 100.0 ); /* 5 monsters in 10 * 10 grid */
+			const std::vector<char> choices { 'Y', 'y', 'N', 'n' };
 
-			while( true )
+			switch( Input::ValidChar( "Spawn monsters [Y/N]: ", choices ) )
 			{
-				amountMonsters = Input::PositiveInteger( "Enter the amount of monsters: " );
-
-				if( amountMonsters <= maxMonsters )
+				case 'Y':
+				case 'y':
 				{
-					_monsters.resize( amountMonsters );
+					_spawnMonsters = true;
 
 					break;
 				}
-				else
+				case 'N':
+				case 'n':
 				{
-					Output::String( "\nToo many monsters, try again.\n\n" );
+					_spawnMonsters = false;
+
+					break;
+				}
+				default:
+				{
+					Output::String( "\nSomething went wrong." );
+					Input::Enter( );
+
+					break;
 				}
 			}
 
@@ -321,15 +293,15 @@ void Dungeon::ResizeVisionData( )
 	_visionData.resize( _dungeonSize.col * _dungeonSize.row, false );
 }
 
-void Dungeon::SetRandomPlayerPosition( )
+void Dungeon::SetPlayer( )
 {
 	Vector2i position;
 
 	position.col = RandomNumberGenerator( 1, _dungeonSize.col - 2 );
 	position.row = RandomNumberGenerator( 1, _dungeonSize.row - 2 );
 
-	_player->SetPosition( position );
-	SetEntityDataAt( position, _player );
+	_player.reset( new Player( position, 100.0f, 0.10f, 50.0f, 100.0f, 100.0f, 5 ) );
+	SetEntityDataAt( position, _player.get( ) );
 }
 void Dungeon::SetRandomExits( )
 {
@@ -488,34 +460,40 @@ void Dungeon::SetFillerWalls( )
 		}
 	}
 }
-void Dungeon::SetRandomMonsterPositions( )
+void Dungeon::SetRandomMonsters( )
 {
-	Vector2i position;
-
-	for( auto& monster : _monsters )
+	if( _spawnMonsters )
 	{
-		while( true )
+		const int low = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) / 3 );
+		const int high = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) / 1.5 );
+		const int amountMonsters = RandomNumberGenerator( low, high );
+		Vector2i position;
+
+		for( int i = 0; i < amountMonsters; i++ )
 		{
-			position.col = RandomNumberGenerator( 1, _dungeonSize.col - 2 );
-			position.row = RandomNumberGenerator( 1, _dungeonSize.row - 2 );
-
-			if( GetEntityDataAt( position ) == nullptr )
+			while( true )
 			{
-				monster.SetPosition( position );
-				SetEntityDataAt( position, &monster );
+				position.col = RandomNumberGenerator( 1, _dungeonSize.col - 2 );
+				position.row = RandomNumberGenerator( 1, _dungeonSize.row - 2 );
 
-				break;
+				if( GetEntityDataAt( position ) == nullptr )
+				{
+					_monsters.emplace_back( position );
+					SetEntityDataAt( position, &_monsters.back( ) );
+
+					break;
+				}
 			}
 		}
 	}
 }
 
-void Dungeon::WriteDungeonSize( std::ofstream& stream )
+void Dungeon::WriteDungeonSize( std::ofstream& stream ) const
 {
 	stream << _dungeonSize.col << '\n';
 	stream << _dungeonSize.row << '\n';
 }
-void Dungeon::WriteEntityData( std::ofstream& stream )
+void Dungeon::WriteEntityData( std::ofstream& stream ) const
 {
 	Vector2i iterator;
 
@@ -536,7 +514,7 @@ void Dungeon::WriteEntityData( std::ofstream& stream )
 		stream << '\n';
 	}
 }
-void Dungeon::WriteHiddenData( std::ofstream& stream )
+void Dungeon::WriteHiddenData( std::ofstream& stream ) const
 {
 	Vector2i iterator;
 
@@ -557,7 +535,7 @@ void Dungeon::WriteHiddenData( std::ofstream& stream )
 		stream << '\n';
 	}
 }
-void Dungeon::WriteVisionData( std::ofstream& stream )
+void Dungeon::WriteVisionData( std::ofstream& stream ) const
 {
 	Vector2i iterator;
 
@@ -576,11 +554,18 @@ void Dungeon::ReadDungeonSize( std::ifstream& stream )
 {
 	std::string line;
 
-	std::getline( stream, line );
-	_dungeonSize.col = std::stoi( line );
+	try
+	{
+		std::getline( stream, line );
+		_dungeonSize.col = std::stoi( line );
 
-	std::getline( stream, line );
-	_dungeonSize.row = std::stoi( line );
+		std::getline( stream, line );
+		_dungeonSize.row = std::stoi( line );
+	}
+	catch( ... )
+	{
+		throw std::exception( std::string( "Couldn't read dungeon size" ).c_str( ) );
+	}
 }
 void Dungeon::ReadEntityData( std::ifstream& stream )
 {
@@ -612,14 +597,14 @@ void Dungeon::ReadEntityData( std::ifstream& stream )
 				case Portrait::Monster:
 				{
 					_monsters.emplace_back( iterator );
-					SetEntityDataAt( iterator, &_walls.back( ) );
+					SetEntityDataAt( iterator, &_monsters.back( ) );
 
 					break;
 				}
 				case Portrait::Player:
 				{
-					_player->SetPosition( iterator );
-					SetEntityDataAt( iterator, _player );
+					_player.reset( new Player( iterator, 100.0f, 0.10f, 50.0f, 100.0f, 100.0f, 5 ) );
+					SetEntityDataAt( iterator, _player.get( ) );
 
 					break;
 				}
@@ -631,12 +616,7 @@ void Dungeon::ReadEntityData( std::ifstream& stream )
 				}
 				default:
 				{
-					Output::String( "\nSomething went wrong." );
-					Output::String( "\nline: " );
-					Output::String( line );
-					Input::Enter( );
-
-					break;
+					throw std::exception( std::string( "Couldn't read entity data" ).c_str( ) );
 				}
 			}
 		}
@@ -670,13 +650,8 @@ void Dungeon::ReadHiddenData( std::ifstream& stream )
 				}
 				default:
 				{
-					Output::String( "\nSomething went wrong." );
-					Output::String( "\nline: " );
-					Output::String( line );
-					Input::Enter( );
-
-					break;
-				}
+					throw std::exception( std::string( "Couldn't read hidden data" ).c_str( ) );
+				}	
 			}
 		}
 	}
@@ -708,12 +683,7 @@ void Dungeon::ReadVisionData( std::ifstream& stream )
 				}
 				default:
 				{
-					Output::String( "\nSomething went wrong." );
-					Output::String( "\nline: " );
-					Output::String( line );
-					Input::Enter( );
-
-					break;
+					throw std::exception( std::string( "Couldn't read vision data" ).c_str( ) );
 				}
 			}
 		}
@@ -836,14 +806,14 @@ void Dungeon::RandomMonsterMovement( )
 		auto entityCached = GetEntityDataAt( monster.GetPosition( ) );
 
 		if( entityCached != nullptr &&
-			entityCached != _player )
+			entityCached != _player.get( ) )
 		{
 			monster.RevertPosition( );
 		}
 		else if( entityCached != nullptr &&
-				 entityCached == _player )
+				 entityCached == _player.get( ) )
 		{
-			monster.Attack( _player );
+			monster.Attack( _player.get( ) );
 		}
 		else
 		{
@@ -871,7 +841,7 @@ void Dungeon::UpdateCharacters( )
 	}
 	else
 	{
-		SetEntityDataAt( _player->GetPosition( ), _player );
+		SetEntityDataAt( _player->GetPosition( ), _player.get( ) );
 	}
 }
 bool Dungeon::CheckGameStatus( ) const
