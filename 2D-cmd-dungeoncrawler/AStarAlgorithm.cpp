@@ -63,7 +63,7 @@ int Heuristic( const Vector2i& positionFrom, const Vector2i& positionTo )
 	return abs( positionFrom.col - positionTo.col ) + abs( positionFrom.row - positionTo.row );
 }
 
-std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionFinish, const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions )
+std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionGoal, const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions )
 {
 	/*
 		http://www.redblobgames.com/pathfinding/a-star/implementation.html
@@ -85,7 +85,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 
 		activeNodes.pop( );
 
-		if( current.position == positionFinish )
+		if( current.position == positionGoal )
 		{
 			break;
 		}
@@ -97,7 +97,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 			if( !positionCost.count( next ) /* Node hasn't been visited before */ ||
 				newCost < positionCost[next] )
 			{
-				const int priority = newCost + Heuristic( next, positionFinish );
+				const int priority = newCost + Heuristic( next, positionGoal );
 
 				activeNodes.emplace( next, priority );
 				positionCameFrom[next] = current.position;
@@ -108,7 +108,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 
 	/* Reconstruct path */
 	std::vector<Vector2i> path;
-	Vector2i positionCurrent = positionFinish;
+	Vector2i positionCurrent = positionGoal;
 
 	path.push_back( positionCurrent );
 

@@ -6,8 +6,8 @@ enum class Portrait : char
 	Player = '@',
 	Monster = 'M',
 	Wall = '#',
-	Exit = '=',
-	Path = ':',
+	Door = '=',
+	Step = ':',
 	Floor = '-'
 };
 */
@@ -17,9 +17,9 @@ struct Portrait
 	static const char Player = '@';
 	static const char Monster = 'M';
 	static const char Wall = '#';
-	static const char Exit = '=';
-	static const char Path = ':';
-	static const char Floor = '-';
+	static const char Door = '+';
+	static const char Step = '=';
+	static const char Ground = '-';
 };
 
 enum class Orientation

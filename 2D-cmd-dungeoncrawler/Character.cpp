@@ -2,17 +2,6 @@
 #include "RNG.h"
 #include "IO.h"
 
-Character::Character( const Vector2i& position, char portrait ) :
-	Entity( position, portrait ),
-	_baseSpeed( 10.0f ),
-	_baseArmor( 0.10f ),
-	_baseDamage( 10.0f ),
-	_baseHealth( 100.0f ),
-	_baseMana( 100.0f ),
-	_alive( true ),
-	_armor( nullptr ),
-	_weapon( nullptr )
-{ }
 Character::Character( const Vector2i& position, char portrait, float speed, float armor, float damage, float health, float mana ) :
 	Entity( position, portrait ),
 	_baseSpeed( speed ),

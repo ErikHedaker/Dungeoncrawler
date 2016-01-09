@@ -93,7 +93,7 @@ void Output::DungeonCentered( const Dungeon& dungeon, const Vector2i& dungeonSiz
 				}
 				else
 				{
-					std::cout << Portrait::Floor;
+					std::cout << Portrait::Ground;
 				}
 			}
 			else
@@ -123,31 +123,8 @@ void Output::DungeonFull( const Dungeon& dungeon, const Vector2i& dungeonSize )
 				}
 				else
 				{
-					std::cout << Portrait::Floor;
+					std::cout << Portrait::Ground;
 				}
-			}
-			else
-			{
-				std::cout << " ";
-			}
-		}
-
-		std::cout << "\n";
-	}
-
-	std::cout << "\n";
-}
-void Output::DungeonFullHidden( const Dungeon& dungeon, const Vector2i& dungeonSize )
-{
-	Vector2i iterator;
-
-	for( iterator.row = 0; iterator.row < dungeonSize.row; iterator.row++ )
-	{
-		for( iterator.col = 0; iterator.col < dungeonSize.col; iterator.col++ )
-		{
-			if( dungeon.GetHiddenDataAt( iterator ) != nullptr )
-			{
-				std::cout << dungeon.GetHiddenDataAt( iterator )->portrait;
 			}
 			else
 			{

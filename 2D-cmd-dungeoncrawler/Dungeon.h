@@ -3,8 +3,8 @@
 #include "Player.h"
 #include "Monster.h"
 #include "Wall.h"
-#include "Exit.h"
-#include "Path.h"
+#include "Door.h"
+#include "Step.h"
 #include "Enums.h"
 #include <vector>
 #include <list>
@@ -29,7 +29,7 @@ class Dungeon
 
 		/* Helper functions */
 		bool InBounds( const Vector2i& position ) const;
-		bool FloorSurroundedWalls( const Vector2i& position, int threshold ) const;
+		bool PositionSurrounded( const Vector2i& position, int threshold ) const;
 
 	private:
 		GameStatus _status;
@@ -39,13 +39,13 @@ class Dungeon
 		/* All types inherit from Entity */
 		std::list<Monster> _monsters;		// std::list guarantees unchanged
 		std::list<Wall> _walls;				// element addresses as the
-		std::list<Exit> _exits;				// container grows, unlike std::vector.
-		std::list<Path> _paths;
+		std::list<Door> _doors;				// container grows, unlike std::vector.
+		std::list<Step> _steps;
 		std::unique_ptr<Player> _player;
 
 		/* 1D arrays interpreted as 2D space */
-		std::vector<Entity*> _entityData;	// Non-owning pointers, points to _monster, _walls, _exits and _player.
-		std::vector<Entity*> _hiddenData;	// Non-owning pointers, points to _paths.
+		std::vector<Entity*> _entityData;	// Non-owning pointers, points to elements in _monster, _walls and _doors as well as _player.
+		std::vector<Entity*> _hiddenData;	// Non-owning pointers, points to elements in _steps.
 		std::vector<bool> _visionData;
 
 		void SetEntityDataAt( const Vector2i& position, Entity* entity );
@@ -64,9 +64,9 @@ class Dungeon
 
 		/* Build Dungeon */
 		void SetPlayer( );
-		void SetRandomExits( );
+		void SetRandomDoors( );
 		void SetOuterWalls( );
-		void SetHiddenPath( );
+		void SetHiddenSteps( );
 		void SetRandomSourceWalls( );
 		void SetRandomExtensionWalls( );
 		void SetFillerWalls( );
@@ -85,7 +85,7 @@ class Dungeon
 		void ReadVisionData( std::ifstream& stream );
 
 		/* GameLoop */
-		void PlayerTurn( char choice );
+		void PlayerTurn( );
 		void PlayerMovement( const Orientation& orientation );
 		void RandomMonsterMovement( );
 		void UpdateCharacters( );

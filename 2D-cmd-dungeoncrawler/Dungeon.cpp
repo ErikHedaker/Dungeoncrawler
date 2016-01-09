@@ -6,9 +6,7 @@
 #include <algorithm>
 #include <iterator>
 #include <fstream>
-#include <sstream>
 #include <string>
-#include <iostream>
 
 Dungeon::Dungeon( ) :
 	_status( GameStatus::Neutral ),
@@ -25,10 +23,10 @@ void Dungeon::BuildDungeon( const GameType& type )
 	ResizeVisionData( );
 
 	SetPlayer( );
-	SetRandomExits( );
+	SetRandomDoors( );
 	SetOuterWalls( );
 	Output::String( "\nLoading path." );
-	SetHiddenPath( );
+	SetHiddenSteps( );
 	Output::String( "\nLoading source walls." );
 	SetRandomSourceWalls( );
 	Output::String( "\nLoading extension walls." );
@@ -40,36 +38,34 @@ void Dungeon::BuildDungeon( const GameType& type )
 }
 void Dungeon::GameLoop( )
 {
-	const std::vector<char> playerTurnChoices { 'W', 'w', 'A', 'a', 'S', 's', 'D', 'd', 'Q', 'q', 'E', 'e' };
-
 	while( CheckGameStatus( ) )
 	{
 		UpdateVisionDataAt( _player->GetPosition( ), _player->GetLineOfSight( ) );
 		Output::ClearScreen( );
 		Output::DungeonCentered( *this, _dungeonSize, _player->GetPosition( ) );
-		//Output::DungeonFull( *this, _dungeonSize );
-		//Output::DungeonFullHidden( *this, _dungeonSize );
 		Output::PlayerStatus( *_player );
 		Output::TurnOptions( );
-		PlayerTurn( Input::ValidChar( "\nYour choice: ", playerTurnChoices ) );
+		PlayerTurn( );
 		RandomMonsterMovement( );
 		UpdateCharacters( );
 	}
+
+	Output::String( "\n\nDungeon destructor might take some time." );
 }
 
 void Dungeon::SaveDungeon( const std::string& fileName ) const
 {
 	std::ofstream outFile;
 
-	outFile.open( "dungeonSave.txt", std::ios::out | std::ios::trunc );
+	outFile.open( fileName, std::ios::out | std::ios::trunc );
 
 	if( !outFile.is_open( ) )
 	{
-		Output::String( "\nSomething went wrong." );
-		Input::Enter( );
+		throw std::exception( std::string( "Couldn't open file " + fileName ).c_str( ) );
 	}
 
 	WriteDungeonSize( outFile );
+
 	Output::String( "\nWriting entity data." );
 	WriteEntityData( outFile );
 	Output::String( "\nWriting hidden data." );
@@ -114,9 +110,9 @@ bool Dungeon::InBounds( const Vector2i& position ) const
 		position.col <= _dungeonSize.col - 1 &&
 		position.row <= _dungeonSize.row - 1;
 }
-bool Dungeon::FloorSurroundedWalls( const Vector2i& position, int threshold ) const
+bool Dungeon::PositionSurrounded( const Vector2i& position, int threshold ) const
 {
-	static const std::array<Vector2i, 8> directions =
+	const std::array<Vector2i, 8> directions =
 	{
 		Vector2i( 0, -1 ),
 		Vector2i( 1, -1 ),
@@ -127,7 +123,7 @@ bool Dungeon::FloorSurroundedWalls( const Vector2i& position, int threshold ) co
 		Vector2i( -1, 0 ),
 		Vector2i( -1, -1 )
 	};
-	int surroundingWalls = 0;
+	int surroundingEntity = 0;
 	Vector2i positionNeighbor;
 
 	for( const auto& direction : directions )
@@ -136,11 +132,11 @@ bool Dungeon::FloorSurroundedWalls( const Vector2i& position, int threshold ) co
 
 		if( GetEntityDataAt( positionNeighbor ) != nullptr )
 		{
-			surroundingWalls++;
+			surroundingEntity++;
 		}
 	}
 
-	return surroundingWalls > threshold;
+	return surroundingEntity >= threshold;
 }
 
 void Dungeon::SetEntityDataAt( const Vector2i& position, Entity* entity )
@@ -219,7 +215,8 @@ void Dungeon::SetDungeonSize( const GameType& type )
 		}
 		default:
 		{
-			Output::String( "\nSomething went wrong." );
+			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\nPress enter to continue: " );
 			Input::Enter( );
 
 			break;
@@ -239,8 +236,9 @@ void Dungeon::SetSpawnMonsters( const GameType& type )
 		case GameType::MinorConfiguration:
 		{
 			const std::vector<char> choices { 'Y', 'y', 'N', 'n' };
+			const char choice = Input::ValidChar( "Spawn monsters [Y/N]: ", choices );
 
-			switch( Input::ValidChar( "Spawn monsters [Y/N]: ", choices ) )
+			switch( choice )
 			{
 				case 'Y':
 				case 'y':
@@ -258,7 +256,8 @@ void Dungeon::SetSpawnMonsters( const GameType& type )
 				}
 				default:
 				{
-					Output::String( "\nSomething went wrong." );
+					Output::String( "\n\nSomething went wrong." );
+					Output::String( "\nPress enter to continue: " );
 					Input::Enter( );
 
 					break;
@@ -269,7 +268,8 @@ void Dungeon::SetSpawnMonsters( const GameType& type )
 		}
 		default:
 		{
-			Output::String( "\nSomething went wrong." );
+			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\nPress enter to continue: " );
 			Input::Enter( );
 
 			break;
@@ -303,7 +303,7 @@ void Dungeon::SetPlayer( )
 	_player.reset( new Player( position, 100.0f, 0.10f, 50.0f, 100.0f, 100.0f, 5 ) );
 	SetEntityDataAt( position, _player.get( ) );
 }
-void Dungeon::SetRandomExits( )
+void Dungeon::SetRandomDoors( )
 {
 	Vector2i iterator;
 	std::vector<Vector2i> positionValid;
@@ -332,8 +332,8 @@ void Dungeon::SetRandomExits( )
 	for( int i = 0; i < exitAmount; i++ )
 	{
 		index = RandomNumberGenerator( 0, positionValid.size( ) - 1 );
-		_exits.emplace_back( positionValid[index] );
-		SetEntityDataAt( positionValid[index], &_exits.back( ) );
+		_doors.emplace_back( positionValid[index] );
+		SetEntityDataAt( positionValid[index], &_doors.back( ) );
 		positionValid.erase( positionValid.begin( ) + index );
 	}
 }
@@ -359,33 +359,37 @@ void Dungeon::SetOuterWalls( )
 		}
 	}
 }
-void Dungeon::SetHiddenPath( )
+void Dungeon::SetHiddenSteps( )
 {
-	for( const auto& exit : _exits )
+	const Vector2i positionCenter = _dungeonSize / 2;
+	std::vector<Vector2i> pathToCenter;
+	std::vector<Vector2i> positionWalls;
+
+	std::for_each( _walls.begin( ), _walls.end( ), [&positionWalls]( const Wall& wall ){ positionWalls.push_back( wall.GetPosition( ) ); } );
+
+	pathToCenter = AStarAlgorithm( _player->GetPosition( ), positionCenter, _dungeonSize, positionWalls );
+
+	for( const auto& door : _doors )
 	{
-		std::vector<Vector2i> positionWalls;
-		std::vector<Vector2i> positionPaths;
+		std::vector<Vector2i> pathToDoor = AStarAlgorithm( positionCenter, door.GetPosition( ), _dungeonSize, positionWalls );
+		std::vector<Vector2i> positionSteps;
 
-		for( const auto& wall : _walls )
+		std::copy( pathToCenter.begin( ), pathToCenter.end( ), std::back_inserter( positionSteps ) );
+		std::copy( pathToDoor.begin( ), pathToDoor.end( ), std::back_inserter( positionSteps ) );
+
+		for( const auto& position : positionSteps )
 		{
-			positionWalls.push_back( wall.GetPosition( ) );
-		}
-
-		positionPaths = AStarAlgorithm( _player->GetPosition( ), exit.GetPosition( ), _dungeonSize, positionWalls );
-
-		for( const auto& path : positionPaths )
-		{
-			if( GetHiddenDataAt( path ) == nullptr )
+			if( GetHiddenDataAt( position ) == nullptr )
 			{
-				_paths.emplace_back( path );
-				SetHiddenDataAt( path, &_paths.back( ) );
+				_steps.emplace_back( position );
+				SetHiddenDataAt( position, &_steps.back( ) );
 			}
 		}
 	}
 }
 void Dungeon::SetRandomSourceWalls( )
 {
-	int sourceWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 10;
+	int sourceWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 20;
 	Vector2i position;
 
 	while( sourceWallsLeft > 0 )
@@ -404,27 +408,22 @@ void Dungeon::SetRandomSourceWalls( )
 }
 void Dungeon::SetRandomExtensionWalls( )
 {
-	const std::array<Vector2i, 8> directions =
+	const std::array<Vector2i, 4> directions =
 	{
 		Vector2i( 0, -1 ),
-		Vector2i( 1, -1 ),
 		Vector2i( 1, 0 ),
-		Vector2i( 1, 1 ),
 		Vector2i( 0, 1 ),
-		Vector2i( -1, 1 ),
 		Vector2i( -1, 0 ),
-		Vector2i( -1, -1 )
 	};
-	int extensionWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 5;
+	int extensionWallsLeft = ( _dungeonSize.col * _dungeonSize.row ) / 4;
 	int index;
 	Vector2i positionNeighbor;
-
 
 	while( extensionWallsLeft > 0 )
 	{
 		for( auto& wall : _walls )
 		{
-			index = RandomNumberGenerator( 0, 7 );
+			index = RandomNumberGenerator( 0, 3 );
 			positionNeighbor = wall.GetPosition( ) + directions[index];
 
 			if( InBounds( positionNeighbor ) &&
@@ -451,7 +450,7 @@ void Dungeon::SetFillerWalls( )
 			{
 				if( GetEntityDataAt( iterator ) == nullptr &&
 					GetHiddenDataAt( iterator ) == nullptr &&
-					FloorSurroundedWalls( iterator, 4 ) )
+					PositionSurrounded( iterator, 5 ) )
 				{
 					_walls.emplace_back( iterator );
 					SetEntityDataAt( iterator, &_walls.back( ) );
@@ -464,7 +463,7 @@ void Dungeon::SetRandomMonsters( )
 {
 	if( _spawnMonsters )
 	{
-		const int low = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) / 3 );
+		const int low = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) / 3.0 );
 		const int high = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) / 1.5 );
 		const int amountMonsters = RandomNumberGenerator( low, high );
 		Vector2i position;
@@ -507,7 +506,7 @@ void Dungeon::WriteEntityData( std::ofstream& stream ) const
 			}
 			else
 			{
-				stream << Portrait::Floor;
+				stream << Portrait::Ground;
 			}
 		}
 
@@ -528,7 +527,7 @@ void Dungeon::WriteHiddenData( std::ofstream& stream ) const
 			}
 			else
 			{
-				stream << ' ';
+				stream << Portrait::Ground;
 			}
 		}
 
@@ -587,10 +586,10 @@ void Dungeon::ReadEntityData( std::ifstream& stream )
 
 					break;
 				}
-				case Portrait::Exit:
+				case Portrait::Door:
 				{
-					_exits.emplace_back( iterator );
-					SetEntityDataAt( iterator, &_exits.back( ) );
+					_doors.emplace_back( iterator );
+					SetEntityDataAt( iterator, &_doors.back( ) );
 
 					break;
 				}
@@ -608,7 +607,7 @@ void Dungeon::ReadEntityData( std::ifstream& stream )
 
 					break;
 				}
-				case Portrait::Floor:
+				case Portrait::Ground:
 				{
 					SetEntityDataAt( iterator, nullptr );
 
@@ -635,14 +634,14 @@ void Dungeon::ReadHiddenData( std::ifstream& stream )
 		{
 			switch( line[iterator.col] )
 			{
-				case Portrait::Path:
+				case Portrait::Step:
 				{
-					_paths.emplace_back( iterator );
-					SetHiddenDataAt( iterator, &_paths.back( ) );
+					_steps.emplace_back( iterator );
+					SetHiddenDataAt( iterator, &_steps.back( ) );
 
 					break;
 				}
-				case ' ':
+				case Portrait::Ground:
 				{
 					SetHiddenDataAt( iterator, nullptr );
 
@@ -690,8 +689,11 @@ void Dungeon::ReadVisionData( std::ifstream& stream )
 	}
 }
 
-void Dungeon::PlayerTurn( char choice )
+void Dungeon::PlayerTurn( )
 {
+	const std::vector<char> playerTurnChoices { 'W', 'w', 'A', 'a', 'S', 's', 'D', 'd', 'Q', 'q', 'E', 'e' };
+	const char choice = Input::ValidChar( "\nYour choice: ", playerTurnChoices );
+
 	switch( choice )
 	{
 		case 'W':
@@ -735,14 +737,27 @@ void Dungeon::PlayerTurn( char choice )
 		case 'E':
 		case 'e':
 		{
-			SaveDungeon( "dungeonSave.txt" );
+			try
+			{
+				SaveDungeon( "dungeonSave.txt" );
+			}
+			catch( const std::exception& e )
+			{
+				Output::String( "\n\nSomething went wrong." );
+				Output::String( "\nReason: " );
+				Output::String( e.what( ) );
+				Output::String( "\nPress enter to continue: " );
+				Input::Enter( );
+			}
+
 			_status = GameStatus::Menu;
 
 			break;
 		}
 		default:
 		{
-			Output::String( "\nSomething went wrong." );
+			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\nPress enter to continue: " );
 			Input::Enter( );
 
 			break;
@@ -768,7 +783,7 @@ void Dungeon::PlayerMovement( const Orientation& orientation )
 
 				break;
 			}
-			case Portrait::Exit:
+			case Portrait::Door:
 			{
 				_status = GameStatus::Won;
 				
@@ -777,9 +792,9 @@ void Dungeon::PlayerMovement( const Orientation& orientation )
 			case Portrait::Monster:
 			{
 				/*
-				const_cast is fine here because the object that the pointer points to is mutable (a monster in this case).
-				While I try to be as const correct as possible, this is only one time I need to access and modify a monster directly from a const pointer.
-				My only other option would be to search all monsters for the same position as the entity pointer, which would be inefficient.
+					const_cast is fine here because the object that the pointer points to is mutable (a monster in this case).
+					While I try to be as const correct as possible, this is only one time I need to access and modify a monster directly from a const pointer.
+					My only other option would be to search all monsters for the same position as the entity pointer, which would be inefficient.
 				*/
 
 				auto entity = const_cast<Entity*>( GetEntityDataAt( _player->GetPosition( ) ) );

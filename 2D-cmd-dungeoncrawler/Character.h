@@ -6,7 +6,6 @@
 class Character : public Entity
 {
 	public:
-		Character( const Vector2i& position, char portrait );
 		Character( const Vector2i& position, char portrait, float speed, float armor, float damage, float health, float mana );
 
 		void Move( const Orientation& orientation );

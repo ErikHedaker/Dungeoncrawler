@@ -53,7 +53,8 @@ void Menu( Dungeon& dungeon )
 		}
 		default:
 		{
-			Output::String( "\nSomething went wrong." );
+			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\nPress enter to continue: " );
 			Input::Enter( );
 
 			break;
