@@ -1,6 +1,27 @@
 #include "AStarAlgorithm.h"
 #include "IO.h"
 
+void Vector2iHasher::HashCombine( std::size_t& seed, int value )
+{
+	/*
+		https://www.quora.com/How-can-I-declare-an-unordered-set-of-pair-of-int-int-in-C++11
+		Function copied from source and then rewritten.
+	*/
+
+	std::hash<int> hasher;
+
+	seed ^= hasher( value ) + 0x9e3779b9 + ( seed << 6 ) + ( seed >> 2 );
+}
+std::size_t Vector2iHasher::operator()( const Vector2i& key )
+{
+	size_t seed = 0;
+
+	HashCombine( seed, key.col );
+	HashCombine( seed, key.row );
+
+	return seed;
+}
+
 SquareGrid::SquareGrid( const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions ) :
 	gridSize( gridSize ),
 	obstacles( obstaclePositions.begin( ), obstaclePositions.end( ) ),
@@ -15,8 +36,8 @@ SquareGrid::SquareGrid( const Vector2i& gridSize, const std::vector<Vector2i>& o
 bool SquareGrid::InBounds( const Vector2i& position ) const
 {
 	return
-		0 <= position.col &&
-		0 <= position.row &&
+		position.col >= 0 &&
+		position.row >= 0 &&
 		position.col < gridSize.col &&
 		position.row < gridSize.row;
 }
@@ -30,12 +51,12 @@ const std::vector<Vector2i> SquareGrid::GetValidNeighbors( const Vector2i& posit
 
 	for( const auto& direction : directions )
 	{
-		Vector2i next = position + direction;
+		Vector2i positionNeighbor = position + direction;
 
-		if( InBounds( next ) &&
-			Passable( next ) )
+		if( InBounds( positionNeighbor ) &&
+			Passable( positionNeighbor ) )
 		{
-			results.push_back( next );
+			results.push_back( positionNeighbor );
 		}
 	}
 
@@ -71,8 +92,8 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 	*/
 
 	std::priority_queue<Node, std::vector<Node>, CompareNodes> activeNodes;
-	std::unordered_map<Vector2i, Vector2i> positionCameFrom;
-	std::unordered_map<Vector2i, int> positionCost;
+	std::unordered_map<Vector2i, Vector2i, Vector2iHasher> positionCameFrom;
+	std::unordered_map<Vector2i, int, Vector2iHasher> positionCost;
 	const SquareGrid grid( gridSize, obstaclePositions );
 
 	activeNodes.emplace( positionStart, 0 );
@@ -124,6 +145,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 			Output::String( "\n\n" );
 			Output::String( e.what( ) );
 			Output::String( " (incomplete path).\n" );
+
 			break;
 		}
 	}

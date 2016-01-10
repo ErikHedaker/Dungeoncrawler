@@ -10,39 +10,11 @@
 #include <algorithm>
 #include <functional>
 
-template <class T>
-void HashCombine( std::size_t& seed, const T& value )
+struct Vector2iHasher
 {
-	/*
-		https://www.quora.com/How-can-I-declare-an-unordered-set-of-pair-of-int-int-in-C++11
-		Function copied from source and then rewritten.
-	*/
-
-	std::hash<T> hasher;
-
-	seed ^= hasher( value ) + 0x9e3779b9 + ( seed << 6 ) + ( seed >> 2 );
-}
-namespace std
-{
-	/*
-		https://www.quora.com/How-can-I-declare-an-unordered-set-of-pair-of-int-int-in-C++11
-		Function copied from source and then rewritten.
-	*/
-
-	template<>
-	struct hash<Vector2i>
-	{
-		size_t operator()( const Vector2i& value ) const
-		{
-			size_t seed = 0;
-
-			::HashCombine( seed, value.col );
-			::HashCombine( seed, value.row );
-
-			return seed;
-		}
-	};
-}
+	void HashCombine( std::size_t& seed, int value );
+	std::size_t operator()( const Vector2i& key );
+};
 
 class SquareGrid
 {
@@ -56,7 +28,7 @@ class SquareGrid
 	private:
 		const Vector2i gridSize;
 		const std::array<Vector2i, 4> directions;
-		const std::unordered_set<Vector2i> obstacles;
+		const std::unordered_set<Vector2i, Vector2iHasher> obstacles;
 };
 
 struct Node

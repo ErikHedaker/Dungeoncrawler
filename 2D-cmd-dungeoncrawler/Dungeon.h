@@ -43,7 +43,7 @@ class Dungeon
 		std::list<Step> _steps;
 		std::unique_ptr<Player> _player;
 
-		/* 1D arrays interpreted as 2D space */
+		/* 1D arrays interpreted as 2D grids */
 		std::vector<Entity*> _entityData;	// Non-owning pointers, points to elements in _monster, _walls and _doors as well as _player.
 		std::vector<Entity*> _hiddenData;	// Non-owning pointers, points to elements in _steps.
 		std::vector<bool> _visionData;
@@ -62,7 +62,7 @@ class Dungeon
 		void ResizeHiddenData( );
 		void ResizeVisionData( );
 
-		/* Build Dungeon */
+		/* Generate Dungeon */
 		void SetPlayer( );
 		void SetRandomDoors( );
 		void SetOuterWalls( );

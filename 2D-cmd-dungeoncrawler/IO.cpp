@@ -200,10 +200,46 @@ void Output::AsciiArtSpider( )
 	std::cout << "\n	';              ,;'";
 	std::cout << "\n          \"'           '";
 }
+void Output::AsciiArtSwords( )
+{
+	std::cout << "\t  n                                                                 :.  \n";
+	std::cout << "\t  E%                                                                :'5 \n";
+	std::cout << "\t z  %                                                              :' ` \n";
+	std::cout << "\t K   ':                                                           z   R \n";
+	std::cout << "\t ?     %.                                                       :^    J \n";
+	std::cout << "\t  '.    ^s                                                     f     :~ \n";
+	std::cout << "\t   '+.    #L                                                 z'    .*   \n";
+	std::cout << "\t     '+     %L                                             z'    .~     \n";
+	std::cout << "\t       ':    '%.                                         .#     +       \n";
+	std::cout << "\t         ':    ^%.                                     .#`    +'        \n";
+	std::cout << "\t           #:    'n                                  .+`   .z'          \n";
+	std::cout << "\t             #:    ':                               z`    +'            \n";
+	std::cout << "\t               %:   `*L                           z'    z'              \n";
+	std::cout << "\t                 *:   ^*L                       z*   .+'                \n";
+	std::cout << "\t                   's   ^*L                   z#   .*'                  \n";
+	std::cout << "\t                     #s   ^%L               z#   .*'                    \n";
+	std::cout << "\t                       #s   ^%L           z#   .r'                      \n";
+	std::cout << "\t                         #s   ^%.       u#   .r'                        \n";
+	std::cout << "\t                           #i   '%.   u#   .@'                          \n";
+	std::cout << "\t                             #s   ^%u#   .@'                            \n";
+	std::cout << "\t                               #s x#   .*'                              \n";
+	std::cout << "\t                                x#`  .@%.                               \n";
+	std::cout << "\t                              x#`  .d'  '%.                             \n";
+	std::cout << "\t                            xf~  .r' #s   '%.                           \n";
+	std::cout << "\t                      u   x*`  .r'     #s   '%.  x.                     \n";
+	std::cout << "\t                      %Mu*`  x*'         #m.  '%zX'                     \n";
+	std::cout << "\t                      :R(h x*              'h..*dN.                     \n";
+	std::cout << "\t                    u@NM5e#>                 7?dMRMh.                   \n";
+	std::cout << "\t                  z$@M@$#'#'                 *''*@MM$hL                 \n";
+	std::cout << "\t                u@@MM8*                          '*$M@Mh.               \n";
+	std::cout << "\t              z$RRM8F'                             'N8@M$bL             \n";
+	std::cout << "\t             5`RM$#                                  'R88f)R            \n";
+	std::cout << "\t             'h.$'                                     #$x*             \n";
+}
 void Output::BattleScreenStart( const Character& attacker, const Character& defender )
 {
 	Output::ClearScreen( );
-	Output::AsciiArtSpider( );
+	Output::AsciiArtSwords( );
 	std::cout << "\n\n";
 	std::cout << attacker.portrait << " has engaged " << defender.portrait;
 }

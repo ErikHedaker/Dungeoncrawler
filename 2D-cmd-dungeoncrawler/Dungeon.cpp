@@ -38,15 +38,22 @@ void Dungeon::BuildDungeon( const GameType& type )
 }
 void Dungeon::GameLoop( )
 {
-	while( CheckGameStatus( ) )
+	while( true )
 	{
+		RandomMonsterMovement( );
+		UpdateCharacters( );
+
+		if( !CheckGameStatus( ) )
+		{
+			break;
+		}
+
 		UpdateVisionDataAt( _player->GetPosition( ), _player->GetLineOfSight( ) );
 		Output::ClearScreen( );
 		Output::DungeonCentered( *this, _dungeonSize, _player->GetPosition( ) );
 		Output::PlayerStatus( *_player );
 		Output::TurnOptions( );
 		PlayerTurn( );
-		RandomMonsterMovement( );
 		UpdateCharacters( );
 	}
 
@@ -61,7 +68,7 @@ void Dungeon::SaveDungeon( const std::string& fileName ) const
 
 	if( !outFile.is_open( ) )
 	{
-		throw std::exception( std::string( "Couldn't open file " + fileName ).c_str( ) );
+		throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
 	}
 
 	WriteDungeonSize( outFile );
@@ -83,7 +90,7 @@ void Dungeon::LoadDungeon( const std::string& fileName )
 
 	if( !inFile.is_open( ) )
 	{
-		throw std::exception( std::string( "Couldn't open file " + fileName ).c_str( ) );
+		throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
 	}
 
 	ReadDungeonSize( inFile );
@@ -107,8 +114,8 @@ bool Dungeon::InBounds( const Vector2i& position ) const
 	return
 		position.col >= 0 &&
 		position.row >= 0 &&
-		position.col <= _dungeonSize.col - 1 &&
-		position.row <= _dungeonSize.row - 1;
+		position.col < _dungeonSize.col &&
+		position.row < _dungeonSize.row;
 }
 bool Dungeon::PositionSurrounded( const Vector2i& position, int threshold ) const
 {
@@ -215,7 +222,7 @@ void Dungeon::SetDungeonSize( const GameType& type )
 		}
 		default:
 		{
-			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\n\nSomething went wrong in Dungeon::SetDungeonSize." );
 			Output::String( "\nPress enter to continue: " );
 			Input::Enter( );
 
@@ -256,7 +263,7 @@ void Dungeon::SetSpawnMonsters( const GameType& type )
 				}
 				default:
 				{
-					Output::String( "\n\nSomething went wrong." );
+					Output::String( "\n\nSomething went wrong in Dungeon::SetSpawnMonsters." );
 					Output::String( "\nPress enter to continue: " );
 					Input::Enter( );
 
@@ -268,7 +275,7 @@ void Dungeon::SetSpawnMonsters( const GameType& type )
 		}
 		default:
 		{
-			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\n\nSomething went wrong in Dungeon::SetSpawnMonsters." );
 			Output::String( "\nPress enter to continue: " );
 			Input::Enter( );
 
@@ -300,7 +307,7 @@ void Dungeon::SetPlayer( )
 	position.col = RandomNumberGenerator( 1, _dungeonSize.col - 2 );
 	position.row = RandomNumberGenerator( 1, _dungeonSize.row - 2 );
 
-	_player.reset( new Player( position, 100.0f, 0.10f, 50.0f, 100.0f, 100.0f, 5 ) );
+	_player.reset( new Player( position, 100.0f, 0.10f, 50.0f, 100.0f, 100.0f, 3 ) );
 	SetEntityDataAt( position, _player.get( ) );
 }
 void Dungeon::SetRandomDoors( )
@@ -362,22 +369,27 @@ void Dungeon::SetOuterWalls( )
 void Dungeon::SetHiddenSteps( )
 {
 	const Vector2i positionCenter = _dungeonSize / 2;
-	std::vector<Vector2i> pathToCenter;
 	std::vector<Vector2i> positionWalls;
+	std::vector<Vector2i> pathToCenter;
 
 	std::for_each( _walls.begin( ), _walls.end( ), [&positionWalls]( const Wall& wall ){ positionWalls.push_back( wall.GetPosition( ) ); } );
 
 	pathToCenter = AStarAlgorithm( _player->GetPosition( ), positionCenter, _dungeonSize, positionWalls );
 
+	for( const auto& position : pathToCenter )
+	{
+		if( GetHiddenDataAt( position ) == nullptr )
+		{
+			_steps.emplace_back( position );
+			SetHiddenDataAt( position, &_steps.back( ) );
+		}
+	}
+
 	for( const auto& door : _doors )
 	{
-		std::vector<Vector2i> pathToDoor = AStarAlgorithm( positionCenter, door.GetPosition( ), _dungeonSize, positionWalls );
-		std::vector<Vector2i> positionSteps;
+		std::vector<Vector2i> pathToDoor( AStarAlgorithm( positionCenter, door.GetPosition( ), _dungeonSize, positionWalls ) );
 
-		std::copy( pathToCenter.begin( ), pathToCenter.end( ), std::back_inserter( positionSteps ) );
-		std::copy( pathToDoor.begin( ), pathToDoor.end( ), std::back_inserter( positionSteps ) );
-
-		for( const auto& position : positionSteps )
+		for( const auto& position : pathToDoor )
 		{
 			if( GetHiddenDataAt( position ) == nullptr )
 			{
@@ -563,7 +575,7 @@ void Dungeon::ReadDungeonSize( std::ifstream& stream )
 	}
 	catch( ... )
 	{
-		throw std::exception( std::string( "Couldn't read dungeon size" ).c_str( ) );
+		throw std::exception( std::string( "Could not read dungeon size" ).c_str( ) );
 	}
 }
 void Dungeon::ReadEntityData( std::ifstream& stream )
@@ -602,7 +614,7 @@ void Dungeon::ReadEntityData( std::ifstream& stream )
 				}
 				case Portrait::Player:
 				{
-					_player.reset( new Player( iterator, 100.0f, 0.10f, 50.0f, 100.0f, 100.0f, 5 ) );
+					_player.reset( new Player( iterator, 100.0f, 0.10f, 50.0f, 100.0f, 100.0f, 3 ) );
 					SetEntityDataAt( iterator, _player.get( ) );
 
 					break;
@@ -615,7 +627,7 @@ void Dungeon::ReadEntityData( std::ifstream& stream )
 				}
 				default:
 				{
-					throw std::exception( std::string( "Couldn't read entity data" ).c_str( ) );
+					throw std::exception( std::string( "Could not read entity data" ).c_str( ) );
 				}
 			}
 		}
@@ -649,7 +661,7 @@ void Dungeon::ReadHiddenData( std::ifstream& stream )
 				}
 				default:
 				{
-					throw std::exception( std::string( "Couldn't read hidden data" ).c_str( ) );
+					throw std::exception( std::string( "Could not read hidden data" ).c_str( ) );
 				}	
 			}
 		}
@@ -682,7 +694,7 @@ void Dungeon::ReadVisionData( std::ifstream& stream )
 				}
 				default:
 				{
-					throw std::exception( std::string( "Couldn't read vision data" ).c_str( ) );
+					throw std::exception( std::string( "Could not read vision data" ).c_str( ) );
 				}
 			}
 		}
@@ -743,7 +755,7 @@ void Dungeon::PlayerTurn( )
 			}
 			catch( const std::exception& e )
 			{
-				Output::String( "\n\nSomething went wrong." );
+				Output::String( "\n\nSomething went wrong in Dungeon::PlayerTurn." );
 				Output::String( "\nReason: " );
 				Output::String( e.what( ) );
 				Output::String( "\nPress enter to continue: " );
@@ -756,7 +768,7 @@ void Dungeon::PlayerTurn( )
 		}
 		default:
 		{
-			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\n\nSomething went wrong in Dungeon::PlayerTurn." );
 			Output::String( "\nPress enter to continue: " );
 			Input::Enter( );
 
@@ -809,6 +821,8 @@ void Dungeon::PlayerMovement( const Orientation& orientation )
 			}
 		}
 	}
+
+	SetEntityDataAt( _player->GetPosition( ), _player.get( ) );
 }
 void Dungeon::RandomMonsterMovement( )
 {
@@ -816,7 +830,14 @@ void Dungeon::RandomMonsterMovement( )
 	{
 		SetEntityDataAt( monster.GetPosition( ), nullptr );
 
-		monster.MoveProbability( 1, 1, 1, 1, 12 ); /* 25% to move, 75% to stand still. */
+		if( Heuristic( monster.GetPosition( ), _player->GetPosition( ) ) < 3 )
+		{
+			monster.MoveTowards( _player->GetPosition( ) );
+		}
+		else
+		{
+			monster.MoveProbability( 1, 1, 1, 1, 12 ); /* 25% to move, 75% to stand still. */
+		}
 
 		auto entityCached = GetEntityDataAt( monster.GetPosition( ) );
 
@@ -830,23 +851,24 @@ void Dungeon::RandomMonsterMovement( )
 		{
 			monster.Attack( _player.get( ) );
 		}
-		else
-		{
-			SetEntityDataAt( monster.GetPosition( ), &monster );
-		}
+
+		SetEntityDataAt( monster.GetPosition( ), &monster );
 	}
 }
 void Dungeon::UpdateCharacters( )
 {
-	for( auto it = _monsters.begin( ); it != _monsters.end( ); it++ )
+	auto it = _monsters.begin( );
+
+	while( it != _monsters.end( ) )
 	{
 		if( it->GetAlive( ) == false )
 		{
-			_monsters.erase( it-- );
+			it = _monsters.erase( it );
 		}
 		else
 		{
 			SetEntityDataAt( it->GetPosition( ), &( *it ) );
+			it++;
 		}
 	}
 
@@ -865,6 +887,7 @@ bool Dungeon::CheckGameStatus( ) const
 	if( _status == GameStatus::Won ||
 		_status == GameStatus::Lost )
 	{
+		Output::ClearScreen( );
 		Output::GameStatusEnd( _status );
 		Input::Enter( );
 		

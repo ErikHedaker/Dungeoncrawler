@@ -53,7 +53,7 @@ void Menu( Dungeon& dungeon )
 		}
 		default:
 		{
-			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\n\nSomething went wrong Menu." );
 			Output::String( "\nPress enter to continue: " );
 			Input::Enter( );
 
@@ -79,7 +79,7 @@ int main( )
 		}
 		catch( const std::exception& e )
 		{
-			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\n\nSomething went wrong in main." );
 			Output::String( "\nReason: " );
 			Output::String( e.what( ) );
 			Output::String( "\nPress enter to continue: " );
@@ -89,7 +89,7 @@ int main( )
 		}
 		catch( ... )
 		{
-			Output::String( "\n\nSomething went wrong." );
+			Output::String( "\n\nSomething went wrong in main." );
 			Output::String( "\nPress enter to continue: " );
 			Input::Enter( );
 
