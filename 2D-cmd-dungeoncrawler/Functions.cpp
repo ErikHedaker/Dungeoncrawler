@@ -1,4 +1,4 @@
-#include "RNG.h"
+#include "Functions.h"
 #include <random>
 
 int RandomNumberGenerator( int min, int max )

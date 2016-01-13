@@ -1,5 +1,5 @@
 #include "Character.h"
-#include "RNG.h"
+#include "Functions.h"
 #include "IO.h"
 #include "AStarAlgorithm.h"
 

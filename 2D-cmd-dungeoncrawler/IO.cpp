@@ -152,6 +152,7 @@ void Output::TurnOptions( )
 	std::cout << "[D] Go Right\n";
 	std::cout << "[Q] Do nothing\n";
 	std::cout << "[E] Save and exit to meny\n";
+	std::cout << "[F] Rotate dungeon 90 degrees clockwise\n";
 }
 void Output::GameStatusEnd( const GameStatus& status )
 {

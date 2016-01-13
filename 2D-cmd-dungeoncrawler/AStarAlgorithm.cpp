@@ -111,18 +111,18 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 			break;
 		}
 
-		for( const auto& next : grid.GetValidNeighbors( current.position ) )
+		for( const auto& positionNeighbor : grid.GetValidNeighbors( current.position ) )
 		{
 			const int newCost = positionCost[current.position] + 1; /* Position-in-grid cost goes here for weighted grid. */
 
-			if( !positionCost.count( next ) /* Node hasn't been visited before */ ||
-				newCost < positionCost[next] )
+			if( !positionCost.count( positionNeighbor ) /* Node hasn't been visited before */ ||
+				newCost < positionCost[positionNeighbor] )
 			{
-				const int priority = newCost + Heuristic( next, positionGoal );
+				const int priority = newCost + Heuristic( positionNeighbor, positionGoal );
 
-				activeNodes.emplace( next, priority );
-				positionCameFrom[next] = current.position;
-				positionCost[next] = newCost;
+				activeNodes.emplace( positionNeighbor, priority );
+				positionCameFrom[positionNeighbor] = current.position;
+				positionCost[positionNeighbor] = newCost;
 			}
 		}
 	}

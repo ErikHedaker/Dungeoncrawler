@@ -8,6 +8,7 @@
 #include "Enums.h"
 #include <vector>
 #include <list>
+#include <deque>
 #include <memory>
 #include <fstream>
 
@@ -17,10 +18,9 @@ class Dungeon
 		Dungeon( );
 
 		void BuildDungeon( const GameType& type );
-		void GameLoop( );
-
 		void SaveDungeon( const std::string& fileName ) const;
 		void LoadDungeon( const std::string& fileName );
+		void GameLoop( );
 
 		/* Public because they're used in Output::Dungeon */
 		const Entity* const GetEntityDataAt( const Vector2i& position ) const;
@@ -52,6 +52,8 @@ class Dungeon
 		void SetHiddenDataAt( const Vector2i& position, Entity* entity );
 		void SetVisionDataAt( const Vector2i& position, bool vision );
 		void UpdateVisionDataAt( const Vector2i& position, int lineOfSight );
+
+		void UpdatePositions( std::vector<Entity*>& arrayCurrent );
 
 		/* Configuration */
 		void SetDungeonSize( const GameType& type );

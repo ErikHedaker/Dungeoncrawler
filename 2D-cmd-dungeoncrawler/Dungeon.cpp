@@ -1,7 +1,7 @@
 #include "Dungeon.h"
-#include "RNG.h"
 #include "AStarAlgorithm.h"
 #include "IO.h"
+#include "Functions.h"
 #include <math.h>
 #include <algorithm>
 #include <iterator>
@@ -9,8 +9,7 @@
 #include <string>
 
 Dungeon::Dungeon( ) :
-	_status( GameStatus::Neutral ),
-	_spawnMonsters( true )
+	_status( GameStatus::Neutral )
 { }
 
 void Dungeon::BuildDungeon( const GameType& type )
@@ -36,30 +35,6 @@ void Dungeon::BuildDungeon( const GameType& type )
 	Output::String( "\nLoading monster positions." );
 	SetRandomMonsters( );
 }
-void Dungeon::GameLoop( )
-{
-	while( true )
-	{
-		RandomMonsterMovement( );
-		UpdateCharacters( );
-
-		if( !CheckGameStatus( ) )
-		{
-			break;
-		}
-
-		UpdateVisionDataAt( _player->GetPosition( ), _player->GetLineOfSight( ) );
-		Output::ClearScreen( );
-		Output::DungeonCentered( *this, _dungeonSize, _player->GetPosition( ) );
-		Output::PlayerStatus( *_player );
-		Output::TurnOptions( );
-		PlayerTurn( );
-		UpdateCharacters( );
-	}
-
-	Output::String( "\n\nDungeon destructor might take some time." );
-}
-
 void Dungeon::SaveDungeon( const std::string& fileName ) const
 {
 	std::ofstream outFile;
@@ -107,6 +82,42 @@ void Dungeon::LoadDungeon( const std::string& fileName )
 	ReadVisionData( inFile );
 
 	inFile.close( );
+}
+void Dungeon::GameLoop( )
+{
+	while( true )
+	{
+		RandomMonsterMovement( );
+		UpdateCharacters( );
+
+		if( !CheckGameStatus( ) )
+		{
+			break;
+		}
+
+		UpdateVisionDataAt( _player->GetPosition( ), _player->GetLineOfSight( ) );
+		Output::ClearScreen( );
+		Output::DungeonCentered( *this, _dungeonSize, _player->GetPosition( ) );
+		Output::PlayerStatus( *_player );
+		Output::TurnOptions( );
+		PlayerTurn( );
+		UpdateCharacters( );
+	}
+
+	Output::String( "\n\nDungeon destructor might take some time." );
+}
+
+const Entity* const Dungeon::GetEntityDataAt( const Vector2i& position ) const
+{
+	return _entityData[( position.row * _dungeonSize.col ) + position.col];
+}
+const Entity* const Dungeon::GetHiddenDataAt( const Vector2i& position ) const
+{
+	return _hiddenData[( position.row * _dungeonSize.col ) + position.col];
+}
+bool Dungeon::GetVisionDataAt( const Vector2i& position ) const
+{
+	return _visionData[( position.row * _dungeonSize.col ) + position.col];
 }
 
 bool Dungeon::InBounds( const Vector2i& position ) const
@@ -176,17 +187,20 @@ void Dungeon::UpdateVisionDataAt( const Vector2i& position, int lineOfSight )
 	}
 }
 
-const Entity* const Dungeon::GetEntityDataAt( const Vector2i& position ) const
+void Dungeon::UpdatePositions( std::vector<Entity*>& arrayCurrent )
 {
-	return _entityData[( position.row * _dungeonSize.col ) + position.col];
-}
-const Entity* const Dungeon::GetHiddenDataAt( const Vector2i& position ) const
-{
-	return _hiddenData[( position.row * _dungeonSize.col ) + position.col];
-}
-bool Dungeon::GetVisionDataAt( const Vector2i& position ) const
-{
-	return _visionData[( position.row * _dungeonSize.col ) + position.col];
+	Vector2i iterator;
+
+	for( iterator.row = 0; iterator.row < _dungeonSize.row; iterator.row++ )
+	{
+		for( iterator.col = 0; iterator.col < _dungeonSize.col; iterator.col++ )
+		{
+			if( arrayCurrent[( iterator.row * _dungeonSize.col ) + iterator.col] != nullptr )
+			{
+				arrayCurrent[( iterator.row * _dungeonSize.col ) + iterator.col]->SetPosition( iterator );
+			}
+		}
+	}
 }
 
 void Dungeon::SetDungeonSize( const GameType& type )
@@ -703,7 +717,7 @@ void Dungeon::ReadVisionData( std::ifstream& stream )
 
 void Dungeon::PlayerTurn( )
 {
-	const std::vector<char> playerTurnChoices { 'W', 'w', 'A', 'a', 'S', 's', 'D', 'd', 'Q', 'q', 'E', 'e' };
+	const std::vector<char> playerTurnChoices { 'W', 'w', 'A', 'a', 'S', 's', 'D', 'd', 'Q', 'q', 'E', 'e', 'F', 'f' };
 	const char choice = Input::ValidChar( "\nYour choice: ", playerTurnChoices );
 
 	switch( choice )
@@ -763,6 +777,26 @@ void Dungeon::PlayerTurn( )
 			}
 
 			_status = GameStatus::Menu;
+
+			break;
+		}
+		case 'F':
+		case 'f':
+		{
+			Vector2i dungeonSizeOld = _dungeonSize;
+
+			std::swap( _dungeonSize.col, _dungeonSize.row );
+			
+			_entityData = TransposeArray1D( _entityData, dungeonSizeOld, _dungeonSize );
+			_hiddenData = TransposeArray1D( _hiddenData, dungeonSizeOld, _dungeonSize );
+			_visionData = TransposeArray1D( _visionData, dungeonSizeOld, _dungeonSize );
+
+			_entityData = ReverseColoumsArray1D( _entityData, _dungeonSize );
+			_hiddenData = ReverseColoumsArray1D( _hiddenData, _dungeonSize );
+			_visionData = ReverseColoumsArray1D( _visionData, _dungeonSize );
+
+			UpdatePositions( _entityData );
+			UpdatePositions( _hiddenData );
 
 			break;
 		}
