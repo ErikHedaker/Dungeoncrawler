@@ -1,31 +1,10 @@
 #include "AStarAlgorithm.h"
-#include "IO.h"
+#include <iostream>
 
-void Vector2iHasher::HashCombine( std::size_t& seed, int value )
-{
-	/*
-		https://www.quora.com/How-can-I-declare-an-unordered-set-of-pair-of-int-int-in-C++11
-		Function copied from source and then rewritten.
-	*/
-
-	std::hash<int> hasher;
-
-	seed ^= hasher( value ) + 0x9e3779b9 + ( seed << 6 ) + ( seed >> 2 );
-}
-std::size_t Vector2iHasher::operator()( const Vector2i& key )
-{
-	size_t seed = 0;
-
-	HashCombine( seed, key.col );
-	HashCombine( seed, key.row );
-
-	return seed;
-}
-
-SquareGrid::SquareGrid( const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions ) :
-	gridSize( gridSize ),
-	obstacles( obstaclePositions.begin( ), obstaclePositions.end( ) ),
-	directions
+SquareGrid::SquareGrid( const Vector2i& gridSize, const std::vector<Vector2i>& obstacles ) :
+	_gridSize( gridSize ),
+	_obstacles( obstacles.begin( ), obstacles.end( ) ),
+	_directions
 	( { {
 		Vector2i( 1, 0 ),
 		Vector2i( 0, -1 ),
@@ -38,18 +17,18 @@ bool SquareGrid::InBounds( const Vector2i& position ) const
 	return
 		position.col >= 0 &&
 		position.row >= 0 &&
-		position.col < gridSize.col &&
-		position.row < gridSize.row;
+		position.col < _gridSize.col &&
+		position.row < _gridSize.row;
 }
 bool SquareGrid::Passable( const Vector2i& position ) const
 {
-	return !obstacles.count( position );
+	return !( _obstacles.count( position ) );
 }
 const std::vector<Vector2i> SquareGrid::GetValidNeighbors( const Vector2i& position ) const
 {
 	std::vector<Vector2i> results;
 
-	for( const auto& direction : directions )
+	for( const auto& direction : _directions )
 	{
 		Vector2i positionNeighbor = position + direction;
 
@@ -84,7 +63,7 @@ int Heuristic( const Vector2i& positionFrom, const Vector2i& positionTo )
 	return abs( positionFrom.col - positionTo.col ) + abs( positionFrom.row - positionTo.row );
 }
 
-std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionGoal, const Vector2i& gridSize, const std::vector<Vector2i>& obstaclePositions )
+std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionGoal, const Vector2i& gridSize, const std::vector<Vector2i>& obstacles )
 {
 	/*
 		http://www.redblobgames.com/pathfinding/a-star/implementation.html
@@ -94,7 +73,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 	std::priority_queue<Node, std::vector<Node>, CompareNodes> activeNodes;
 	std::unordered_map<Vector2i, Vector2i, Vector2iHasher> positionCameFrom;
 	std::unordered_map<Vector2i, int, Vector2iHasher> positionCost;
-	const SquareGrid grid( gridSize, obstaclePositions );
+	const SquareGrid grid( gridSize, obstacles );
 
 	activeNodes.emplace( positionStart, 0 );
 	positionCameFrom[positionStart] = positionStart;
@@ -140,12 +119,10 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 			positionCurrent = positionCameFrom.at( positionCurrent );
 			path.push_back( positionCurrent );
 		}
-		catch( const std::out_of_range& e )
+		catch( const std::exception& e )
 		{
-			Output::String( "\n\n" );
-			Output::String( e.what( ) );
-			Output::String( " (incomplete path).\n" );
-
+			std::cout << "\nException: " << e.what( );
+			
 			break;
 		}
 	}

@@ -2,94 +2,93 @@
 
 #include "Player.h"
 #include "Monster.h"
-#include "Wall.h"
-#include "Door.h"
-#include "Step.h"
 #include "Enums.h"
+#include "Functions.h"
+#include "DungeonConfiguration.h"
 #include <vector>
 #include <list>
-#include <deque>
 #include <memory>
 #include <fstream>
+#include <unordered_set>
+
+struct Tile
+{
+	std::list<Entity*> occupants;
+	char icon = '-';
+};
 
 class Dungeon
 {
 	public:
-		Dungeon( );
+		void GenerateDungeon( );
+		void GenerateDungeon( const DungeonConfiguration& config );
 
-		void BuildDungeon( const GameType& type );
-		void SaveDungeon( const std::string& fileName ) const;
-		void LoadDungeon( const std::string& fileName );
-		void GameLoop( );
+		//void SaveDungeon( const std::string& fileName ) const;
+		//void LoadDungeon( const std::string& fileName );
 
-		/* Public because they're used in Output::Dungeon */
-		const Entity* const GetEntityDataAt( const Vector2i& position ) const;
-		const Entity* const GetHiddenDataAt( const Vector2i& position ) const;
-		bool GetVisionDataAt( const Vector2i& position ) const;
+		void PlayerAdd( Player* player, const Vector2i& position );
+		void PlayerAdd( Player* player, Entity* door );
+
+		void UpdatePlayerVision( );
+		void PlayerMovement( const Orientation& orientation );
+		void MonsterMovement( );
+		void HandleEvents( GameStatus& status );
+		void RemoveDeadCharacters( GameStatus& status, bool safe = true );
+
+		void RotateDungeonClockwise( );
+		void RotateEntityClockwise( Entity* entity );
+		void UpdateEntityPositions( );
+
+		const std::vector<Entity*> GetDoors( ) const;
+		const Vector2i& GetSize( ) const;
+		const Tile& GetTile( const Vector2i& position ) const;
+		bool GetVision( const Vector2i& position ) const;
 
 		/* Helper functions */
+		bool Contains( const Vector2i& position, const EntityType& type ) const;
+		bool Walkable( const Vector2i& position ) const;
 		bool InBounds( const Vector2i& position ) const;
-		bool PositionSurrounded( const Vector2i& position, int threshold ) const;
+		bool Unoccupied( const Vector2i& position ) const;
+		bool Surrounded( const Vector2i& position, int threshold ) const;
 
 	private:
-		GameStatus _status;
+		bool _fixed;
+		int _seed;
 		Vector2i _dungeonSize;
-		bool _spawnMonsters;
 
-		/* All types inherit from Entity */
-		std::list<Monster> _monsters;		// std::list guarantees unchanged
-		std::list<Wall> _walls;				// element addresses as the
-		std::list<Door> _doors;				// container grows, unlike std::vector.
-		std::list<Step> _steps;
-		std::unique_ptr<Player> _player;
+		/* All types are or inherit from Entity */
+		Player* _player;
+		std::list<Monster> _monsters;
+		std::list<Entity> _entities;
 
 		/* 1D arrays interpreted as 2D grids */
-		std::vector<Entity*> _entityData;	// Non-owning pointers, points to elements in _monster, _walls and _doors as well as _player.
-		std::vector<Entity*> _hiddenData;	// Non-owning pointers, points to elements in _steps.
-		std::vector<bool> _visionData;
+		std::vector<Tile> _tileMap;
+		std::vector<bool> _visionMap;
 
-		void SetEntityDataAt( const Vector2i& position, Entity* entity );
-		void SetHiddenDataAt( const Vector2i& position, Entity* entity );
-		void SetVisionDataAt( const Vector2i& position, bool vision );
-		void UpdateVisionDataAt( const Vector2i& position, int lineOfSight );
-
-		void UpdatePositions( std::vector<Entity*>& arrayCurrent );
-
-		/* Configuration */
-		void SetDungeonSize( const GameType& type );
-		void SetSpawnMonsters( const GameType& type );
-
-		/* Resize containers */
-		void ResizeEntityData( );
-		void ResizeHiddenData( );
-		void ResizeVisionData( );
+		/* Container modifiers */
+		void UpdateVision( const Vector2i& position, int lineOfSight );
+		void UpdateTile( const Vector2i& position );
+		void OccupantAdd( Entity* entity );
+		void OccupantRemove( Entity* entity );
 
 		/* Generate Dungeon */
-		void SetPlayer( );
-		void SetRandomDoors( );
-		void SetOuterWalls( );
-		void SetHiddenSteps( );
-		void SetRandomSourceWalls( );
-		void SetRandomExtensionWalls( );
-		void SetFillerWalls( );
-		void SetRandomMonsters( );
+		void SetDungeonSize( bool set = false, const Vector2i& size = { 0, 0 } );
+		void SetDungeonContainers( );
+		void GenerateDoors( bool generate = true, int amount = 0 );
+		void GenerateOuterObstacles( bool generate = true );
+		void GeneratePath( bool generate = true );
+		void GenerateSourceObstacles( bool generate = true, int amount = 0 );
+		void GenerateExtensionObstacles( bool generate = true, int amount = 0 );
+		void GenerateFillerObstacles( bool generate = true, int amount = 0 );
+		void GenerateMonsters( bool generater = true, int amount = 0 );
 
-		/* Write to save file */
-		void WriteDungeonSize( std::ofstream& stream ) const;
-		void WriteEntityData( std::ofstream& stream ) const;
-		void WriteHiddenData( std::ofstream& stream ) const;
-		void WriteVisionData( std::ofstream& stream ) const;
+		///* Write to save file */
+		//void WriteDungeonSize( std::ofstream& stream ) const;
+		//void WriteTileIcons( std::ofstream& stream ) const;
+		//void WriteVision( std::ofstream& stream ) const;
 
-		/* Read from save file */
-		void ReadDungeonSize( std::ifstream& stream );
-		void ReadEntityData( std::ifstream& stream );
-		void ReadHiddenData( std::ifstream& stream );
-		void ReadVisionData( std::ifstream& stream );
-
-		/* GameLoop */
-		void PlayerTurn( );
-		void PlayerMovement( const Orientation& orientation );
-		void RandomMonsterMovement( );
-		void UpdateCharacters( );
-		bool CheckGameStatus( ) const;
+		///* Read from save file */
+		//void ReadDungeonSize( std::ifstream& stream );
+		//void ReadTileIcons( std::ifstream& stream );
+		//void ReadVision( std::ifstream& stream );
 };

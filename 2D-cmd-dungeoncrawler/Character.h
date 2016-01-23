@@ -6,11 +6,11 @@
 class Character : public Entity
 {
 	public:
-		Character( const Vector2i& position, char portrait, float speed, float armor, float damage, float health, float mana );
+		Character( const Vector2i& position, const EntityType& type, float speed, float armor, float damage, float health, float mana );
 
 		void Move( const Orientation& orientation );
 		void MoveTowards( const Vector2i& position );
-		void MoveProbability( int north, int east, int south, int west, int still );
+		void MoveProbability( int north, int south, int west, int east, int still, bool fixed, int seed );
 		void RevertPosition( );
 
 		float GetSpeed( ) const;

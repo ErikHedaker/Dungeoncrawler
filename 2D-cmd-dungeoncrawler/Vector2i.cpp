@@ -9,55 +9,11 @@ Vector2i::Vector2i( int col, int row ) :
 	row( row )
 { }
 
-void Vector2i::operator=( const Vector2i& rhs )
+std::ostream& operator<<( std::ostream& stream, const Vector2i& position )
 {
-	col = rhs.col;
-	row = rhs.row;
-}
-void Vector2i::operator=( int rhs )
-{
-	col = rhs;
-	row = rhs;
-}
-void Vector2i::operator+=( const Vector2i& rhs )
-{
-	col = col + rhs.col;
-	row = row + rhs.row;
-}
-void Vector2i::operator+=( int rhs )
-{
-	col = col + rhs;
-	row = row + rhs;
-}
-void Vector2i::operator-=( const Vector2i& rhs )
-{
-	col = col - rhs.col;
-	row = row - rhs.row;
-}
-void Vector2i::operator-=( int rhs )
-{
-	col = col - rhs;
-	row = row - rhs;
-}
-void Vector2i::operator*=( const Vector2i& rhs )
-{
-	col = col * rhs.col;
-	row = row * rhs.row;
-}
-void Vector2i::operator*=( int rhs )
-{
-	col = col * rhs;
-	row = row * rhs;
-}
-void Vector2i::operator/=( const Vector2i& rhs )
-{
-	col = col / rhs.col;
-	row = row / rhs.row;
-}
-void Vector2i::operator/=( int rhs )
-{
-	col = col / rhs;
-	row = row / rhs;
+	stream << "( " << position.col << ", " << position.row << " )";
+
+	return stream;
 }
 
 bool operator==( const Vector2i& lhs, const Vector2i& rhs )
@@ -86,57 +42,78 @@ bool operator>( const Vector2i& lhs, const Vector2i& rhs )
 }
 const Vector2i operator+( const Vector2i& lhs, const Vector2i& rhs )
 {
-	Vector2i result;
+	Vector2i result = Vector2i( 0, 0 );
 	result.col = lhs.col + rhs.col;
 	result.row = lhs.row + rhs.row;
 	return result;
 }
 const Vector2i operator+( const Vector2i& lhs, int rhs )
 {
-	Vector2i result;
+	Vector2i result = Vector2i( 0, 0 );
 	result.col = lhs.col + rhs;
 	result.row = lhs.row + rhs;
 	return result;
 }
 const Vector2i operator-( const Vector2i& lhs, const Vector2i& rhs )
 {
-	Vector2i result;
+	Vector2i result = Vector2i( 0, 0 );
 	result.col = lhs.col - rhs.col;
 	result.row = lhs.row - rhs.row;
 	return result;
 }
 const Vector2i operator-( const Vector2i& lhs, int rhs )
 {
-	Vector2i result;
+	Vector2i result = Vector2i( 0, 0 );
 	result.col = lhs.col - rhs;
 	result.row = lhs.row - rhs;
 	return result;
 }
 const Vector2i operator*( const Vector2i& lhs, const Vector2i& rhs )
 {
-	Vector2i result;
+	Vector2i result = Vector2i( 0, 0 );
 	result.col = lhs.col * rhs.col;
 	result.row = lhs.row * rhs.row;
 	return result;
 }
 const Vector2i operator*( const Vector2i& lhs, int rhs )
 {
-	Vector2i result;
+	Vector2i result = Vector2i( 0, 0 );
 	result.col = lhs.col * rhs;
 	result.row = lhs.row * rhs;
 	return result;
 }
 const Vector2i operator/( const Vector2i& lhs, const Vector2i& rhs )
 {
-	Vector2i result;
+	Vector2i result = Vector2i( 0, 0 );
 	result.col = lhs.col / rhs.col;
 	result.row = lhs.row / rhs.row;
 	return result;
 }
 const Vector2i operator/( const Vector2i& lhs, int rhs )
 {
-	Vector2i result;
+	Vector2i result = Vector2i( 0, 0 );
 	result.col = lhs.col / rhs;
 	result.row = lhs.row / rhs;
 	return result;
+}
+
+void Vector2iHasher::HashCombine( std::size_t& seed, int value )
+{
+	/*
+	https://www.quora.com/How-can-I-declare-an-unordered-set-of-pair-of-int-int-in-C++11
+	Function copied from source and then rewritten.
+	*/
+
+	std::hash<int> hasher;
+
+	seed ^= hasher( value ) + 0x9e3779b9 + ( seed << 6 ) + ( seed >> 2 );
+}
+std::size_t Vector2iHasher::operator()( const Vector2i& key )
+{
+	size_t seed = 0;
+
+	HashCombine( seed, key.col );
+	HashCombine( seed, key.row );
+
+	return seed;
 }

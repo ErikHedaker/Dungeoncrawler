@@ -1,25 +1,22 @@
 #pragma once
 
-/*
-enum class Portrait : char
-{
-	Player = '@',
-	Monster = 'M',
-	Wall = '#',
-	Door = '=',
-	Step = ':',
-	Floor = '-'
-};
-*/
-
-struct Portrait
+struct Icon
 {
 	static const char Player = '@';
 	static const char Monster = 'M';
-	static const char Wall = '#';
 	static const char Door = '+';
-	static const char Step = '=';
+	static const char Obstacle = '#';
+	static const char Path = ':';
 	static const char Ground = '-';
+};
+
+enum class EntityType
+{
+	Player,
+	Monster,
+	Door,
+	Obstacle,
+	Path
 };
 
 enum class Orientation
@@ -34,13 +31,12 @@ enum class GameStatus
 {
 	Neutral,
 	Menu,
-	Lost,
-	Won
+	Next,
+	Dead
 };
 
-enum class GameType
+enum class DungeonType
 {
-	Randomized,
-	MinorConfiguration,
-	MajorConfiguration
+	Randomization,
+	Configuration
 };

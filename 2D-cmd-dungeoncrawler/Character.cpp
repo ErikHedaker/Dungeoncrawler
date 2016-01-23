@@ -1,10 +1,10 @@
 #include "Character.h"
 #include "Functions.h"
-#include "IO.h"
 #include "AStarAlgorithm.h"
 
-Character::Character( const Vector2i& position, char portrait, float speed, float armor, float damage, float health, float mana ) :
-	Entity( position, portrait ),
+Character::Character( const Vector2i& position, const EntityType& type, float speed, float armor, float damage, float health, float mana ) :
+	Entity( position, type ),
+	_positionPrev( position ),
 	_baseSpeed( speed ),
 	_baseArmor( armor ),
 	_baseDamage( damage ),
@@ -46,13 +46,6 @@ void Character::Move( const Orientation& orientation )
 
 			break;
 		}
-		default:
-		{
-			Output::String( "\nSomething went wrong in Character::Move." );
-			Input::Enter( );
-
-			break;
-		}
 	}
 
 	SetPosition( position );
@@ -60,7 +53,7 @@ void Character::Move( const Orientation& orientation )
 void Character::MoveTowards( const Vector2i& position )
 {
 	int costBest = 999999999;
-	Vector2i positionBest;
+	Vector2i positionBest = Vector2i( 0, 0 );
 	std::vector<Vector2i> directions =
 	{
 		Vector2i( 1, 0 ),
@@ -85,10 +78,10 @@ void Character::MoveTowards( const Vector2i& position )
 
 	SetPosition( positionBest );
 }
-void Character::MoveProbability( int north, int south, int west, int east, int still )
+void Character::MoveProbability( int north, int south, int west, int east, int still, bool fixed, int seed )
 {
 	const int sumProbability = north + south + west + east + still;
-	const int random = RandomNumberGenerator( 0, sumProbability - 1 );
+	const int random = RandomNumberGenerator( 0, sumProbability - 1, fixed, seed );
 
 	if( random < north )
 	{
@@ -176,7 +169,7 @@ void Character::Attack( Character* character )
 	float health;
 	float damage;
 
-	Output::BattleScreenStart( *attacker, *defender );
+	OutputBattleScreenStart( *attacker, *defender );
 
 	while( true )
 	{
@@ -186,7 +179,7 @@ void Character::Attack( Character* character )
 
 		if( defender->GetHealth( ) <= 0 )
 		{
-			Output::BattleScreenEnd( *attacker, *defender );
+			OutputBattleScreenEnd( *attacker, *defender );
 			defender->SetAlive( false );
 			break;
 		}

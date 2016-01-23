@@ -1,102 +1,88 @@
-#include "Dungeon.h"
-#include "IO.h"
-#include <random>
-#include <queue>
-#include <algorithm>
+#include "Game.h"
 #include <Windows.h>
+#include <vector>
 
 extern const Vector2i WINDOW_SIZE( 100, 50 );
 
-void SetWindow( int Width, int Height )
-{
-	_COORD coord;
-	coord.X = Width;
-	coord.Y = Height;
-
-	_SMALL_RECT Rect;
-	Rect.Top = 0;
-	Rect.Left = 0;
-	Rect.Bottom = Height - 1;
-	Rect.Right = Width - 1;
-
-	HANDLE Handle = GetStdHandle( STD_OUTPUT_HANDLE );      // Get Handle 
-	SetConsoleScreenBufferSize( Handle, coord );            // Set Buffer Size 
-	SetConsoleWindowInfo( Handle, TRUE, &Rect );            // Set Window Size 
-}
-void Menu( Dungeon& dungeon )
-{
-	const std::vector<char> menuChoices { '1', '2', '3', '4' };
-
-	switch( Input::ValidChar( "\nYour choice: ", menuChoices ) )
-	{
-		case '1':
-		{
-			dungeon.BuildDungeon( GameType::Randomized );
-
-			break;
-		}
-		case '2':
-		{
-			dungeon.BuildDungeon( GameType::MinorConfiguration );
-
-			break;
-		}
-		case '3':
-		{
-			dungeon.LoadDungeon( "dungeonSave.txt" );
-
-			break;
-		}
-		case '4':
-		{
-			exit( 0 );
-		}
-		default:
-		{
-			Output::String( "\n\nSomething went wrong Menu." );
-			Output::String( "\nPress enter to continue: " );
-			Input::Enter( );
-
-			break;
-		}
-	}
-}
+//void SetWindow( int Width, int Height )
+//{
+//	_COORD coord;
+//	coord.X = Width;
+//	coord.Y = Height;
+//
+//	_SMALL_RECT Rect;
+//	Rect.Top = 0;
+//	Rect.Left = 0;
+//	Rect.Bottom = Height - 1;
+//	Rect.Right = Width - 1;
+//
+//	HANDLE Handle = GetStdHandle( STD_OUTPUT_HANDLE );      // Get Handle 
+//	SetConsoleScreenBufferSize( Handle, coord );            // Set Buffer Size 
+//	SetConsoleWindowInfo( Handle, TRUE, &Rect );            // Set Window Size 
+//}
 
 int main( )
 {
-	SetWindow( WINDOW_SIZE.col, WINDOW_SIZE.row );
-
-	while( true ) /* Menu (sort of). */
+	while( true )
 	{
-		Dungeon dungeon;
+		const std::vector<char> choices { '1', '2', '3', '4', '5', '6' };
+		char choice;
+		Game game;
 
-		Output::ClearScreen( );
-		Output::GameTypes( );
+		OutputClearScreen( );
 
-		try
+		std::cout << "[1] Continue current game\n";
+		std::cout << "[2] Build new dungeon (Randomization)\n";
+		std::cout << "[3] Build new dungeon (Configuration)\n";
+		std::cout << "[4] Load dungeons from file\n";
+		std::cout << "[5] Save dungeons to file and exit\n";
+		std::cout << "[6] Exit\n";
+
+		choice = InputValidChar( "\nEnter choice: ", choices );
+
+		switch( choice )
 		{
-			Menu( dungeon );
-		}
-		catch( const std::exception& e )
-		{
-			Output::String( "\n\nSomething went wrong in main." );
-			Output::String( "\nReason: " );
-			Output::String( e.what( ) );
-			Output::String( "\nPress enter to continue: " );
-			Input::Enter( );
+			case '1':
+			{
+				if( game.existingGame )
+				{
+					game.GameLoop( );
+				}
 
-			continue;
-		}
-		catch( ... )
-		{
-			Output::String( "\n\nSomething went wrong in main." );
-			Output::String( "\nPress enter to continue: " );
-			Input::Enter( );
+				break;
+			}
+			case '2':
+			{
+				game.NewGame( DungeonType::Randomization );
+				game.GameLoop( );
 
-			continue;
-		}
+				break;
+			}
+			case '3':
+			{
+				game.SetDungeonConfiguration( );
+				game.NewGame( DungeonType::Configuration );
+				game.GameLoop( );
 
-		dungeon.GameLoop( );
+				break;
+			}
+			case '4':
+			{
+				/* Temporary */
+
+				break;
+			}
+			case '5':
+			{
+				/* Temporary */
+
+				break;
+			}
+			case '6':
+			{
+				exit( 0 );
+			}
+		}
 	}
 
 	return 0;

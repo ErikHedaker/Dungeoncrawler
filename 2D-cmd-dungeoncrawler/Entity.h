@@ -6,9 +6,9 @@
 class Entity
 {
 	public:
-		Entity( const Vector2i& position, char portrait );
+		Entity( const Vector2i& position, const EntityType& type );
 
-		const char portrait;
+		const EntityType type;
 
 		void SetPosition( const Vector2i& position );
 		const Vector2i GetPosition( ) const;

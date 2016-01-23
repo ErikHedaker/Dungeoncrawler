@@ -1,7 +1,12 @@
 #pragma once
 
 #include "Vector2i.h"
+#include "Enums.h"
 #include <vector>
+
+class Dungeon;
+class Player;
+class Character;
 
 template<class T>
 std::vector<T> TransposeArray1D( const std::vector<T>& arrayOld, const Vector2i& sizeOld, const Vector2i& sizeNew )
@@ -28,13 +33,29 @@ std::vector<T> ReverseColoumsArray1D( const std::vector<T>& arrayOld, const Vect
 
 	for( iterator.row = 0; iterator.row < size.row; iterator.row++ )
 	{
-		auto beginCol = arrayNew.begin( ) + iterator.row * size.col;
-		auto endCol = arrayNew.begin( ) + iterator.row * size.col + size.col;
+		auto coloumBegin = arrayNew.begin( ) + iterator.row * size.col;
+		auto coloumEnd   = arrayNew.begin( ) + iterator.row * size.col + size.col;
 
-		std::reverse( beginCol, endCol );
+		std::reverse( coloumBegin, coloumEnd );
 	}
 
 	return arrayNew;
 }
 
-int RandomNumberGenerator( int min, int max );
+int RandomNumberGenerator( int min, int max, bool fixed = false, int seed = 0 );
+
+void OutputClearScreen( );
+void OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& center );
+void OutputDungeonFull( const Dungeon& dungeon, const Vector2i& dungeonSize );
+void OutputDungeonFullHidden( const Dungeon& dungeon, const Vector2i& dungeonSize );
+void OutputCharacterStatus( const Character& character );
+void OutputTurnOptions( );
+void OutputGameStatusEnd( const GameStatus& status );
+void OutputBattleScreenStart( const Character& attacker, const Character& defender );
+void OutputBattleScreenEnd( const Character& winner, const Character& loser );
+void OutputAsciiArtSpider( );
+void OutputAsciiArtSwords( );
+
+void InputEnter( );
+char InputValidChar( const std::string& context, const std::vector<char>& validChoices );
+int InputPositiveInteger( const std::string& context );

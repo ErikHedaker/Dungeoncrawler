@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Character.h"
-#include <array>
 
 class Monster : public Character
 {

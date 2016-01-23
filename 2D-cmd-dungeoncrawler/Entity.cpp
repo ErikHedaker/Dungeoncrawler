@@ -1,8 +1,8 @@
 #include "Entity.h"
 
-Entity::Entity( const Vector2i& position, char portrait ) :
+Entity::Entity( const Vector2i& position, const EntityType& type ) :
 	_position( position ),
-	portrait( portrait )
+	type( type )
 { }
 
 void Entity::SetPosition( const Vector2i& position )
