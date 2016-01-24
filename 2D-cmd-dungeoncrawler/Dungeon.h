@@ -4,12 +4,34 @@
 #include "Monster.h"
 #include "Enums.h"
 #include "Functions.h"
-#include "DungeonConfiguration.h"
 #include <vector>
 #include <list>
 #include <memory>
 #include <fstream>
 #include <unordered_set>
+
+struct DungeonConfiguration
+{
+	bool fixedSeed = false;
+	int seed = 0;
+
+	bool fixedDungeonSize = false;
+	Vector2i dungeonSize = { 0, 0 };
+
+	bool generateDoors = true;
+	bool generateOuterObstacles = true;
+	bool generatePath = true;
+	bool generateSourceObstacles = true;
+	bool generateExtensionObstacles = true;
+	bool generateFillerObstacles = true;
+	bool generateMonsters = true;
+
+	int amountDoors = 0;
+	int amountSourceObstacles = 0;
+	int amountExtensionObstacles = 0;
+	int amountFillerObstacleCycles = 0;
+	int amountMonsters = 0;
+};
 
 struct Tile
 {
@@ -20,14 +42,13 @@ struct Tile
 class Dungeon
 {
 	public:
-		void GenerateDungeon( );
-		void GenerateDungeon( const DungeonConfiguration& config );
+		Dungeon( Player* player, const DungeonConfiguration& config );
 
 		//void SaveDungeon( const std::string& fileName ) const;
 		//void LoadDungeon( const std::string& fileName );
 
-		void PlayerAdd( Player* player, const Vector2i& position );
-		void PlayerAdd( Player* player, Entity* door );
+		void PlayerInitialPlace( const Vector2i& position );
+		void PlayerInitialPlaceNearby( const Vector2i& position );
 
 		void UpdatePlayerVision( );
 		void PlayerMovement( const Orientation& orientation );
@@ -36,10 +57,9 @@ class Dungeon
 		void RemoveDeadCharacters( GameStatus& status, bool safe = true );
 
 		void RotateDungeonClockwise( );
-		void RotateEntityClockwise( Entity* entity );
 		void UpdateEntityPositions( );
 
-		const std::vector<Entity*> GetDoors( ) const;
+		const std::vector<const Entity*> GetDoors( ) const;
 		const Vector2i& GetSize( ) const;
 		const Tile& GetTile( const Vector2i& position ) const;
 		bool GetVision( const Vector2i& position ) const;
@@ -72,8 +92,6 @@ class Dungeon
 		void OccupantRemove( Entity* entity );
 
 		/* Generate Dungeon */
-		void SetDungeonSize( bool set = false, const Vector2i& size = { 0, 0 } );
-		void SetDungeonContainers( );
 		void GenerateDoors( bool generate = true, int amount = 0 );
 		void GenerateOuterObstacles( bool generate = true );
 		void GeneratePath( bool generate = true );

@@ -4,160 +4,146 @@
 #include <map>
 
 Game::Game( ) :
-	existingGame( false ),
-	_dungeonCurrent( nullptr ),
-	_status( GameStatus::Neutral )
+	existingGame( false )
 { }
 
 void Game::SetDungeonConfiguration( )
 {
-	/* Disregard unholy mess of code */
-	_config.SetFixedSeed( );
+	const std::vector<char> YesNo = { 'Y', 'y', 'N', 'n' };
+	auto GetBool = []( char input ) -> bool { return input == 'Y' || input == 'y'; };
+
+	std::cout << "\n";
+	
+	_config.fixedSeed = GetBool( InputValidChar( "Fixed seed for RandomNumberGenerator, [Y/N]: ", YesNo ) );
+	_config.fixedDungeonSize = GetBool( InputValidChar( "Fixed dungeon size, [Y/N]: ", YesNo ) );
+	_config.generateDoors = GetBool( InputValidChar( "Generate doors, [Y/N]: ", YesNo ) );
+	_config.generateOuterObstacles = GetBool( InputValidChar( "Generate outer obstacles, [Y/N]: ", YesNo ) );
+	_config.generatePath = GetBool( InputValidChar( "Generate path, [Y/N]: ", YesNo ) );
+	_config.generateSourceObstacles = GetBool( InputValidChar( "Generate source obstacles, [Y/N]: ", YesNo ) );
+	_config.generateExtensionObstacles = GetBool( InputValidChar( "Generate extension, [Y/N]: ", YesNo ) );
+	_config.generateFillerObstacles = GetBool( InputValidChar( "Generate filler obstacles, [Y/N]: ", YesNo ) );
+	_config.generateMonsters = GetBool( InputValidChar( "Generate monsters, [Y/N]: ", YesNo ) );
+
+	std::cout << "\n";
+
 	if( _config.fixedSeed )
-		_config.SetSeed( );
-	_config.SetFixedDungeonSize( );
+	{
+		_config.seed = InputPositiveInteger( "Enter seed: " );
+	}
 	if( _config.fixedDungeonSize )
-		_config.SetDungeonSize( );
-	_config.SetGenerateDoors( );
+	{
+		_config.dungeonSize.col = InputPositiveInteger( "Enter dungeon col size: " );
+		_config.dungeonSize.row = InputPositiveInteger( "Enter dungeon col size: " );
+	}
 	if( _config.generateDoors )
-		_config.SetAmountDoors( );
-	_config.SetGenerateOuterObstacles( );
-	_config.SetGeneratePath( );
-	_config.SetGenerateSourceObstacles( );
+	{
+		_config.amountDoors = InputPositiveInteger( "Enter amount of doors: " );
+	}
 	if( _config.generateSourceObstacles )
-		_config.SetAmountSourceObstacles( );
-	_config.SetGenerateExtensionObstacles( );
+	{
+		_config.amountSourceObstacles = InputPositiveInteger( "Enter amount of source obstacles: " );
+	}
 	if( _config.generateExtensionObstacles )
-		_config.SetAmountExtensionObstacles( );
-	_config.SetGenerateFillerObstacles( );
+	{
+		_config.amountExtensionObstacles = InputPositiveInteger( "Enter amount of extension obstacles: " );
+	}
 	if( _config.generateFillerObstacles )
-		_config.SetAmountFillerObstacleCycles( );
-	_config.SetGenerateMonsters( );
+	{
+		_config.amountFillerObstacleCycles = InputPositiveInteger( "Enter amount of filler obstacle cycles: " );
+	}
 	if( _config.generateMonsters )
-		_config.SetAmountMonsters( );
+	{
+		_config.amountMonsters = InputPositiveInteger( "Enter amount of monsters: " );
+	}
 }
-void Game::NewGame( const DungeonType& type )
+void Game::NewGame( )
 {
-	_status = GameStatus::Neutral;
+	Dungeon* dungeon;
+
 	_player.reset( new Player( Vector2i( ) ) );
-	_links.clear( );
 	_dungeons.clear( );
-	_type = type;
+	_dungeonGraph.nodes.clear( );
+	_dungeonGraph.edges.clear( );
+	_status = GameStatus::Neutral;
 	existingGame = true;
 
-	_dungeons.emplace_back( );
-	_dungeonCurrent = &_dungeons.back( );
-	_dungeonCurrent->GenerateDungeon( _config );
-	FullLinkDungeon( _dungeonCurrent );
-	_dungeonCurrent->PlayerAdd( _player.get( ), _dungeonCurrent->GetSize( ) / 2 );
+	_dungeons.emplace_back( _player.get( ), _config );
+	dungeon = &_dungeons.back( );
+	_dungeonGraph.nodes.push_back( { &_dungeons.back( ) } );
+	_indexNodeCurrent = _dungeonGraph.nodes.size( ) - 1;
+	FullLinkDungeon( _indexNodeCurrent );
+	dungeon->PlayerInitialPlace( dungeon->GetSize( ) / 2 );
 }
 void Game::GameLoop( )
 {
-	while( _status == GameStatus::Neutral )
+	Dungeon* dungeon = _dungeonGraph.nodes[_indexNodeCurrent].data;
+
+	_status = GameStatus::Neutral;
+
+	while( _status == GameStatus::Neutral &&
+		   _player->GetAlive( ) )
 	{
-		_dungeonCurrent->UpdatePlayerVision( );
+		dungeon->UpdatePlayerVision( );
 
 		OutputClearScreen( );
-		OutputDungeonCentered( *_dungeonCurrent, _player->GetPosition( ) );
+		OutputDungeonCentered( *dungeon, _player->GetPosition( ) );
 		OutputCharacterStatus( *_player );
 		OutputTurnOptions( );
 
-		PlayerTurn( *_dungeonCurrent );
+		PlayerTurn( *dungeon );
 
-		_dungeonCurrent->MonsterMovement( );
-		_dungeonCurrent->HandleEvents( _status );
-		_dungeonCurrent->RemoveDeadCharacters( _status );
+		dungeon->MonsterMovement( );
+		dungeon->HandleEvents( _status );
+		dungeon->RemoveDeadCharacters( _status );
 
 		if( _status == GameStatus::Next )
 		{
-			Dungeon* dungeon;
-			Entity* door;
-			Entity* doorCurrent;
-
-			for( const auto& door : _dungeonCurrent->GetDoors( ) )
+			for( const auto& indexEdgeParent : _dungeonGraph.nodes[_indexNodeCurrent].indexEdges )
 			{
-				if( _player->GetPosition( ) == door->GetPosition( ) )
-				{
-					doorCurrent = door;
+				auto indexNodeChild = _dungeonGraph.edges[indexEdgeParent].indexNode;
 
-					break;
+				for( const auto& indexEdgeChild : _dungeonGraph.nodes[indexNodeChild].indexEdges )
+				{
+					if( _dungeonGraph.edges[indexEdgeChild].data == _player->GetPosition( ) )
+					{
+						_indexNodeCurrent = indexNodeChild;
+						dungeon = _dungeonGraph.nodes[indexNodeChild].data;
+						dungeon->PlayerInitialPlaceNearby( _dungeonGraph.edges[indexEdgeParent].data );
+						FullLinkDungeon( indexNodeChild );
+
+						goto END;
+					}
 				}
 			}
 
-			dungeon = _links[doorCurrent].first;
-			door = _links[doorCurrent].second;
-			FullLinkDungeon( dungeon );
-			dungeon->PlayerAdd( _player.get( ), door );
-			_dungeonCurrent = dungeon;
+			END:
 			_status = GameStatus::Neutral;
 		}
 	}
 }
 
-bool Game::DungeonFullyLinked( Dungeon* dungeon ) const
+void Game::FullLinkDungeon( std::size_t indexNodeParent )
 {
-	const auto& doors = dungeon->GetDoors( );
-	unsigned int doorsLinked = 0;
+	auto doors = _dungeonGraph.nodes[indexNodeParent].data->GetDoors( );
+	auto required = doors.size( );
 
-	for( const auto& door : doors )
+	while( _dungeonGraph.nodes[indexNodeParent].indexEdges.size( ) < required )
 	{
-		if( _links.find( door ) != _links.end( ) )
-		{
-			std::cout << "\nLink exists";
-
-			doorsLinked++;
-		}
-	}
-
-	return doorsLinked >= dungeon->GetDoors( ).size( );
-}
-void Game::AddAndLinkDungeon( Dungeon* dungeonParent, Entity* doorParent )
-{
-	std::cout << "\nAddAndLinkDungeon";
-
-	std::pair<Dungeon*, Entity*> parent;
-	std::pair<Dungeon*, Entity*> child;
-	Dungeon* dungeonChild;
-	Entity* doorChild;
-
-	_dungeons.emplace_back( );
-	dungeonChild = &_dungeons.back( );
-	dungeonChild->GenerateDungeon( _config );
-
-	const auto& doors = dungeonChild->GetDoors( );
-
-	for( const auto& door : doors )
-	{
-		if( _links.find( door ) == _links.end( ) )
-		{
-			doorChild = door;
-			parent = std::make_pair( dungeonParent, doorParent );
-			child = std::make_pair( dungeonChild, doorChild );
-			_links[doorParent] = child;
-			_links[doorChild] = parent;
-
-			std::cout << "\nAdded link";
-
-			break;
-		}
-	}
-}
-void Game::FullLinkDungeon( Dungeon* dungeon )
-{
-	while( !DungeonFullyLinked( dungeon ) )
-	{
-		const auto& doors = dungeon->GetDoors( );
-
 		for( const auto& door : doors )
 		{
-			if( _links.find( door ) == _links.end( ) )
-			{
-				AddAndLinkDungeon( dungeon, door );
-			}
+			Dungeon* dungeonChild;
+
+			_dungeons.emplace_back( _player.get( ), _config );
+			dungeonChild = &_dungeons.back( );
+			_dungeonGraph.edges.push_back( { door->GetPosition( ), indexNodeParent } );
+			_dungeonGraph.nodes.push_back( { dungeonChild, std::vector<std::size_t>{ _dungeonGraph.edges.size( ) - 1 } } );
+			_dungeonGraph.edges.push_back( { dungeonChild->GetDoors( ).back( )->GetPosition( ), _dungeonGraph.nodes.size( ) - 1 } );
+			_dungeonGraph.nodes[indexNodeParent].indexEdges.push_back( _dungeonGraph.edges.size( ) - 1 );
+
+			std::cout << "\nLinked added";
 		}
 	}
 }
-
 void Game::PlayerTurn( Dungeon& dungeon )
 {
 	static const std::vector<char> choices { 'W', 'w', 'A', 'a', 'S', 's', 'D', 'd', 'E', 'e', 'F', 'f', 'Q', 'q' };

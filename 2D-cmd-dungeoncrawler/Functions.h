@@ -2,6 +2,7 @@
 
 #include "Vector2i.h"
 #include "Enums.h"
+#include <algorithm>
 #include <vector>
 
 class Dungeon;

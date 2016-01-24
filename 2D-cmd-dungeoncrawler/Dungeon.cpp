@@ -53,28 +53,16 @@
 //	inFile.close( );
 //}
 
-void Dungeon::GenerateDungeon( )
+Dungeon::Dungeon( Player* player, const DungeonConfiguration& config ) :
+	_player( player ),
+	_fixed( config.fixedSeed ),
+	_seed( config.seed ),
+	_dungeonSize( config.fixedDungeonSize ? config.dungeonSize.col : RandomNumberGenerator( 40, 80, _fixed, _seed ),
+	              config.fixedDungeonSize ? config.dungeonSize.row : RandomNumberGenerator( 40, 80, _fixed, _seed ) )
 {
-	_fixed = false;
-	_seed = 0;
+	_tileMap.resize( _dungeonSize.col * _dungeonSize.row );
+	_visionMap.resize( _dungeonSize.col * _dungeonSize.row, false );
 
-	SetDungeonSize( );
-	SetDungeonContainers( );
-	GenerateDoors( );
-	GenerateOuterObstacles( );
-	GeneratePath( );
-	GenerateSourceObstacles( );
-	GenerateExtensionObstacles( );
-	GenerateFillerObstacles( );
-	GenerateMonsters( );
-}
-void Dungeon::GenerateDungeon( const DungeonConfiguration& config )
-{
-	_fixed = config.fixedSeed;
-	_seed = config.seed;
-
-	SetDungeonSize( config.fixedDungeonSize, config.dungeonSize );
-	SetDungeonContainers( );
 	GenerateDoors( config.generateDoors, config.amountDoors );
 	GenerateOuterObstacles( config.generateOuterObstacles );
 	GeneratePath( config.generatePath );
@@ -84,13 +72,12 @@ void Dungeon::GenerateDungeon( const DungeonConfiguration& config )
 	GenerateMonsters( config.generateMonsters, config.amountMonsters );
 }
 
-void Dungeon::PlayerAdd( Player* player, const Vector2i& position )
+void Dungeon::PlayerInitialPlace( const Vector2i& position )
 {
-	_player = player;
 	_player->SetPosition( position );
 	OccupantAdd( _player );
 }
-void Dungeon::PlayerAdd( Player* player, Entity* door )
+void Dungeon::PlayerInitialPlaceNearby( const Vector2i& position )
 {
 	static const std::array<Vector2i, 4> directions =
 	{
@@ -102,13 +89,12 @@ void Dungeon::PlayerAdd( Player* player, Entity* door )
 
 	for( const auto& direction : directions )
 	{
-		Vector2i position = door->GetPosition( ) + direction;
+		Vector2i positionNearby = position + direction;
 
-		if( InBounds( position ) &&
-			Walkable( position ) )
+		if( InBounds( positionNearby ) &&
+			Walkable( positionNearby ) )
 		{
-			_player = player;
-			_player->SetPosition( position );
+			_player->SetPosition( positionNearby );
 			OccupantAdd( _player );
 
 			break;
@@ -147,21 +133,6 @@ void Dungeon::RotateDungeonClockwise( )
 
 	_tileMap = tileRotated;
 	_visionMap = visionRotated;
-}
-void Dungeon::RotateEntityClockwise( Entity* entity )
-{
-	Vector2i position;
-
-	position.col = _dungeonSize.col - entity->GetPosition( ).row - 1;
-	position.row = entity->GetPosition( ).col;
-
-	if( InBounds( entity->GetPosition( ) ) )
-	{
-		OccupantRemove( entity );
-	}
-
-	entity->SetPosition( position );
-	OccupantAdd( entity );
 }
 void Dungeon::UpdateEntityPositions( )
 {
@@ -274,6 +245,7 @@ void Dungeon::HandleEvents( GameStatus& status )
 			}
 			case EntityType::Door:
 			{
+				OccupantRemove( _player );
 				status = GameStatus::Next;
 
 				break;
@@ -283,6 +255,11 @@ void Dungeon::HandleEvents( GameStatus& status )
 				auto monster = static_cast<Monster*>( occupant );
 
 				_player->Attack( monster );
+
+				if( !_player->GetAlive( ) )
+				{
+					status = GameStatus::Menu;
+				}
 
 				break;
 			}
@@ -295,7 +272,7 @@ void Dungeon::HandleEvents( GameStatus& status )
 }
 void Dungeon::RemoveDeadCharacters( GameStatus& status, bool safe )
 {
-	auto& it = _monsters.begin( );
+	auto it = _monsters.begin( );
 
 	while( it != _monsters.end( ) )
 	{
@@ -320,16 +297,14 @@ void Dungeon::RemoveDeadCharacters( GameStatus& status, bool safe )
 		{
 			OccupantRemove( _player );
 		}
-
-		status = GameStatus::Dead;
 	}
 }
 
-const std::vector<Entity*> Dungeon::GetDoors( ) const
+const std::vector<const Entity*> Dungeon::GetDoors( ) const
 {
-	std::vector<Entity*> doors;
+	std::vector<const Entity*> doors;
 	
-	for( auto entity : _entities )
+	for( const auto& entity : _entities )
 	{
 		if( entity.type == EntityType::Door )
 		{
@@ -482,27 +457,11 @@ void Dungeon::OccupantRemove( Entity* entity )
 	UpdateTile( entity->GetPosition( ) );
 }
 
-void Dungeon::SetDungeonSize( bool set, const Vector2i& size )
-{
-	_dungeonSize.col = set ? size.col : RandomNumberGenerator( 40, 80, _fixed, _seed );
-	_dungeonSize.row = set ? size.row : RandomNumberGenerator( 40, 80, _fixed, _seed );
-}
-void Dungeon::SetDungeonContainers( )
-{
-	_monsters.clear( );
-	_entities.clear( );
-
-	_tileMap.clear( );
-	_visionMap.clear( );
-
-	_tileMap.resize( _dungeonSize.col * _dungeonSize.row );
-	_visionMap.resize( _dungeonSize.col * _dungeonSize.row, false );
-}
 void Dungeon::GenerateDoors( bool generate, int amount )
 {
 	if( generate )
 	{
-		int amountDoors = amount ? amount : 2;
+		int amountDoors = amount ? amount : 3;
 		Vector2i iterator;
 		std::vector<Vector2i> positionValid;
 		int index;
@@ -598,7 +557,7 @@ void Dungeon::GenerateSourceObstacles( bool generate, int amount )
 {
 	if( generate )
 	{
-		int sourceWallsLeft = amount ? amount : ( _dungeonSize.col * _dungeonSize.row ) / 20;
+		int sourceWallsLeft = amount ? amount : ( _dungeonSize.col * _dungeonSize.row ) / 30;
 		Vector2i position;
 
 		while( sourceWallsLeft > 0 )
@@ -628,7 +587,7 @@ void Dungeon::GenerateExtensionObstacles( bool generate, int amount )
 
 	if( generate )
 	{
-		int extensionWallsLeft = amount ? amount : ( _dungeonSize.col * _dungeonSize.row ) / 4;
+		int extensionWallsLeft = amount ? amount : ( _dungeonSize.col * _dungeonSize.row ) / 3;
 		int index;
 		Vector2i position;
 
@@ -653,7 +612,7 @@ void Dungeon::GenerateExtensionObstacles( bool generate, int amount )
 }
 void Dungeon::GenerateFillerObstacles( bool generate, int amount )
 {
-	const int amountWalls = amount ? amount : 5;
+	const int amountWalls = amount ? amount : 4;
 	Vector2i iterator;
 	
 	for( int i = 0; i < amountWalls; i++ )
@@ -677,9 +636,9 @@ void Dungeon::GenerateMonsters( bool generate, int amount )
 {
 	if( generate )
 	{
-		const int low = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) / 3.0 );
-		const int high = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) / 1.5 );
-		const int amountMonsters = amount ? amount : RandomNumberGenerator( low, high, _fixed, _seed );
+		const int min = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) / 3.0 );
+		const int max = static_cast<int>( sqrt( _dungeonSize.col * _dungeonSize.row ) / 1.5 );
+		const int amountMonsters = amount ? amount : RandomNumberGenerator( min, max, _fixed, _seed );
 		Vector2i position;
 
 		for( int i = 0; i < amountMonsters; i++ )

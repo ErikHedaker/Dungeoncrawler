@@ -33,6 +33,6 @@ const Vector2i operator/( const Vector2i& lhs, int rhs );
 
 struct Vector2iHasher
 {
-	void HashCombine( std::size_t& seed, int value );
-	std::size_t operator( )( const Vector2i& key );
+	static void HashCombine( std::size_t& seed, int value );
+	std::size_t operator( )( const Vector2i& key ) const;
 };

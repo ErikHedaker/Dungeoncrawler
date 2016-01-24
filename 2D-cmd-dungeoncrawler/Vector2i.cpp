@@ -108,7 +108,7 @@ void Vector2iHasher::HashCombine( std::size_t& seed, int value )
 
 	seed ^= hasher( value ) + 0x9e3779b9 + ( seed << 6 ) + ( seed >> 2 );
 }
-std::size_t Vector2iHasher::operator()( const Vector2i& key )
+std::size_t Vector2iHasher::operator()( const Vector2i& key ) const
 {
 	size_t seed = 0;
 

@@ -32,11 +32,4 @@ enum class GameStatus
 	Neutral,
 	Menu,
 	Next,
-	Dead
-};
-
-enum class DungeonType
-{
-	Randomization,
-	Configuration
 };
