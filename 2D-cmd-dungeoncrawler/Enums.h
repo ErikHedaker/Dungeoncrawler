@@ -19,6 +19,12 @@ enum class EntityType
 	Path
 };
 
+enum class ConfigType
+{
+	Default,
+	Configure
+};
+
 enum class Orientation
 {
 	North,

@@ -1,6 +1,7 @@
 #include "Character.h"
 #include "Functions.h"
 #include "AStarAlgorithm.h"
+#include <map>
 
 Character::Character( const Vector2i& position, const EntityType& type, float speed, float armor, float damage, float health, float mana ) :
 	Entity( position, type ),
@@ -17,38 +18,16 @@ Character::Character( const Vector2i& position, const EntityType& type, float sp
 
 void Character::Move( const Orientation& orientation )
 {
-	Vector2i position = GetPosition( );
-	_positionPrev = GetPosition( );
-
-	switch( orientation )
+	static const std::map<Orientation, Vector2i> directions =
 	{
-		case Orientation::North:
-		{
-			position.row = position.row - 1;
+		{ Orientation::North, Vector2i(  0, -1 ) },
+		{ Orientation::West,  Vector2i( -1,  0 ) },
+		{ Orientation::South, Vector2i(  0,  1 ) },
+		{ Orientation::East,  Vector2i(  1,  0 ) }
+	};
 
-			break;
-		}
-		case Orientation::South:
-		{
-			position.row = position.row + 1;
-
-			break;
-		}
-		case Orientation::West:
-		{
-			position.col = position.col - 1;
-
-			break;
-		}
-		case Orientation::East:
-		{
-			position.col = position.col + 1;
-
-			break;
-		}
-	}
-
-	SetPosition( position );
+	_positionPrev = GetPosition( );
+	SetPosition( GetPosition( ) + directions.at( orientation ) );
 }
 void Character::MoveTowards( const Vector2i& position )
 {
@@ -78,10 +57,10 @@ void Character::MoveTowards( const Vector2i& position )
 
 	SetPosition( positionBest );
 }
-void Character::MoveProbability( int north, int south, int west, int east, int still, bool fixed, int seed )
+void Character::MoveProbability( int north, int south, int west, int east, int still )
 {
 	const int sumProbability = north + south + west + east + still;
-	const int random = RandomNumberGenerator( 0, sumProbability - 1, fixed, seed );
+	const int random = RandomNumberGenerator( 0, sumProbability - 1 );
 
 	if( random < north )
 	{

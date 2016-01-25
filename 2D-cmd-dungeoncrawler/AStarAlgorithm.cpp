@@ -1,8 +1,9 @@
 #include "AStarAlgorithm.h"
 #include <iostream>
 
-SquareGrid::SquareGrid( const Vector2i& gridSize, const std::vector<Vector2i>& obstacles ) :
-	_gridSize( gridSize ),
+SquareGrid::SquareGrid( std::size_t maxCol, std::size_t maxRow, const std::vector<Vector2i>& obstacles ) :
+	_maxCol( maxCol ),
+	_maxRow( maxRow ),
 	_obstacles( obstacles.begin( ), obstacles.end( ) ),
 	_directions
 	( { {
@@ -17,8 +18,8 @@ bool SquareGrid::InBounds( const Vector2i& position ) const
 	return
 		position.col >= 0 &&
 		position.row >= 0 &&
-		position.col < _gridSize.col &&
-		position.row < _gridSize.row;
+		position.col < _maxCol &&
+		position.row < _maxRow;
 }
 bool SquareGrid::Passable( const Vector2i& position ) const
 {
@@ -63,7 +64,7 @@ int Heuristic( const Vector2i& positionFrom, const Vector2i& positionTo )
 	return abs( positionFrom.col - positionTo.col ) + abs( positionFrom.row - positionTo.row );
 }
 
-std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionGoal, const Vector2i& gridSize, const std::vector<Vector2i>& obstacles )
+std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionGoal, std::size_t maxCol, std::size_t maxRow, const std::vector<Vector2i>& obstacles )
 {
 	/*
 		http://www.redblobgames.com/pathfinding/a-star/implementation.html
@@ -73,7 +74,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 	std::priority_queue<Node, std::vector<Node>, CompareNodes> activeNodes;
 	std::unordered_map<Vector2i, Vector2i, Vector2iHasher> positionCameFrom;
 	std::unordered_map<Vector2i, int, Vector2iHasher> positionCost;
-	const SquareGrid grid( gridSize, obstacles );
+	const SquareGrid grid( maxCol, maxRow, obstacles );
 
 	activeNodes.emplace( positionStart, 0 );
 	positionCameFrom[positionStart] = positionStart;

@@ -43,7 +43,7 @@ std::vector<T> ReverseColoumsArray1D( const std::vector<T>& arrayOld, const Vect
 	return arrayNew;
 }
 
-int RandomNumberGenerator( int min, int max, bool fixed = false, int seed = 0 );
+int RandomNumberGenerator( int min, int max );
 
 void OutputClearScreen( );
 void OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& center );

@@ -2,10 +2,7 @@
 
 #include "Dungeon.h"
 #include "Templates.h"
-#include <array>
 #include <memory>
-#include <map>
-#include <unordered_map>
 
 class Game
 {
@@ -14,9 +11,11 @@ class Game
 
 		bool existingGame;
 
-		void SetDungeonConfiguration( );
+		void SetDungeonConfiguration( const ConfigType& type );
 		void NewGame( );
 		void GameLoop( );
+		void SaveDungeons( );
+		void LoadDungeons( );
 
 	private:
 		std::list<Dungeon> _dungeons;

@@ -6,10 +6,10 @@
 #include <algorithm>
 #include <random>
 
-int RandomNumberGenerator( int min, int max, bool fixed, int seed )
+int RandomNumberGenerator( int min, int max )
 {
 	static std::random_device rd;
-	static std::mt19937 generator( fixed ? seed : rd( ) );
+	static std::mt19937 generator( rd( ) );
 	std::uniform_int_distribution<int> randomNumber( min, max );
 
 	return randomNumber( generator );
@@ -57,11 +57,13 @@ void OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& center )
 }
 void OutputDungeonFull( const Dungeon& dungeon )
 {
-	Vector2i iterator = Vector2i( -1, -1 );
+	const int maxCol = dungeon.GetSize( ).first;
+	const int maxRow = dungeon.GetSize( ).second;
+	Vector2i iterator;
 
-	for( iterator.row = 0; iterator.row < dungeon.GetSize( ).row; iterator.row++ )
+	for( iterator.row = 0; iterator.row < maxCol; iterator.row++ )
 	{
-		for( iterator.col = 0; iterator.col < dungeon.GetSize( ).col; iterator.col++ )
+		for( iterator.col = 0; iterator.col < maxRow; iterator.col++ )
 		{
 			if( dungeon.GetVision( iterator ) )
 			{
@@ -88,8 +90,8 @@ void OutputCharacterStatus( const Character& character )
 void OutputTurnOptions( )
 {
 	std::cout << "[W] Go North\n";
-	std::cout << "[S] Go South\n";
 	std::cout << "[A] Go East\n";
+	std::cout << "[S] Go South\n";
 	std::cout << "[D] Go West\n";
 	std::cout << "[Q] Stand still\n";
 	std::cout << "[E] Exit to meny\n";

@@ -6,15 +6,10 @@
 #include "Functions.h"
 #include <vector>
 #include <list>
-#include <memory>
-#include <fstream>
-#include <unordered_set>
+#include <utility>
 
 struct DungeonConfiguration
 {
-	bool fixedSeed = false;
-	int seed = 0;
-
 	bool fixedDungeonSize = false;
 	Vector2i dungeonSize = { 0, 0 };
 
@@ -43,9 +38,7 @@ class Dungeon
 {
 	public:
 		Dungeon( Player* player, const DungeonConfiguration& config );
-
-		//void SaveDungeon( const std::string& fileName ) const;
-		//void LoadDungeon( const std::string& fileName );
+		Dungeon( Player* player, int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
 
 		void PlayerInitialPlace( const Vector2i& position );
 		void PlayerInitialPlaceNearby( const Vector2i& position );
@@ -54,13 +47,13 @@ class Dungeon
 		void PlayerMovement( const Orientation& orientation );
 		void MonsterMovement( );
 		void HandleEvents( GameStatus& status );
-		void RemoveDeadCharacters( GameStatus& status, bool safe = true );
+		void RemoveDeadCharacters( bool safe = true );
 
 		void RotateDungeonClockwise( );
 		void UpdateEntityPositions( );
 
 		const std::vector<const Entity*> GetDoors( ) const;
-		const Vector2i& GetSize( ) const;
+		const std::pair<int, int> GetSize( ) const;
 		const Tile& GetTile( const Vector2i& position ) const;
 		bool GetVision( const Vector2i& position ) const;
 
@@ -72,9 +65,8 @@ class Dungeon
 		bool Surrounded( const Vector2i& position, int threshold ) const;
 
 	private:
-		bool _fixed;
-		int _seed;
-		Vector2i _dungeonSize;
+		int _maxCol;
+		int _maxRow;
 
 		/* All types are or inherit from Entity */
 		Player* _player;
@@ -85,28 +77,17 @@ class Dungeon
 		std::vector<Tile> _tileMap;
 		std::vector<bool> _visionMap;
 
-		/* Container modifiers */
 		void UpdateVision( const Vector2i& position, int lineOfSight );
 		void UpdateTile( const Vector2i& position );
 		void OccupantAdd( Entity* entity );
 		void OccupantRemove( Entity* entity );
 
 		/* Generate Dungeon */
-		void GenerateDoors( bool generate = true, int amount = 0 );
-		void GenerateOuterObstacles( bool generate = true );
-		void GeneratePath( bool generate = true );
-		void GenerateSourceObstacles( bool generate = true, int amount = 0 );
-		void GenerateExtensionObstacles( bool generate = true, int amount = 0 );
-		void GenerateFillerObstacles( bool generate = true, int amount = 0 );
-		void GenerateMonsters( bool generater = true, int amount = 0 );
-
-		///* Write to save file */
-		//void WriteDungeonSize( std::ofstream& stream ) const;
-		//void WriteTileIcons( std::ofstream& stream ) const;
-		//void WriteVision( std::ofstream& stream ) const;
-
-		///* Read from save file */
-		//void ReadDungeonSize( std::ifstream& stream );
-		//void ReadTileIcons( std::ifstream& stream );
-		//void ReadVision( std::ifstream& stream );
+		void GenerateDoors( bool generate, int amount );
+		void GenerateOuterObstacles( bool generate );
+		void GeneratePath( bool generate );
+		void GenerateSourceObstacles( bool generate, int amount );
+		void GenerateExtensionObstacles( bool generate, int amount );
+		void GenerateFillerObstacles( bool generate, int amount );
+		void GenerateMonsters( bool generater, int amount );
 };

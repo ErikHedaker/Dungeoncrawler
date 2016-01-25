@@ -3,11 +3,12 @@
 
 int main( )
 {
+	Game game;
+
 	while( true )
 	{
 		const std::vector<char> choices { '1', '2', '3', '4', '5', '6' };
 		char choice;
-		Game game;
 
 		OutputClearScreen( );
 
@@ -15,7 +16,7 @@ int main( )
 		std::cout << "[2] Build new dungeon (Randomization)\n";
 		std::cout << "[3] Build new dungeon (Configuration)\n";
 		std::cout << "[4] Load dungeons from file\n";
-		std::cout << "[5] Save dungeons to file and exit\n";
+		std::cout << "[5] Save dungeons to file\n";
 		std::cout << "[6] Exit\n";
 
 		choice = InputValidChar( "\nEnter choice: ", choices );
@@ -33,6 +34,7 @@ int main( )
 			}
 			case '2':
 			{
+				game.SetDungeonConfiguration( ConfigType::Default );
 				game.NewGame( );
 				game.GameLoop( );
 
@@ -40,7 +42,7 @@ int main( )
 			}
 			case '3':
 			{
-				game.SetDungeonConfiguration( );
+				game.SetDungeonConfiguration( ConfigType::Configure );
 				game.NewGame( );
 				game.GameLoop( );
 
@@ -48,13 +50,26 @@ int main( )
 			}
 			case '4':
 			{
-				/* Temporary */
+				game.SetDungeonConfiguration( ConfigType::Default );
+
+				try
+				{
+					game.LoadDungeons( );
+				}
+				catch( const std::exception& e )
+				{
+					std::cout << "Exception: " << e.what( );
+
+					break;
+				}
+
+				game.GameLoop( );
 
 				break;
 			}
 			case '5':
 			{
-				/* Temporary */
+				game.SaveDungeons( );
 
 				break;
 			}

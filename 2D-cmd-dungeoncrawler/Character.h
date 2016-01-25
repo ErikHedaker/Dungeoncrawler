@@ -10,7 +10,7 @@ class Character : public Entity
 
 		void Move( const Orientation& orientation );
 		void MoveTowards( const Vector2i& position );
-		void MoveProbability( int north, int south, int west, int east, int still, bool fixed, int seed );
+		void MoveProbability( int north, int south, int west, int east, int still );
 		void RevertPosition( );
 
 		float GetSpeed( ) const;
