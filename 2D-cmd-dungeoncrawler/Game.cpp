@@ -43,8 +43,8 @@ void Game::SetDungeonConfiguration( const ConfigType& type )
 
 			if( _config.fixedDungeonSize )
 			{
-				_config.dungeonSize.col = InputPositiveInteger( "Enter dungeon col size: " );
-				_config.dungeonSize.row = InputPositiveInteger( "Enter dungeon col size: " );
+				_config.maxCol = InputPositiveInteger( "Enter dungeon col size: " );
+				_config.maxRow = InputPositiveInteger( "Enter dungeon row size: " );
 			}
 			if( _config.generateDoors )
 				_config.amountDoors = InputPositiveInteger( "Enter amount of doors: " );
@@ -92,7 +92,7 @@ void Game::GameLoop( )
 		dungeon->UpdatePlayerVision( );
 
 		OutputClearScreen( );
-		OutputDungeonCentered( *dungeon, _player->GetPosition( ) );
+		OutputDungeonCentered( *dungeon, _player->GetPosition( ), _player->GetVisionReach( ) );
 		OutputCharacterStatus( *_player );
 		OutputTurnOptions( );
 
@@ -359,14 +359,14 @@ void Game::FullLinkDungeon( std::size_t indexNodeParent )
 		{
 			Dungeon* dungeonChild;
 
+			std::cout << "\nAdding dungeon link\n\n";
+
 			_dungeons.emplace_back( _player.get( ), _config );
 			dungeonChild = &_dungeons.back( );
 			_dungeonGraph.edges.push_back( { door->GetPosition( ), indexNodeParent } );
 			_dungeonGraph.nodes.push_back( { dungeonChild, std::vector<std::size_t>{ _dungeonGraph.edges.size( ) - 1 } } );
-			_dungeonGraph.edges.push_back( { dungeonChild->GetDoors( ).back( )->GetPosition( ), _dungeonGraph.nodes.size( ) - 1 } );
+			_dungeonGraph.edges.push_back( { dungeonChild->GetDoors( )[0]->GetPosition( ), _dungeonGraph.nodes.size( ) - 1 } );
 			_dungeonGraph.nodes[indexNodeParent].indexEdges.push_back( _dungeonGraph.edges.size( ) - 1 );
-
-			std::cout << "\nLinked added";
 		}
 	}
 }
@@ -403,6 +403,13 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		{
 			dungeon.RotateDungeonClockwise( );
 			dungeon.UpdateEntityPositions( );
+
+			//for( auto& indexEdge : _dungeonGraph.nodes[_indexNodeCurrent].indexEdges )
+			//{
+			//	Vector2i& position = _dungeonGraph.edges[indexEdge].data;
+
+			//	position = RotatePositionClockwise( position, dungeon.GetSize( ).first );
+			//}
 
 			break;
 		}

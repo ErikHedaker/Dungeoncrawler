@@ -35,6 +35,7 @@ int main( )
 			case '2':
 			{
 				game.SetDungeonConfiguration( ConfigType::Default );
+				OutputClearScreen( );
 				game.NewGame( );
 				game.GameLoop( );
 
@@ -43,6 +44,7 @@ int main( )
 			case '3':
 			{
 				game.SetDungeonConfiguration( ConfigType::Configure );
+				OutputClearScreen( );
 				game.NewGame( );
 				game.GameLoop( );
 

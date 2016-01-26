@@ -6,8 +6,8 @@
 
 Dungeon::Dungeon( Player* player, const DungeonConfiguration& config ) :
 	_player( player ),
-	_maxCol( config.fixedDungeonSize ? config.dungeonSize.col : RandomNumberGenerator( 50, 60 ) ),
-	_maxRow( config.fixedDungeonSize ? config.dungeonSize.row : RandomNumberGenerator( 50, 60 ) ),
+	_maxCol( config.fixedDungeonSize ? config.maxCol : RandomNumberGenerator( 50, 60 ) ),
+	_maxRow( config.fixedDungeonSize ? config.maxRow : RandomNumberGenerator( 50, 60 ) ),
 	_tileMap( _maxCol * _maxRow ),
 	_visionMap( _maxCol * _maxRow, false )
 
@@ -146,7 +146,7 @@ void Dungeon::UpdateEntityPositions( )
 
 void Dungeon::UpdatePlayerVision( )
 {
-	UpdateVision( _player->GetPosition( ), _player->GetLineOfSight( ) );
+	UpdateVision( _player->GetPosition( ), _player->GetVisionReach( ) );
 }
 void Dungeon::PlayerMovement( const Orientation& orientation )
 {
@@ -444,6 +444,8 @@ void Dungeon::GenerateDoors( bool generate, int amount )
 		std::vector<Vector2i> positionValid;
 		Vector2i iterator;
 
+		std::cout << "Generating doors\n";
+
 		for( iterator.row = 0; iterator.row < _maxRow; iterator.row++ )
 		{
 			for( iterator.col = 0; iterator.col < _maxCol; iterator.col++ )
@@ -454,8 +456,8 @@ void Dungeon::GenerateDoors( bool generate, int amount )
 					iterator.row == _maxRow - 1 )
 				{
 					/* Check if position is not in a corner */
-					if( ( iterator.col != 0 || iterator.col != _maxCol - 1 ) &&
-						( iterator.row != 0 || iterator.row != _maxRow - 1 ) )
+					if( ( iterator.col != 0 && iterator.col != _maxCol - 1 ) ||
+						( iterator.row != 0 && iterator.row != _maxRow - 1 ) )
 					{
 						positionValid.push_back( iterator );
 					}
@@ -477,6 +479,8 @@ void Dungeon::GenerateOuterObstacles( bool generate )
 	if( generate )
 	{
 		Vector2i iterator;
+
+		std::cout << "Generating outer obstacles\n";
 
 		for( iterator.row = 0; iterator.row < _maxRow; iterator.row++ )
 		{
@@ -504,6 +508,8 @@ void Dungeon::GeneratePath( bool generate )
 		const Vector2i center = Vector2i( _maxCol / 2, _maxRow / 2 );
 		std::vector<Vector2i> pathToDoor;
 		std::vector<Vector2i> obstacles;
+
+		std::cout << "Generating path\n";
 
 		for( const auto& entity : _entities )
 		{
@@ -538,6 +544,8 @@ void Dungeon::GenerateSourceObstacles( bool generate, int amount )
 		int sourceWallsLeft = amount ? amount : ( _maxCol * _maxRow ) / 50;
 		const Vector2i center = Vector2i( _maxCol / 2, _maxRow / 2 );
 
+		std::cout << "Generating source obstacles\n";
+
 		while( sourceWallsLeft > 0 )
 		{
 			Vector2i position;
@@ -569,6 +577,8 @@ void Dungeon::GenerateExtensionObstacles( bool generate, int amount )
 		int extensionWallsLeft = amount ? amount : ( _maxCol * _maxRow ) / 3;
 		const Vector2i center = Vector2i( _maxCol / 2, _maxRow / 2 );
 
+		std::cout << "Generating extension obstacles\n";
+
 		while( extensionWallsLeft > 0 )
 		{
 			for( const auto& entity : _entities )
@@ -596,6 +606,8 @@ void Dungeon::GenerateFillerObstacles( bool generate, int amount )
 	const int amountWalls = amount ? amount : 5;
 	const Vector2i center = Vector2i( _maxCol / 2, _maxRow / 2 );
 	Vector2i iterator;
+
+	std::cout << "Generating filler obstacles\n";
 	
 	for( int i = 0; i < amountWalls; i++ )
 	{
@@ -622,6 +634,8 @@ void Dungeon::GenerateMonsters( bool generate, int amount )
 		const int max = static_cast<int>( sqrt( _maxCol * _maxRow ) / 1.5 );
 		const int amountMonsters = amount ? amount : RandomNumberGenerator( min, max );
 		const Vector2i center = Vector2i( _maxCol / 2, _maxRow / 2 );
+
+		std::cout << "Generating monsters\n";
 
 		for( int i = 0; i < amountMonsters; i++ )
 		{

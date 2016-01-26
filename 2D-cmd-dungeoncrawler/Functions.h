@@ -45,8 +45,10 @@ std::vector<T> ReverseColoumsArray1D( const std::vector<T>& arrayOld, const Vect
 
 int RandomNumberGenerator( int min, int max );
 
+Vector2i RotatePositionClockwise( const Vector2i& position, int dungeonMaxCol );
+
 void OutputClearScreen( );
-void OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& center );
+void OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& center, int visionReach );
 void OutputDungeonFull( const Dungeon& dungeon, const Vector2i& dungeonSize );
 void OutputDungeonFullHidden( const Dungeon& dungeon, const Vector2i& dungeonSize );
 void OutputCharacterStatus( const Character& character );

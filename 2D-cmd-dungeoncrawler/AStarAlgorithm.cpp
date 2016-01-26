@@ -1,16 +1,16 @@
 #include "AStarAlgorithm.h"
 #include <iostream>
 
-SquareGrid::SquareGrid( std::size_t maxCol, std::size_t maxRow, const std::vector<Vector2i>& obstacles ) :
+SquareGrid::SquareGrid( int maxCol, int maxRow, const std::vector<Vector2i>& obstacles ) :
 	_maxCol( maxCol ),
 	_maxRow( maxRow ),
 	_obstacles( obstacles.begin( ), obstacles.end( ) ),
 	_directions
 	( { {
-		Vector2i( 1, 0 ),
-		Vector2i( 0, -1 ),
-		Vector2i( -1, 0 ),
-		Vector2i( 0, 1 )
+		Vector2i(  1,  0 ),
+		Vector2i(  0, -1 ),
+		Vector2i( -1,  0 ),
+		Vector2i(  0,  1 )
 	} } )
 { }
 bool SquareGrid::InBounds( const Vector2i& position ) const
@@ -31,12 +31,12 @@ const std::vector<Vector2i> SquareGrid::GetValidNeighbors( const Vector2i& posit
 
 	for( const auto& direction : _directions )
 	{
-		Vector2i positionNeighbor = position + direction;
+		Vector2i neighbor = position + direction;
 
-		if( InBounds( positionNeighbor ) &&
-			Passable( positionNeighbor ) )
+		if( InBounds( neighbor ) &&
+			Passable( neighbor ) )
 		{
-			results.push_back( positionNeighbor );
+			results.push_back( neighbor );
 		}
 	}
 

@@ -11,7 +11,8 @@
 struct DungeonConfiguration
 {
 	bool fixedDungeonSize = false;
-	Vector2i dungeonSize = { 0, 0 };
+	int maxCol = 0;
+	int maxRow = 0;
 
 	bool generateDoors = true;
 	bool generateOuterObstacles = true;

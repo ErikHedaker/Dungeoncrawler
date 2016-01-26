@@ -13,15 +13,15 @@
 class SquareGrid
 {
 	public:
-		SquareGrid( std::size_t maxCol, std::size_t maxRow, const std::vector<Vector2i>& obstacles );
+		SquareGrid( int maxCol, int maxRow, const std::vector<Vector2i>& obstacles );
 
 		bool InBounds( const Vector2i& position ) const;
 		bool Passable( const Vector2i& position ) const;
 		const std::vector<Vector2i> GetValidNeighbors( const Vector2i& position ) const;
 
 	private:
-		const std::size_t _maxCol;
-		const std::size_t _maxRow;
+		const int _maxCol;
+		const int _maxRow;
 		const std::array<Vector2i, 4> _directions;
 		const std::unordered_set<Vector2i, Vector2iHasher> _obstacles;
 };

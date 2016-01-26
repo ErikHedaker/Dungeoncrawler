@@ -5,6 +5,7 @@
 #include <string>
 #include <algorithm>
 #include <random>
+#include <array>
 
 int RandomNumberGenerator( int min, int max )
 {
@@ -15,17 +16,94 @@ int RandomNumberGenerator( int min, int max )
 	return randomNumber( generator );
 }
 
+Vector2i RotatePositionClockwise( const Vector2i& position, int dungeonMaxCol )
+{
+	Vector2i rotated;
+
+	rotated.col = dungeonMaxCol - position.row - 1;
+	rotated.row = position.col;
+
+	return rotated;
+}
+
 void OutputClearScreen( )
 {
 	/* Some day I will switch to a framework like ncurses and get rid of this abomination */
 	system( "CLS" );
 }
-void OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& center )
+void OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& center, int visionReach )
 {
+	//struct LineOfSight
+	//{
+
+	//	const std::vector<char> blockers;
+	//	const Dungeon* const dungeon;
+	//	const float errorOffset;
+	//	const int visionReach;
+	//	const std::array<Vector2i, 8> directions;
+	//	std::vector<std::vector<Vector2i>> inspect;
+
+	//	LineOfSight( const std::vector<char>& blockers, Dungeon* dungeon, float errorOffset, int visionReach ) :
+	//		blockers( blockers ),
+	//		dungeon( dungeon ),
+	//		errorOffset( errorOffset ),
+	//		visionReach( visionReach ),
+	//		directions
+	//		( { {
+	//				Vector2i(  0, -1 ),
+	//				Vector2i(  1, -1 ),
+	//				Vector2i(  1,  0 ),
+	//				Vector2i(  1,  1 ),
+	//				Vector2i(  0,  1 ),
+	//				Vector2i( -1,  1 ),
+	//				Vector2i( -1,  0 ),
+	//				Vector2i( -1, -1 )
+	//		} } )
+	//	{ }
+	//	bool operator( )( const Vector2i& position )
+	//	{
+	//		if( std::find( blockers.begin( ), blockers.end( ), dungeon->GetTile( position ).icon ) != blockers.end( ) )
+	//		{
+	//			Vector2i iterator;
+
+	//			inspect.emplace_back( );
+
+	//			//for( iterator.row = position.row - 1; iterator.row <= position.row + 1; iterator.row++ )
+	//			//{
+	//			//	for( iterator.col = position.col - 1; iterator.col <= position.col + 1; iterator.col++ )
+	//			//	{
+	//			//		if( dungeon->InBounds( iterator ) )
+	//			//		{
+	//			//			inspect.back( ).push_back( iterator );
+	//			//		}
+	//			//	}
+	//			//}
+
+	//			for( auto direction : directions )
+	//			{
+	//				Vector2i neighbor = position + direction;
+
+	//				if( dungeon->InBounds( neighbor ) )
+	//				{
+	//					inspect.back( ).push_back( iterator );
+	//				}
+	//			}
+
+
+	//		}
+	//	}
+	//};
 	const Vector2i screenSize = { 40, 20 };
 	const Vector2i cameraOrigo = center - screenSize / 2;
 	const Vector2i iteratorBegin = cameraOrigo - 1;
-	const Vector2i iteratorEnd = cameraOrigo + screenSize + 1;
+	const Vector2i iteratorEnd   = cameraOrigo + screenSize + 1;
+	auto InsideVisionReach = [visionReach, center]( const Vector2i& iterator ) -> bool
+	{
+		return
+			iterator >= center - visionReach &&
+			iterator <= center + visionReach;
+	};
+
 	Vector2i iterator;
 
 	for( iterator.row = iteratorBegin.row; iterator.row <= iteratorEnd.row; iterator.row++ )
@@ -37,23 +115,28 @@ void OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& center )
 				iterator.col == iteratorEnd.col ||
 				iterator.row == iteratorEnd.row )
 			{
-				std::cout << "\\";
+				std::cout << '\\';
+			}
+			else if( dungeon.InBounds( iterator ) &&
+					 InsideVisionReach( iterator ) )
+			{
+				std::cout << dungeon.GetTile( iterator ).icon;
 			}
 			else if( dungeon.InBounds( iterator ) &&
 					 dungeon.GetVision( iterator ) )
 			{
-				std::cout << dungeon.GetTile( iterator ).icon;
+				std::cout << ':';
 			}
 			else
 			{
-				std::cout << " ";
+				std::cout << ' ';
 			}
 		}
 
-		std::cout << "\n";
+		std::cout << '\n';
 	}
 
-	std::cout << "\n";
+	std::cout << '\n';
 }
 void OutputDungeonFull( const Dungeon& dungeon )
 {
