@@ -1,19 +1,19 @@
 #include "AStarAlgorithm.h"
 #include <iostream>
 
-SquareGrid::SquareGrid( int maxCol, int maxRow, const std::vector<Vector2i>& obstacles ) :
+Grid::Grid( int maxCol, int maxRow, const std::vector<Vector2i>& obstacles ) :
 	_maxCol( maxCol ),
 	_maxRow( maxRow ),
 	_obstacles( obstacles.begin( ), obstacles.end( ) ),
 	_directions
 	( { {
-		Vector2i(  1,  0 ),
-		Vector2i(  0, -1 ),
-		Vector2i( -1,  0 ),
-		Vector2i(  0,  1 )
+			Vector2i(  0, -1 ),
+			Vector2i(  1,  0 ),
+			Vector2i(  0,  1 ),
+			Vector2i( -1,  0 ),
 	} } )
 { }
-bool SquareGrid::InBounds( const Vector2i& position ) const
+bool Grid::InBounds( const Vector2i& position ) const
 {
 	return
 		position.col >= 0 &&
@@ -21,11 +21,11 @@ bool SquareGrid::InBounds( const Vector2i& position ) const
 		position.col < _maxCol &&
 		position.row < _maxRow;
 }
-bool SquareGrid::Passable( const Vector2i& position ) const
+bool Grid::Passable( const Vector2i& position ) const
 {
 	return !( _obstacles.count( position ) );
 }
-const std::vector<Vector2i> SquareGrid::GetValidNeighbors( const Vector2i& position ) const
+const std::vector<Vector2i> Grid::GetValidNeighbors( const Vector2i& position ) const
 {
 	std::vector<Vector2i> results;
 
@@ -64,7 +64,7 @@ int Heuristic( const Vector2i& positionFrom, const Vector2i& positionTo )
 	return abs( positionFrom.col - positionTo.col ) + abs( positionFrom.row - positionTo.row );
 }
 
-std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionGoal, std::size_t maxCol, std::size_t maxRow, const std::vector<Vector2i>& obstacles )
+std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionGoal, int maxCol, int maxRow, const std::vector<Vector2i>& obstacles )
 {
 	/*
 		http://www.redblobgames.com/pathfinding/a-star/implementation.html
@@ -74,7 +74,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 	std::priority_queue<Node, std::vector<Node>, CompareNodes> activeNodes;
 	std::unordered_map<Vector2i, Vector2i, Vector2iHasher> positionCameFrom;
 	std::unordered_map<Vector2i, int, Vector2iHasher> positionCost;
-	const SquareGrid grid( maxCol, maxRow, obstacles );
+	const Grid grid( maxCol, maxRow, obstacles );
 
 	activeNodes.emplace( positionStart, 0 );
 	positionCameFrom[positionStart] = positionStart;

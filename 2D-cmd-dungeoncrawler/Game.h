@@ -26,5 +26,6 @@ class Game
 		std::unique_ptr<Player> _player;
 
 		void FullLinkDungeon( std::size_t indexNodeParent );
+		void SwitchDungeon( Dungeon* dungeon );
 		void PlayerTurn( Dungeon& dungeon );
 };

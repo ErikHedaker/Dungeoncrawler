@@ -10,10 +10,10 @@
 #include <algorithm>
 #include <functional>
 
-class SquareGrid
+class Grid
 {
 	public:
-		SquareGrid( int maxCol, int maxRow, const std::vector<Vector2i>& obstacles );
+		Grid( int maxCol, int maxRow, const std::vector<Vector2i>& obstacles );
 
 		bool InBounds( const Vector2i& position ) const;
 		bool Passable( const Vector2i& position ) const;
@@ -41,4 +41,4 @@ struct CompareNodes
 
 int Heuristic( const Vector2i& positionFrom, const Vector2i& positionTo );
 
-std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionGoal, std::size_t maxCol, std::size_t maxRow, const std::vector<Vector2i>& obstacles );
+std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionGoal, int maxCol, int maxRow, const std::vector<Vector2i>& obstacles );

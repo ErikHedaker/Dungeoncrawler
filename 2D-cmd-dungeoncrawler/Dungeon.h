@@ -62,6 +62,7 @@ class Dungeon
 		bool Contains( const Vector2i& position, const EntityType& type ) const;
 		bool Walkable( const Vector2i& position ) const;
 		bool InBounds( const Vector2i& position ) const;
+		bool IsCorner( const Vector2i& position ) const;
 		bool Unoccupied( const Vector2i& position ) const;
 		bool Surrounded( const Vector2i& position, int threshold ) const;
 

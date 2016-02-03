@@ -11,7 +11,8 @@ template<class T>
 struct Node
 {
 	T data;
-	std::vector<std::size_t> indexEdges;
+	std::vector<std::size_t> indexEdgesIn;
+	std::vector<std::size_t> indexEdgesOut;
 };
 
 template<class NodeType, class EdgeType>

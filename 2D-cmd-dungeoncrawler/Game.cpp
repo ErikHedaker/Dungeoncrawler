@@ -22,22 +22,19 @@ void Game::SetDungeonConfiguration( const ConfigType& type )
 		}
 		case ConfigType::Configure:
 		{
-			const std::vector<char> YesNo = { 'Y', 'y', 'N', 'n' };
-			auto GetBool = [] ( char input ) -> bool
-			{
-				return input == 'Y' || input == 'y';
-			};
+			const std::vector<char> choices { 'Y', 'y', 'N', 'n' };
+			auto GetBool = []( char input )->bool{ return input == 'Y' || input == 'y'; };
 
 			std::cout << "\n";
 
-			_config.fixedDungeonSize = GetBool( InputValidChar( "Fixed dungeon size, [Y/N]: ", YesNo ) );
-			_config.generateDoors = GetBool( InputValidChar( "Generate doors, [Y/N]: ", YesNo ) );
-			_config.generateOuterObstacles = GetBool( InputValidChar( "Generate outer obstacles, [Y/N]: ", YesNo ) );
-			_config.generatePath = GetBool( InputValidChar( "Generate path, [Y/N]: ", YesNo ) );
-			_config.generateSourceObstacles = GetBool( InputValidChar( "Generate source obstacles, [Y/N]: ", YesNo ) );
-			_config.generateExtensionObstacles = GetBool( InputValidChar( "Generate extension, [Y/N]: ", YesNo ) );
-			_config.generateFillerObstacles = GetBool( InputValidChar( "Generate filler obstacles, [Y/N]: ", YesNo ) );
-			_config.generateMonsters = GetBool( InputValidChar( "Generate monsters, [Y/N]: ", YesNo ) );
+			_config.fixedDungeonSize = GetBool( InputValidChar( "Fixed dungeon size, [Y/N]: ", choices ) );
+			_config.generateDoors = GetBool( InputValidChar( "Generate doors, [Y/N]: ", choices ) );
+			_config.generateOuterObstacles = GetBool( InputValidChar( "Generate outer obstacles, [Y/N]: ", choices ) );
+			_config.generatePath = GetBool( InputValidChar( "Generate path, [Y/N]: ", choices ) );
+			_config.generateSourceObstacles = GetBool( InputValidChar( "Generate source obstacles, [Y/N]: ", choices ) );
+			_config.generateExtensionObstacles = GetBool( InputValidChar( "Generate extension, [Y/N]: ", choices ) );
+			_config.generateFillerObstacles = GetBool( InputValidChar( "Generate filler obstacles, [Y/N]: ", choices ) );
+			_config.generateMonsters = GetBool( InputValidChar( "Generate monsters, [Y/N]: ", choices ) );
 
 			std::cout << "\n";
 
@@ -104,25 +101,8 @@ void Game::GameLoop( )
 
 		if( _status == GameStatus::Next )
 		{
-			for( const auto& indexEdgeParent : _dungeonGraph.nodes[_indexNodeCurrent].indexEdges )
-			{
-				auto indexNodeChild = _dungeonGraph.edges[indexEdgeParent].indexNode;
+			SwitchDungeon( dungeon );
 
-				for( const auto& indexEdgeChild : _dungeonGraph.nodes[indexNodeChild].indexEdges )
-				{
-					if( _dungeonGraph.edges[indexEdgeChild].data == _player->GetPosition( ) )
-					{
-						_indexNodeCurrent = indexNodeChild;
-						dungeon = _dungeonGraph.nodes[indexNodeChild].data;
-						dungeon->PlayerInitialPlaceNearby( _dungeonGraph.edges[indexEdgeParent].data );
-						FullLinkDungeon( indexNodeChild );
-
-						goto END;
-					}
-				}
-			}
-
-			END:
 			_status = GameStatus::Neutral;
 		}
 	}
@@ -158,11 +138,15 @@ void Game::SaveDungeons( )
 		const int maxRow = dungeon.GetSize( ).second;
 		Vector2i iterator;
 
-		outFile << _dungeonGraph.nodes[indexNode].indexEdges.size( ) << '\n';
+		outFile << _dungeonGraph.nodes[indexNode].indexEdgesIn.size( ) << '\n';
 
-		for( auto indexEdge : _dungeonGraph.nodes[indexNode].indexEdges )
+		for( auto indexEdgeIn : _dungeonGraph.nodes[indexNode].indexEdgesIn )
 		{
-			outFile << indexEdge << '\n';
+			outFile << indexEdgeIn << '\n';
+		}
+		for( auto indexEdgeOut : _dungeonGraph.nodes[indexNode].indexEdgesOut )
+		{
+			outFile << indexEdgeOut << '\n';
 		}
 
 		outFile << maxCol << '\n';
@@ -252,6 +236,8 @@ void Game::LoadDungeons( )
 				std::getline( inFile, line );
 				indexNodeEdgeNodes.push_back( std::stoi( line ) );
 			}
+
+			/* Add something here */
 
 			std::getline( inFile, line );
 			maxCol = std::stoi( line );
@@ -353,20 +339,72 @@ void Game::FullLinkDungeon( std::size_t indexNodeParent )
 	auto doors = _dungeonGraph.nodes[indexNodeParent].data->GetDoors( );
 	auto required = doors.size( );
 
-	while( _dungeonGraph.nodes[indexNodeParent].indexEdges.size( ) < required )
+	while( _dungeonGraph.nodes[indexNodeParent].indexEdgesIn.size( ) < required &&
+		   _dungeonGraph.nodes[indexNodeParent].indexEdgesOut.size( ) < required )
 	{
 		for( const auto& door : doors )
 		{
-			Dungeon* dungeonChild;
+			const auto& edges = _dungeonGraph.edges;
+			auto DoorLinked = [door]( const Edge<Vector2i>& edge )->bool{ return edge.data == door->GetPosition( ); };
 
-			std::cout << "\nAdding dungeon link\n\n";
+			if( std::find_if( edges.begin( ), edges.end( ), DoorLinked ) == edges.end( ) )
+			{
+				Dungeon* dungeonChild;
+				Node<Dungeon*> nodeChild;
+				Edge<Vector2i> edgeToParent;
+				Edge<Vector2i> edgeToChild;
+				std::size_t indexEdgeToParent;
+				std::size_t indexEdgeToChild;
+				std::size_t indexNodeChild;
 
-			_dungeons.emplace_back( _player.get( ), _config );
-			dungeonChild = &_dungeons.back( );
-			_dungeonGraph.edges.push_back( { door->GetPosition( ), indexNodeParent } );
-			_dungeonGraph.nodes.push_back( { dungeonChild, std::vector<std::size_t>{ _dungeonGraph.edges.size( ) - 1 } } );
-			_dungeonGraph.edges.push_back( { dungeonChild->GetDoors( )[0]->GetPosition( ), _dungeonGraph.nodes.size( ) - 1 } );
-			_dungeonGraph.nodes[indexNodeParent].indexEdges.push_back( _dungeonGraph.edges.size( ) - 1 );
+				std::cout << "\nAdding dungeon link\n\n";
+
+				_dungeons.emplace_back( _player.get( ), _config );
+				dungeonChild = &_dungeons.back( );
+
+				_dungeonGraph.nodes.emplace_back( );
+				indexNodeChild = _dungeonGraph.nodes.size( ) - 1;
+				_dungeonGraph.edges.emplace_back( );
+				indexEdgeToParent = _dungeonGraph.edges.size( ) - 1;
+				_dungeonGraph.edges.emplace_back( );
+				indexEdgeToChild = _dungeonGraph.edges.size( ) - 1;
+
+				edgeToParent = { door->GetPosition( ), indexNodeParent };
+				_dungeonGraph.edges[indexEdgeToParent] = edgeToParent;
+				edgeToChild = { dungeonChild->GetDoors( )[0]->GetPosition( ), indexNodeChild };
+				_dungeonGraph.edges[indexEdgeToChild] = edgeToChild;
+				nodeChild = { dungeonChild, { indexEdgeToChild }, { indexEdgeToParent } };
+				_dungeonGraph.nodes[indexNodeChild] = nodeChild;
+
+				_dungeonGraph.nodes[indexNodeParent].indexEdgesIn.push_back( indexEdgeToParent );
+				_dungeonGraph.nodes[indexNodeChild].indexEdgesOut.push_back( indexEdgeToParent );
+
+				_dungeonGraph.nodes[indexNodeParent].indexEdgesOut.push_back( indexEdgeToChild );
+				_dungeonGraph.nodes[indexNodeChild].indexEdgesIn.push_back( indexEdgeToChild );
+			}
+		}
+	}
+}
+void Game::SwitchDungeon( Dungeon* dungeon )
+{
+	auto amountEdges = _dungeonGraph.nodes[_indexNodeCurrent].indexEdgesIn.size( );
+
+	for( std::size_t indexEdge = 0; indexEdge < amountEdges; indexEdge++ )
+	{
+		auto indexEdgeToParent = _dungeonGraph.nodes[_indexNodeCurrent].indexEdgesIn[indexEdge];
+		auto positionDoor = _dungeonGraph.edges[indexEdgeToParent].data;
+
+		if( _player->GetPosition( ) == positionDoor )
+		{
+			auto indexEdgeToChild = _dungeonGraph.nodes[_indexNodeCurrent].indexEdgesOut[indexEdge];
+			auto indexNodeChild = _dungeonGraph.edges[indexEdgeToChild].indexNode;
+
+			_indexNodeCurrent = indexNodeChild;
+			dungeon = _dungeonGraph.nodes[indexNodeChild].data;
+			dungeon->PlayerInitialPlaceNearby( _dungeonGraph.edges[indexEdgeToChild].data );
+			FullLinkDungeon( indexNodeChild );
+
+			break;
 		}
 	}
 }
@@ -404,9 +442,9 @@ void Game::PlayerTurn( Dungeon& dungeon )
 			dungeon.RotateDungeonClockwise( );
 			dungeon.UpdateEntityPositions( );
 
-			//for( auto& indexEdge : _dungeonGraph.nodes[_indexNodeCurrent].indexEdges )
+			//for( auto& indexEdgeOut : _dungeonGraph.nodes[_indexNodeCurrent].indexEdgesOut )
 			//{
-			//	Vector2i& position = _dungeonGraph.edges[indexEdge].data;
+			//	Vector2i& position = _dungeonGraph.edges[indexEdgeOut].data;
 
 			//	position = RotatePositionClockwise( position, dungeon.GetSize( ).first );
 			//}

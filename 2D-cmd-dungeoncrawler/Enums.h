@@ -37,5 +37,5 @@ enum class GameStatus
 {
 	Neutral,
 	Menu,
-	Next,
+	Next
 };
