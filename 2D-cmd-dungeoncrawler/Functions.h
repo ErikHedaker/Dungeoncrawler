@@ -5,10 +5,6 @@
 #include <algorithm>
 #include <vector>
 
-class Dungeon;
-class Player;
-class Character;
-
 template<class T>
 std::vector<T> TransposeArray1D( const std::vector<T>& arrayOld, const Vector2i& sizeOld, const Vector2i& sizeNew )
 {
@@ -43,22 +39,16 @@ std::vector<T> ReverseColoumsArray1D( const std::vector<T>& arrayOld, const Vect
 	return arrayNew;
 }
 
+void GetEnter( );
+char GetValidChar( const std::string& context, const std::vector<char>& validChoices );
+int GetPositiveInteger( const std::string& context );
+
 int RandomNumberGenerator( int min, int max );
 
-Vector2i RotatePositionClockwise( const Vector2i& position, int dungeonMaxCol );
+Vector2i RotatePositionClockwise( const Vector2i& position, int maxCol );
+Vector2i MoveEntity( const Vector2i& position, const Orientation& orientation );
+Vector2i MoveEntityProbability( const Vector2i& position, int north, int south, int west, int east, int still );
+void Battle( int* attackerHealth, int* attackerDamage, int* defenderHealth, int* defenderDamage );
 
-void OutputClearScreen( );
-void OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& center, int visionReach );
-void OutputDungeonFull( const Dungeon& dungeon, const Vector2i& dungeonSize );
-void OutputDungeonFullHidden( const Dungeon& dungeon, const Vector2i& dungeonSize );
-void OutputCharacterStatus( const Character& character );
-void OutputTurnOptions( );
-void OutputGameStatusEnd( const GameStatus& status );
-void OutputBattleScreenStart( const Character& attacker, const Character& defender );
-void OutputBattleScreenEnd( const Character& winner, const Character& loser );
-void OutputAsciiArtSpider( );
-void OutputAsciiArtSwords( );
-
-void InputEnter( );
-char InputValidChar( const std::string& context, const std::vector<char>& validChoices );
-int InputPositiveInteger( const std::string& context );
+void AsciiArtSpider( );
+void AsciiArtSwords( );

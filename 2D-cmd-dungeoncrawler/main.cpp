@@ -10,8 +10,7 @@ int main( )
 		const std::vector<char> choices { '1', '2', '3', '4', '5', '6' };
 		char choice;
 
-		OutputClearScreen( );
-
+		system( "CLS" );
 		std::cout << "[1] Continue current game\n";
 		std::cout << "[2] Build new dungeon (Randomization)\n";
 		std::cout << "[3] Build new dungeon (Configuration)\n";
@@ -19,7 +18,7 @@ int main( )
 		std::cout << "[5] Save dungeons to file\n";
 		std::cout << "[6] Exit\n";
 
-		choice = InputValidChar( "\nEnter choice: ", choices );
+		choice = GetValidChar( "\nEnter choice: ", choices );
 
 		switch( choice )
 		{
@@ -35,7 +34,7 @@ int main( )
 			case '2':
 			{
 				game.SetDungeonConfiguration( ConfigType::Default );
-				OutputClearScreen( );
+				system( "CLS" );
 				game.NewGame( );
 				game.GameLoop( );
 
@@ -44,7 +43,7 @@ int main( )
 			case '3':
 			{
 				game.SetDungeonConfiguration( ConfigType::Configure );
-				OutputClearScreen( );
+				system( "CLS" );
 				game.NewGame( );
 				game.GameLoop( );
 

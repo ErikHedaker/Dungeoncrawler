@@ -23,7 +23,6 @@ class Game
 		std::size_t _indexNodeCurrent;
 		DungeonConfiguration _config;
 		GameStatus _status;
-		std::unique_ptr<Player> _player;
 
 		void FullLinkDungeon( std::size_t indexNodeParent );
 		void SwitchDungeon( Dungeon* dungeon );

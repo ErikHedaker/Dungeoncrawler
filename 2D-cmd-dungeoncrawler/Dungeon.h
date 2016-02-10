@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Player.h"
-#include "Monster.h"
 #include "Enums.h"
 #include "Functions.h"
 #include <vector>
@@ -15,52 +13,76 @@ struct DungeonConfiguration
 	int maxRow = 0;
 
 	bool generateDoors = true;
-	bool generateOuterObstacles = true;
+	bool generateOuterWalls = true;
 	bool generatePath = true;
-	bool generateSourceObstacles = true;
-	bool generateExtensionObstacles = true;
-	bool generateFillerObstacles = true;
+	bool generateSourceWalls = true;
+	bool generateExtensionWalls = true;
+	bool generateFillerWalls = true;
 	bool generateMonsters = true;
 
 	int amountDoors = 0;
-	int amountSourceObstacles = 0;
-	int amountExtensionObstacles = 0;
-	int amountFillerObstacleCycles = 0;
+	int amountSourceWalls = 0;
+	int amountExtensionWalls = 0;
+	int amountFillerWallsCycles = 0;
 	int amountMonsters = 0;
+};
+
+struct Properties
+{
+	bool movementRandom;
+	bool aggressive;
+	bool mortal;
+	bool hidden;
+	bool walkablePlayer;
+	bool walkableOthers;
+};
+
+struct Components
+{
+	std::size_t size = 0;
+	std::vector<bool> active;
+	std::vector<Properties> properties;
+	std::vector<Vector2i> position;
+	std::vector<Vector2i> positionPrevious;
+	std::vector<int> health;
+	std::vector<int> damage;
+	std::vector<int> visionReach;
+	std::vector<int> iconPriority;
+	std::vector<char> icon;
+
+	std::size_t Add( );
 };
 
 struct Tile
 {
-	std::list<Entity*> occupants;
+	std::vector<std::size_t> indexOccupants;
 	char icon = '-';
 };
 
 class Dungeon
 {
 	public:
-		Dungeon( Player* player, const DungeonConfiguration& config );
-		Dungeon( Player* player, int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
+		Dungeon( const DungeonConfiguration& config );
+		Dungeon( int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
 
-		void PlayerInitialPlace( const Vector2i& position );
-		void PlayerInitialPlaceNearby( const Vector2i& position );
+		void SetPositionPlayer( const Vector2i& position );
 
-		void UpdatePlayerVision( );
+		void PrintDungeonCentered( const Vector2i& screenSize = { 40, 20 } );
 		void PlayerMovement( const Orientation& orientation );
 		void MonsterMovement( );
 		void HandleEvents( GameStatus& status );
-		void RemoveDeadCharacters( bool safe = true );
 
 		void RotateDungeonClockwise( );
 		void UpdateEntityPositions( );
 
-		const std::vector<const Entity*> GetDoors( ) const;
+		const std::vector<Vector2i> GetDoors( ) const;
 		const std::pair<int, int> GetSize( ) const;
 		const Tile& GetTile( const Vector2i& position ) const;
 		bool GetVision( const Vector2i& position ) const;
 
 		/* Helper functions */
-		bool Contains( const Vector2i& position, const EntityType& type ) const;
-		bool Walkable( const Vector2i& position ) const;
+		bool WalkablePlayer( const Vector2i& position ) const;
+		bool WalkableOthers( const Vector2i& position ) const;
 		bool InBounds( const Vector2i& position ) const;
 		bool IsCorner( const Vector2i& position ) const;
 		bool Unoccupied( const Vector2i& position ) const;
@@ -69,27 +91,31 @@ class Dungeon
 	private:
 		int _maxCol;
 		int _maxRow;
-
-		/* All types are or inherit from Entity */
-		Player* _player;
-		std::list<Monster> _monsters;
-		std::list<Entity> _entities;
+		Components _components;
+		std::vector<const std::size_t> _indexDoors;
 
 		/* 1D arrays interpreted as 2D grids */
 		std::vector<Tile> _tileMap;
 		std::vector<bool> _visionMap;
 
-		void UpdateVision( const Vector2i& position, int lineOfSight );
+		void UpdateVision( const Vector2i& position, int visionReach );
 		void UpdateTile( const Vector2i& position );
-		void OccupantAdd( Entity* entity );
-		void OccupantRemove( Entity* entity );
+		void OccupantAdd( std::size_t index );
+		void OccupantRemove( std::size_t index );
 
-		/* Generate Dungeon */
+		/* Preset entities */
+		void PlayerAdd( const Vector2i& position );
+		void WallAdd( const Vector2i& position );
+		void DoorAdd( const Vector2i& position );
+		void StepAdd( const Vector2i& position );
+		void MonsterAdd( const Vector2i& position );
+
+		/* Called in constructor */
 		void GenerateDoors( bool generate, int amount );
-		void GenerateOuterObstacles( bool generate );
+		void GenerateOuterWalls( bool generate );
 		void GeneratePath( bool generate );
-		void GenerateSourceObstacles( bool generate, int amount );
-		void GenerateExtensionObstacles( bool generate, int amount );
-		void GenerateFillerObstacles( bool generate, int amount );
+		void GenerateSourceWalls( bool generate, int amount );
+		void GenerateExtensionWalls( bool generate, int amount );
+		void GenerateFillerWalls( bool generate, int amount );
 		void GenerateMonsters( bool generater, int amount );
 };

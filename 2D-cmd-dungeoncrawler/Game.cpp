@@ -6,8 +6,7 @@
 #include <string>
 
 Game::Game( ) :
-	existingGame( false ),
-	_player( new Player( Vector2i( ) ) )
+	existingGame( false )
 { }
 
 void Game::SetDungeonConfiguration( const ConfigType& type )
@@ -23,36 +22,39 @@ void Game::SetDungeonConfiguration( const ConfigType& type )
 		case ConfigType::Configure:
 		{
 			const std::vector<char> choices { 'Y', 'y', 'N', 'n' };
-			auto GetBool = []( char input )->bool{ return input == 'Y' || input == 'y'; };
+			auto GetBool = [] ( char input ) -> bool
+			{
+				return input == 'Y' || input == 'y';
+			};
 
 			std::cout << "\n";
 
-			_config.fixedDungeonSize = GetBool( InputValidChar( "Fixed dungeon size, [Y/N]: ", choices ) );
-			_config.generateDoors = GetBool( InputValidChar( "Generate doors, [Y/N]: ", choices ) );
-			_config.generateOuterObstacles = GetBool( InputValidChar( "Generate outer obstacles, [Y/N]: ", choices ) );
-			_config.generatePath = GetBool( InputValidChar( "Generate path, [Y/N]: ", choices ) );
-			_config.generateSourceObstacles = GetBool( InputValidChar( "Generate source obstacles, [Y/N]: ", choices ) );
-			_config.generateExtensionObstacles = GetBool( InputValidChar( "Generate extension, [Y/N]: ", choices ) );
-			_config.generateFillerObstacles = GetBool( InputValidChar( "Generate filler obstacles, [Y/N]: ", choices ) );
-			_config.generateMonsters = GetBool( InputValidChar( "Generate monsters, [Y/N]: ", choices ) );
+			_config.fixedDungeonSize       = GetBool( GetValidChar( "Fixed dungeon size, [Y/N]: ",        choices ) );
+			_config.generateDoors          = GetBool( GetValidChar( "Generate doors, [Y/N]: ",            choices ) );
+			_config.generateOuterWalls     = GetBool( GetValidChar( "Generate outer obstacles, [Y/N]: ",  choices ) );
+			_config.generatePath           = GetBool( GetValidChar( "Generate path, [Y/N]: ",             choices ) );
+			_config.generateSourceWalls    = GetBool( GetValidChar( "Generate source obstacles, [Y/N]: ", choices ) );
+			_config.generateExtensionWalls = GetBool( GetValidChar( "Generate extension, [Y/N]: ",        choices ) );
+			_config.generateFillerWalls    = GetBool( GetValidChar( "Generate filler obstacles, [Y/N]: ", choices ) );
+			_config.generateMonsters       = GetBool( GetValidChar( "Generate monsters, [Y/N]: ",         choices ) );
 
 			std::cout << "\n";
 
 			if( _config.fixedDungeonSize )
 			{
-				_config.maxCol = InputPositiveInteger( "Enter dungeon col size: " );
-				_config.maxRow = InputPositiveInteger( "Enter dungeon row size: " );
+				_config.maxCol = GetPositiveInteger( "Enter dungeon col size: " );
+				_config.maxRow = GetPositiveInteger( "Enter dungeon row size: " );
 			}
 			if( _config.generateDoors )
-				_config.amountDoors = InputPositiveInteger( "Enter amount of doors: " );
-			if( _config.generateSourceObstacles )
-				_config.amountSourceObstacles = InputPositiveInteger( "Enter amount of source obstacles: " );
-			if( _config.generateExtensionObstacles )
-				_config.amountExtensionObstacles = InputPositiveInteger( "Enter amount of extension obstacles: " );
-			if( _config.generateFillerObstacles )
-				_config.amountFillerObstacleCycles = InputPositiveInteger( "Enter amount of filler obstacle cycles: " );
+				_config.amountDoors             = GetPositiveInteger( "Enter amount of doors: " );
+			if( _config.generateSourceWalls )
+				_config.amountSourceWalls       = GetPositiveInteger( "Enter amount of source obstacles: " );
+			if( _config.generateExtensionWalls )
+				_config.amountExtensionWalls    = GetPositiveInteger( "Enter amount of extension obstacles: " );
+			if( _config.generateFillerWalls )
+				_config.amountFillerWallsCycles = GetPositiveInteger( "Enter amount of filler obstacle cycles: " );
 			if( _config.generateMonsters )
-				_config.amountMonsters = InputPositiveInteger( "Enter amount of monsters: " );
+				_config.amountMonsters          = GetPositiveInteger( "Enter amount of monsters: " );
 
 			break;
 		}
@@ -62,20 +64,17 @@ void Game::NewGame( )
 {
 	Dungeon* dungeon;
 
-	_player->SetHealth( 100 );
-	_player->SetAlive( true );
 	_dungeons.clear( );
 	_dungeonGraph.nodes.clear( );
 	_dungeonGraph.edges.clear( );
 	_status = GameStatus::Neutral;
 	existingGame = true;
 
-	_dungeons.emplace_back( _player.get( ), _config );
+	_dungeons.emplace_back( _config );
 	dungeon = &_dungeons.back( );
 	_dungeonGraph.nodes.push_back( { &_dungeons.back( ) } );
 	_indexNodeCurrent = _dungeonGraph.nodes.size( ) - 1;
 	FullLinkDungeon( _indexNodeCurrent );
-	dungeon->PlayerInitialPlace( Vector2i( dungeon->GetSize( ).first / 2, dungeon->GetSize( ).second / 2 ) );
 }
 void Game::GameLoop( )
 {
@@ -83,27 +82,18 @@ void Game::GameLoop( )
 
 	_status = GameStatus::Neutral;
 
-	while( _status == GameStatus::Neutral &&
-		   _player->GetAlive( ) )
+	while( _status == GameStatus::Neutral )
 	{
-		dungeon->UpdatePlayerVision( );
-
-		OutputClearScreen( );
-		OutputDungeonCentered( *dungeon, _player->GetPosition( ), _player->GetVisionReach( ) );
-		OutputCharacterStatus( *_player );
-		OutputTurnOptions( );
-
+		system( "CLS" );
+		dungeon->PrintDungeonCentered( );
 		PlayerTurn( *dungeon );
-
 		dungeon->MonsterMovement( );
 		dungeon->HandleEvents( _status );
-		dungeon->RemoveDeadCharacters( );
 
 		if( _status == GameStatus::Next )
 		{
-			SwitchDungeon( dungeon );
-
 			_status = GameStatus::Neutral;
+			SwitchDungeon( dungeon );
 		}
 	}
 }
@@ -261,7 +251,6 @@ void Game::LoadDungeons( )
 							case Icon::Player:
 							{
 								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Player;
-								_player->SetPosition( iterator );
 
 								break;
 							}
@@ -277,9 +266,9 @@ void Game::LoadDungeons( )
 
 								break;
 							}
-							case Icon::Obstacle:
+							case Icon::Wall:
 							{
-								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Obstacle;
+								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Wall;
 
 								break;
 							}
@@ -322,7 +311,7 @@ void Game::LoadDungeons( )
 				}
 			}
 
-			_dungeons.emplace_back( _player.get( ), maxCol, maxRow, visionMap, iconMap );
+			_dungeons.emplace_back( maxCol, maxRow, visionMap, iconMap );
 			_dungeonGraph.nodes.push_back( { &_dungeons.back( ), indexNodeEdgeNodes } );
 		}
 	}
@@ -342,10 +331,10 @@ void Game::FullLinkDungeon( std::size_t indexNodeParent )
 	while( _dungeonGraph.nodes[indexNodeParent].indexEdgesIn.size( ) < required &&
 		   _dungeonGraph.nodes[indexNodeParent].indexEdgesOut.size( ) < required )
 	{
-		for( const auto& door : doors )
+		for( auto door : doors )
 		{
 			const auto& edges = _dungeonGraph.edges;
-			auto DoorLinked = [door]( const Edge<Vector2i>& edge )->bool{ return edge.data == door->GetPosition( ); };
+			auto DoorLinked = [door]( const Edge<Vector2i>& edge )->bool{ return edge.data == door; };
 
 			if( std::find_if( edges.begin( ), edges.end( ), DoorLinked ) == edges.end( ) )
 			{
@@ -359,7 +348,7 @@ void Game::FullLinkDungeon( std::size_t indexNodeParent )
 
 				std::cout << "\nAdding dungeon link\n\n";
 
-				_dungeons.emplace_back( _player.get( ), _config );
+				_dungeons.emplace_back( _config );
 				dungeonChild = &_dungeons.back( );
 
 				_dungeonGraph.nodes.emplace_back( );
@@ -369,9 +358,9 @@ void Game::FullLinkDungeon( std::size_t indexNodeParent )
 				_dungeonGraph.edges.emplace_back( );
 				indexEdgeToChild = _dungeonGraph.edges.size( ) - 1;
 
-				edgeToParent = { door->GetPosition( ), indexNodeParent };
+				edgeToParent = { door, indexNodeParent };
 				_dungeonGraph.edges[indexEdgeToParent] = edgeToParent;
-				edgeToChild = { dungeonChild->GetDoors( )[0]->GetPosition( ), indexNodeChild };
+				edgeToChild = { dungeonChild->GetDoors( )[0], indexNodeChild };
 				_dungeonGraph.edges[indexEdgeToChild] = edgeToChild;
 				nodeChild = { dungeonChild, { indexEdgeToChild }, { indexEdgeToParent } };
 				_dungeonGraph.nodes[indexNodeChild] = nodeChild;
@@ -387,6 +376,7 @@ void Game::FullLinkDungeon( std::size_t indexNodeParent )
 }
 void Game::SwitchDungeon( Dungeon* dungeon )
 {
+	/*
 	auto amountEdges = _dungeonGraph.nodes[_indexNodeCurrent].indexEdgesIn.size( );
 
 	for( std::size_t indexEdge = 0; indexEdge < amountEdges; indexEdge++ )
@@ -401,15 +391,24 @@ void Game::SwitchDungeon( Dungeon* dungeon )
 
 			_indexNodeCurrent = indexNodeChild;
 			dungeon = _dungeonGraph.nodes[indexNodeChild].data;
-			dungeon->PlayerInitialPlaceNearby( _dungeonGraph.edges[indexEdgeToChild].data );
+			dungeon->SetPositionPlayer( _dungeonGraph.edges[indexEdgeToChild].data );
 			FullLinkDungeon( indexNodeChild );
 
 			break;
 		}
 	}
+	*/
 }
 void Game::PlayerTurn( Dungeon& dungeon )
 {
+	std::cout << "[W] Go North\n";
+	std::cout << "[A] Go West\n";
+	std::cout << "[S] Go South\n";
+	std::cout << "[D] Go East\n";
+	std::cout << "[Q] Stand still\n";
+	std::cout << "[E] Exit to meny\n";
+	std::cout << "[F] Rotate dungeon 90 degrees clockwise\n";
+
 	static const std::vector<char> choices { 'W', 'w', 'A', 'a', 'S', 's', 'D', 'd', 'E', 'e', 'F', 'f', 'Q', 'q' };
 	static const std::map<char, Orientation> direction
 	{
@@ -418,7 +417,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		{ 'S', Orientation::South }, { 's', Orientation::South },
 		{ 'D', Orientation::East  }, { 'd', Orientation::East  }
 	};
-	const char choice = InputValidChar( "\nYour choice: ", choices );
+	const char choice = GetValidChar( "\nYour choice: ", choices );
 
 	switch( choice )
 	{

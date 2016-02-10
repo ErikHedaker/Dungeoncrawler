@@ -1,11 +1,52 @@
 #include "Functions.h"
 #include "Enums.h"
-#include "Dungeon.h"
 #include <iostream>
 #include <string>
 #include <algorithm>
 #include <random>
-#include <array>
+#include <map>
+
+void GetEnter( )
+{
+	/* First one doesn't wait for user input */
+	std::cin.get( );
+	std::cin.get( );
+}
+char GetValidChar( const std::string& context, const std::vector<char>& valid )
+{
+	std::string choice;
+
+	while( true )
+	{
+		std::cout << context;
+		std::cin >> choice;
+
+		if( std::find( valid.begin( ), valid.end( ), choice[0] ) != valid.end( ) )
+		{
+			break;
+		}
+	}
+
+	return choice[0];
+}
+int GetPositiveInteger( const std::string& context )
+{
+	std::string choice;
+
+	while( true )
+	{
+		std::cout << context;
+		std::cin >> choice;
+
+		if( choice.size( ) < 10 &&
+			std::all_of( choice.begin( ), choice.end( ), ::isdigit ) )
+		{
+			break;
+		}
+	}
+
+	return std::stoi( choice );
+}
 
 int RandomNumberGenerator( int min, int max )
 {
@@ -16,171 +57,71 @@ int RandomNumberGenerator( int min, int max )
 	return randomNumber( generator );
 }
 
-Vector2i RotatePositionClockwise( const Vector2i& position, int dungeonMaxCol )
+Vector2i RotatePositionClockwise( const Vector2i& position, int maxCol )
 {
 	Vector2i rotated;
 
-	rotated.col = dungeonMaxCol - position.row - 1;
+	rotated.col = maxCol - position.row - 1;
 	rotated.row = position.col;
 
 	return rotated;
 }
-
-void OutputClearScreen( )
+Vector2i MoveEntity( const Vector2i& position, const Orientation& orientation )
 {
-	/* Some day I will switch to a framework like ncurses and get rid of this abomination */
-	system( "CLS" );
-}
-void OutputDungeonCentered( const Dungeon& dungeon, const Vector2i& center, int visionReach )
-{
-	//struct LineOfSight
-	//{
-
-	//	const std::vector<char> blockers;
-	//	const Dungeon* const dungeon;
-	//	const float errorOffset;
-	//	const int visionReach;
-	//	const std::array<Vector2i, 8> directions;
-	//	std::vector<std::vector<Vector2i>> inspect;
-
-	//	LineOfSight( const std::vector<char>& blockers, Dungeon* dungeon, float errorOffset, int visionReach ) :
-	//		blockers( blockers ),
-	//		dungeon( dungeon ),
-	//		errorOffset( errorOffset ),
-	//		visionReach( visionReach ),
-	//		directions
-	//		( { {
-	//				Vector2i(  0, -1 ),
-	//				Vector2i(  1, -1 ),
-	//				Vector2i(  1,  0 ),
-	//				Vector2i(  1,  1 ),
-	//				Vector2i(  0,  1 ),
-	//				Vector2i( -1,  1 ),
-	//				Vector2i( -1,  0 ),
-	//				Vector2i( -1, -1 )
-	//		} } )
-	//	{ }
-	//	bool operator( )( const Vector2i& position )
-	//	{
-	//		if( std::find( blockers.begin( ), blockers.end( ), dungeon->GetTile( position ).icon ) != blockers.end( ) )
-	//		{
-	//			Vector2i iterator;
-
-	//			inspect.emplace_back( );
-
-	//			//for( iterator.row = position.row - 1; iterator.row <= position.row + 1; iterator.row++ )
-	//			//{
-	//			//	for( iterator.col = position.col - 1; iterator.col <= position.col + 1; iterator.col++ )
-	//			//	{
-	//			//		if( dungeon->InBounds( iterator ) )
-	//			//		{
-	//			//			inspect.back( ).push_back( iterator );
-	//			//		}
-	//			//	}
-	//			//}
-
-	//			for( auto direction : directions )
-	//			{
-	//				Vector2i neighbor = position + direction;
-
-	//				if( dungeon->InBounds( neighbor ) )
-	//				{
-	//					inspect.back( ).push_back( iterator );
-	//				}
-	//			}
-
-
-	//		}
-	//	}
-	//};
-	const Vector2i screenSize = { 40, 20 };
-	const Vector2i cameraOrigo = center - screenSize / 2;
-	const Vector2i iteratorBegin = cameraOrigo - 1;
-	const Vector2i iteratorEnd   = cameraOrigo + screenSize + 1;
-	auto InsideVisionReach = [visionReach, center]( const Vector2i& iterator ) -> bool
+	static const std::map<Orientation, Vector2i> directions =
 	{
-		return
-			iterator >= center - visionReach &&
-			iterator <= center + visionReach;
+		{ Orientation::North, Vector2i(  0, -1 ) },
+		{ Orientation::West,  Vector2i( -1,  0 ) },
+		{ Orientation::South, Vector2i(  0,  1 ) },
+		{ Orientation::East,  Vector2i(  1,  0 ) }
 	};
 
-	Vector2i iterator;
+	return position + directions.at( orientation );
+}
+Vector2i MoveEntityProbability( const Vector2i& position, int north, int south, int west, int east, int still )
+{
+	const int sumProbability = north + south + west + east + still;
+	const int random = RandomNumberGenerator( 0, sumProbability - 1 );
+	Vector2i result = position;
 
-	for( iterator.row = iteratorBegin.row; iterator.row <= iteratorEnd.row; iterator.row++ )
+	if( random < north )
 	{
-		for( iterator.col = iteratorBegin.col; iterator.col <= iteratorEnd.col; iterator.col++ )
-		{
-			if( iterator.col == iteratorBegin.col ||
-				iterator.row == iteratorBegin.row ||
-				iterator.col == iteratorEnd.col ||
-				iterator.row == iteratorEnd.row )
-			{
-				std::cout << '\\';
-			}
-			else if( dungeon.InBounds( iterator ) &&
-					 InsideVisionReach( iterator ) )
-			{
-				std::cout << dungeon.GetTile( iterator ).icon;
-			}
-			else if( dungeon.InBounds( iterator ) &&
-					 dungeon.GetVision( iterator ) )
-			{
-				std::cout << ':';
-			}
-			else
-			{
-				std::cout << ' ';
-			}
-		}
-
-		std::cout << '\n';
+		result = MoveEntity( position, Orientation::North );
+	}
+	else if( random < north + south )
+	{
+		result = MoveEntity( position, Orientation::South );
+	}
+	else if( random < north + south + west )
+	{
+		result = MoveEntity( position, Orientation::West );
+	}
+	else if( random < north + south + west + east )
+	{
+		result = MoveEntity( position, Orientation::East );
 	}
 
-	std::cout << '\n';
+	return result;
 }
-void OutputDungeonFull( const Dungeon& dungeon )
+void Battle( int* attackerHealth, int* attackerDamage, int* defenderHealth, int* defenderDamage )
 {
-	const int maxCol = dungeon.GetSize( ).first;
-	const int maxRow = dungeon.GetSize( ).second;
-	Vector2i iterator;
-
-	for( iterator.row = 0; iterator.row < maxCol; iterator.row++ )
+	while( true )
 	{
-		for( iterator.col = 0; iterator.col < maxRow; iterator.col++ )
+		*defenderHealth -= *attackerDamage;
+
+		if( *defenderHealth <= 0 )
 		{
-			if( dungeon.GetVision( iterator ) )
-			{
-				std::cout << dungeon.GetTile( iterator ).icon;
-			}
-			else
-			{
-				std::cout << " ";
-			}
+			break;
 		}
-
-		std::cout << "\n";
+		else
+		{
+			std::swap( attackerHealth, defenderHealth );
+			std::swap( attackerDamage, defenderDamage );
+		}
 	}
+}
 
-	std::cout << "\n";
-}
-void OutputCharacterStatus( const Character& character )
-{
-	std::cout << "Health: " << character.GetHealth( ) << "\n";
-	std::cout << "Mana:   " << character.GetMana( ) << "\n";
-	std::cout << "\n";
-
-}
-void OutputTurnOptions( )
-{
-	std::cout << "[W] Go North\n";
-	std::cout << "[A] Go East\n";
-	std::cout << "[S] Go South\n";
-	std::cout << "[D] Go West\n";
-	std::cout << "[Q] Stand still\n";
-	std::cout << "[E] Exit to meny\n";
-	std::cout << "[F] Rotate dungeon 90 degrees clockwise\n";
-}
-void OutputAsciiArtSpider( )
+void AsciiArtSpider( )
 {
 	std::cout << "\n	  ;               ,";
 	std::cout << "\n        ,;                 '.";
@@ -214,7 +155,7 @@ void OutputAsciiArtSpider( )
 	std::cout << "\n	';              ,;'";
 	std::cout << "\n          \"'           '";
 }
-void OutputAsciiArtSwords( )
+void AsciiArtSwords( )
 {
 	std::cout << "\t  n                                                                 :.  \n";
 	std::cout << "\t  E%                                                                :'5 \n";
@@ -249,60 +190,4 @@ void OutputAsciiArtSwords( )
 	std::cout << "\t              z$RRM8F'                             'N8@M$bL             \n";
 	std::cout << "\t             5`RM$#                                  'R88f)R            \n";
 	std::cout << "\t             'h.$'                                     #$x*             \n";
-}
-void OutputBattleScreenStart( const Character& attacker, const Character& defender )
-{
-	OutputClearScreen( );
-	OutputAsciiArtSwords( );
-	std::cout << "\n\n";
-	std::cout << "Someone" << " has engaged " << "Someone else";
-}
-void OutputBattleScreenEnd( const Character& winner, const Character& loser )
-{
-	std::cout << "\n";
-	std::cout << "Someone" << " has lost to " << "Someone else";
-	std::cout << "\n\nPress enter to continue: ";
-	InputEnter( );
-}
-
-void InputEnter( )
-{
-	/* First one doesn't wait for user input */
-	std::cin.get( );
-	std::cin.get( );
-}
-char InputValidChar( const std::string& context, const std::vector<char>& valid )
-{
-	std::string choice;
-
-	while( true )
-	{
-		std::cout << context;
-		std::cin >> choice;
-
-		if( std::find( valid.begin( ), valid.end( ), choice[0] ) != valid.end( ) )
-		{
-			break;
-		}
-	}
-
-	return choice[0];
-}
-int InputPositiveInteger( const std::string& context )
-{
-	std::string choice;
-
-	while( true )
-	{
-		std::cout << context;
-		std::cin >> choice;
-
-		if( choice.size( ) < 10 &&
-			std::all_of( choice.begin( ), choice.end( ), ::isdigit ) )
-		{
-			break;
-		}
-	}
-
-	return std::stoi( choice );
 }
