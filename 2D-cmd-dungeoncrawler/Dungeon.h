@@ -61,7 +61,7 @@ class Dungeon
 {
 	public:
 		Dungeon( const DungeonConfiguration& config );
-		Dungeon( int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
+		Dungeon( const std::vector<Link>& links, int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
 
 		std::vector<Link> links;
 

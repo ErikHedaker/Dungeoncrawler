@@ -88,49 +88,38 @@ void Game::GameLoop( )
 }
 void Game::SaveDungeons( )
 {
-	/*
-	const std::string nameFile = "2D-cmd-dungeoncrawler-save.txt";
+	const std::string fileName = "2D-cmd-dungeoncrawler-save.txt";
 	std::ofstream outFile;
 
-	outFile.open( nameFile, std::ios::out | std::ios::trunc );
-	
+	outFile.open( fileName, std::ios::out | std::ios::trunc );
+
 	if( !outFile.is_open( ) )
 	{
-		throw std::exception( std::string( "Could not open file " + nameFile ).c_str( ) );
+		throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
 	}
 
 	outFile << _indexCurrent << '\n';
-	outFile << _dungeonGraph.edges.size( ) << '\n';
+	outFile << _dungeons.size( ) << '\n';
 
-	for( std::size_t indexEdge = 0; indexEdge < _dungeonGraph.edges.size( ); indexEdge++ )
+	for( const auto& dungeon : _dungeons )
 	{
-		outFile << _dungeonGraph.edges[indexEdge].indexNode << '\n';
-		outFile << _dungeonGraph.edges[indexEdge].data.col << '\n';
-		outFile << _dungeonGraph.edges[indexEdge].data.row << '\n';
-	}
-
-	outFile << _dungeonGraph.nodes.size( ) << '\n';
-
-	for( std::size_t indexNode = 0; indexNode < _dungeonGraph.nodes.size( ); indexNode++ )
-	{
-		const auto& dungeon = *_dungeonGraph.nodes[indexNode].data;
-		const int maxCol = dungeon.GetSize( ).first;
-		const int maxRow = dungeon.GetSize( ).second;
+		const auto maxCol = dungeon.GetSize( ).first;
+		const auto maxRow = dungeon.GetSize( ).second;
 		Vector2i iterator;
-
-		outFile << _dungeonGraph.nodes[indexNode].indexEdgesIn.size( ) << '\n';
-
-		for( auto indexEdgeIn : _dungeonGraph.nodes[indexNode].indexEdgesIn )
-		{
-			outFile << indexEdgeIn << '\n';
-		}
-		for( auto indexEdgeOut : _dungeonGraph.nodes[indexNode].indexEdgesOut )
-		{
-			outFile << indexEdgeOut << '\n';
-		}
 
 		outFile << maxCol << '\n';
 		outFile << maxRow << '\n';
+		outFile << dungeon.links.size( ) << '\n';
+		
+		for( const auto& link : dungeon.links )
+		{
+			outFile << link.set << '\n';
+			outFile << link.indexDungeon << '\n';
+			outFile << link.exit.col << '\n';
+			outFile << link.exit.row << '\n';
+			outFile << link.entry.col << '\n';
+			outFile << link.entry.row << '\n';
+		}
 
 		for( iterator.row = 0; iterator.row < maxRow; iterator.row++ )
 		{
@@ -142,178 +131,172 @@ void Game::SaveDungeons( )
 				}
 				else
 				{
-					Vector2i position( iterator.col % 2, iterator.row );
-
-					outFile << dungeon.GetVision( position );
+					outFile << dungeon.GetVision( { iterator.col % maxCol, iterator.row } );
 				}
 			}
 
 			outFile << '\n';
 		}
 	}
-	
-	outFile.close( );
-	*/
 }
 void Game::LoadDungeons( )
 {
-	/*
-	const std::string nameFile = "2D-cmd-dungeoncrawler-save.txt";
+	const std::string fileName = "2D-cmd-dungeoncrawler-save.txt";
 	std::string line;
 	std::ifstream inFile;
-	std::size_t amountEdges;
-	std::size_t amountNodes;
+	std::size_t dungeonCount;
 
-	inFile.open( nameFile, std::ios::in );
+	inFile.open( fileName, std::ios::in );
 
 	if( !inFile.is_open( ) )
 	{
-		throw std::exception( std::string( "Could not open file " + nameFile ).c_str( ) );
+		throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
 	}
+
+	_dungeons.clear( );
 
 	try
 	{
 		std::getline( inFile, line );
 		_indexCurrent = std::stoi( line );
-
-		std::getline( inFile, line );
-		amountEdges = std::stoi( line );
-
-		for( std::size_t indexEdge = 0; indexEdge < amountEdges; indexEdge++ )
-		{
-			std::size_t indexNode;
-			int col;
-			int row;
-
-			std::getline( inFile, line );
-			indexNode = std::stoi( line );
-
-			std::getline( inFile, line );
-			col = std::stoi( line );
-
-			std::getline( inFile, line );
-			row = std::stoi( line );
-
-			_dungeonGraph.edges.push_back( { Vector2i( col, row ), indexNode } );
-		}
-
-		std::getline( inFile, line );
-		amountNodes = std::stoi( line );
-
-		for( std::size_t indexNode = 0; indexNode < amountNodes; indexNode++ )
-		{
-			std::vector<char> iconMap;
-			std::vector<bool> visionMap;
-			std::vector<std::size_t> indexNodeEdgeNodes;
-			std::size_t amountNodeEdges;
-			Vector2i iterator;
-			int maxCol;
-			int maxRow;
-
-			std::getline( inFile, line );
-			amountNodeEdges = std::stoi( line );
-
-			for( std::size_t indexNodeEdge = 0; indexNodeEdge < amountNodeEdges; indexNodeEdge++ )
-			{
-				std::getline( inFile, line );
-				indexNodeEdgeNodes.push_back( std::stoi( line ) );
-			}
-
-			// Add something here
-
-			std::getline( inFile, line );
-			maxCol = std::stoi( line );
-
-			std::getline( inFile, line );
-			maxRow = std::stoi( line );
-
-			iconMap.resize( maxCol * maxRow );
-			visionMap.resize( maxCol * maxRow );
-
-			for( iterator.row = 0; iterator.row < maxRow; iterator.row++ )
-			{
-				std::getline( inFile, line );
-
-				for( iterator.col = 0; iterator.col < maxCol * 2; iterator.col++ )
-				{
-					if( iterator.col < maxCol )
-					{
-						switch( line[iterator.col] )
-						{
-							case Icon::Player:
-							{
-								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Player;
-
-								break;
-							}
-							case Icon::Monster:
-							{
-								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Monster;
-
-								break;
-							}
-							case Icon::Door:
-							{
-								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Door;
-
-								break;
-							}
-							case Icon::Wall:
-							{
-								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Wall;
-
-								break;
-							}
-							case Icon::Ground:
-							{
-								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Ground;
-
-								break;
-							}
-							default:
-							{
-								throw std::exception( std::string( "Could not read tile icons" ).c_str( ) );
-							}
-						}
-					}
-					else
-					{
-						Vector2i position( iterator.col % 2, iterator.row );
-
-						switch( line[iterator.col] )
-						{
-							case '1':
-							{
-								visionMap[( position.row * maxCol ) + position.col] = true;
-
-								break;
-							}
-							case '0':
-							{
-								visionMap[( position.row * maxCol ) + position.col] = false;
-
-								break;
-							}
-							default:
-							{
-								throw std::exception( std::string( "Could not read vision" ).c_str( ) );
-							}
-						}
-					}
-				}
-			}
-
-			_dungeons.emplace_back( maxCol, maxRow, visionMap, iconMap );
-			_dungeonGraph.nodes.push_back( { &_dungeons.back( ), indexNodeEdgeNodes } );
-		}
 	}
 	catch( ... )
 	{
 		throw std::exception( std::string( "Could not read integers" ).c_str( ) );
 	}
 
-	inFile.close( );
-	*/
+	std::getline( inFile, line );
+	dungeonCount = std::stoi( line );
+
+	for( std::size_t index = 0; index < dungeonCount; index++ )
+	{
+		std::vector<char> iconMap;
+		std::vector<bool> visionMap;
+		int maxCol;
+		int maxRow;
+		std::size_t linkCount;
+		std::vector<Link> links;
+		bool set;
+		std::size_t indexDungeon;
+		Vector2i exit;
+		Vector2i entry;
+		Vector2i iterator;
+
+		try
+		{
+			std::getline( inFile, line );
+			maxCol = std::stoi( line );
+
+			std::getline( inFile, line );
+			maxRow = std::stoi( line );
+
+			std::getline( inFile, line );
+			linkCount = std::stoi( line );
+
+			for( std::size_t indexLink = 0; indexLink < linkCount; indexLink++ )
+			{
+				std::getline( inFile, line );
+				set = std::stoi( line );
+
+				std::getline( inFile, line );
+				indexDungeon = std::stoi( line );
+
+				std::getline( inFile, line );
+				exit.col = std::stoi( line );
+
+				std::getline( inFile, line );
+				exit.row = std::stoi( line );
+
+				std::getline( inFile, line );
+				entry.col = std::stoi( line );
+
+				std::getline( inFile, line );
+				entry.row = std::stoi( line );
+
+				links.push_back( { set, indexDungeon, exit, entry } );
+			}
+		}
+		catch( ... )
+		{
+			throw std::exception( std::string( "Could not read integers" ).c_str( ) );
+		}
+
+		iconMap.resize( maxCol * maxRow );
+		visionMap.resize( maxCol * maxRow );
+
+		for( iterator.row = 0; iterator.row < maxRow; iterator.row++ )
+		{
+			std::getline( inFile, line );
+
+			for( iterator.col = 0; iterator.col < maxCol * 2; iterator.col++ )
+			{
+				if( iterator.col < maxCol )
+				{
+					switch( line[iterator.col] )
+					{
+						case Icon::Player:
+						{
+							iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Player;
+
+							break;
+						}
+						case Icon::Monster:
+						{
+							iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Monster;
+
+							break;
+						}
+						case Icon::Door:
+						{
+							iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Door;
+
+							break;
+						}
+						case Icon::Wall:
+						{
+							iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Wall;
+
+							break;
+						}
+						case Icon::Ground:
+						{
+							iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Ground;
+
+							break;
+						}
+						default:
+						{
+							throw std::exception( std::string( "Could not read tile icons" ).c_str( ) );
+						}
+					}
+				}
+				else
+				{
+					Vector2i position( iterator.col % 2, iterator.row );
+
+					switch( line[iterator.col] )
+					{
+						case '1':
+						{
+							visionMap[( position.row * maxCol ) + position.col] = true;
+							break;
+						}
+						case '0':
+						{
+							visionMap[( position.row * maxCol ) + position.col] = false;
+							break;
+						}
+						default:
+						{
+							throw std::exception( std::string( "Could not read vision" ).c_str( ) );
+						}
+					}
+				}
+			}
+		}
+
+		_dungeons.emplace_back( links, maxCol, maxRow, visionMap, iconMap );
+	}
 }
 
 void Game::PlayerTurn( Dungeon& dungeon )

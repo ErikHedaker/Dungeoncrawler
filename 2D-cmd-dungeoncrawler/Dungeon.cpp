@@ -36,7 +36,8 @@ Dungeon::Dungeon( const DungeonConfiguration& config ) :
 	GenerateFillerWalls( config.generateFillerWalls, config.amountFillerWallsCycles );
 	GenerateMonsters( config.generateMonsters, config.amountMonsters );
 }
-Dungeon::Dungeon( int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap ) :
+Dungeon::Dungeon( const std::vector<Link>& links, int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap ) :
+	links( links ),
 	_maxCol( maxCol ),
 	_maxRow( maxRow ),
 	_tileMap( _maxCol * _maxRow ),
@@ -44,7 +45,7 @@ Dungeon::Dungeon( int maxCol, int maxRow, const std::vector<bool>& visionMap, co
 {
 	Vector2i iterator;
 
-	PlayerAdd( { -1, -1 } );
+	PlayerAdd( { _maxCol / 2, _maxRow / 2 } );
 
 	for( iterator.row = 0; iterator.row < _maxRow; iterator.row++ )
 	{
@@ -56,6 +57,7 @@ Dungeon::Dungeon( int maxCol, int maxRow, const std::vector<bool>& visionMap, co
 				{
 					const std::size_t indexPlayer = 0;
 
+					OccupantRemove( indexPlayer );
 					_components.position[indexPlayer] = iterator;
 					_components.positionPrevious[indexPlayer] = iterator;
 					UpdateVision( iterator, _components.visionReach[indexPlayer] );
@@ -122,6 +124,7 @@ void Dungeon::SetPositionPlayer( const Vector2i& position )
 		}
 	}
 
+	UpdateVision( _components.position[indexPlayer], _components.visionReach[indexPlayer] );
 	OccupantAdd( indexPlayer );
 }
 const Vector2i& Dungeon::GetPositionPlayer( ) const
@@ -509,7 +512,6 @@ void Dungeon::PlayerAdd( const Vector2i& position )
 	_components.visionReach[indexPlayer] = 5;
 	_components.iconPriority[indexPlayer] = 1;
 	_components.icon[indexPlayer] = '@';
-	UpdateVision( _components.position[indexPlayer], _components.visionReach[indexPlayer] );
 	OccupantAdd( indexPlayer );
 }
 void Dungeon::WallAdd( const Vector2i& position )
