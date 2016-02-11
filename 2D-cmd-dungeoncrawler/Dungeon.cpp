@@ -130,6 +130,57 @@ const Vector2i& Dungeon::GetPositionPlayer( ) const
 
 	return _components.position[indexPlayer];
 }
+const std::pair<int, int> Dungeon::GetSize( ) const
+{
+	return std::make_pair( _maxCol, _maxRow );
+}
+const Tile& Dungeon::GetTile( const Vector2i& position ) const
+{
+	return _tileMap[( position.row * _maxCol ) + position.col];
+}
+bool Dungeon::GetVision( const Vector2i& position ) const
+{
+	return _visionMap[( position.row * _maxCol ) + position.col];
+}
+void Dungeon::RotateDungeonClockwise( )
+{
+	auto tileRotated = _tileMap;
+	auto visionRotated = _visionMap;
+	Vector2i iterator;
+
+	std::swap( _maxCol, _maxRow );
+
+	for( iterator.row = 0; iterator.row < _maxRow; iterator.row++ )
+	{
+		for( iterator.col = 0; iterator.col < _maxCol; iterator.col++ )
+		{
+			tileRotated[( iterator.row * _maxCol ) + iterator.col] = _tileMap[( iterator.col * _maxRow ) + iterator.row];
+			visionRotated[( iterator.row * _maxCol ) + iterator.col] = _visionMap[( iterator.col * _maxRow ) + iterator.row];
+		}
+
+		auto tileColoumBegin = tileRotated.begin( ) + iterator.row * _maxCol;
+		auto tileColoumEnd = tileRotated.begin( ) + iterator.row * _maxCol + _maxCol;
+		auto visionColoumBegin = visionRotated.begin( ) + iterator.row * _maxCol;
+		auto visionColoumEnd = visionRotated.begin( ) + iterator.row * _maxCol + _maxCol;
+
+		std::reverse( tileColoumBegin, tileColoumEnd );
+		std::reverse( visionColoumBegin, visionColoumEnd );
+	}
+
+	_tileMap = tileRotated;
+	_visionMap = visionRotated;
+
+	for( std::size_t index = 0; index < _components.indexCount; index++ )
+	{
+		_components.position[index] = PositionRotateClockwise( _components.position[index], _maxCol );
+		_components.positionPrevious[index] = PositionRotateClockwise( _components.position[index], _maxCol );
+	}
+
+	for( auto& link : links )
+	{
+		link.entry = PositionRotateClockwise( link.entry, _maxCol );
+	}
+}
 
 void Dungeon::PrintDungeonCentered( const Vector2i& screenSize )
 {	
@@ -330,64 +381,6 @@ void Dungeon::HandleEvents( GameStatus& status )
 			OccupantRemove( index );
 		}
 	}
-}
-
-void Dungeon::RotateDungeonClockwise( )
-{
-	auto tileRotated = _tileMap;
-	auto visionRotated = _visionMap;
-	Vector2i iterator;
-
-	std::swap( _maxCol, _maxRow );
-
-	for( iterator.row = 0; iterator.row < _maxRow; iterator.row++ )
-	{
-		for( iterator.col = 0; iterator.col < _maxCol; iterator.col++ )
-		{
-			tileRotated[( iterator.row * _maxCol ) + iterator.col] = _tileMap[( iterator.col * _maxRow ) + iterator.row];
-			visionRotated[( iterator.row * _maxCol ) + iterator.col] = _visionMap[( iterator.col * _maxRow ) + iterator.row];
-		}
-
-		auto tileColoumBegin = tileRotated.begin( ) + iterator.row * _maxCol;
-		auto tileColoumEnd = tileRotated.begin( ) + iterator.row * _maxCol + _maxCol;
-		auto visionColoumBegin = visionRotated.begin( ) + iterator.row * _maxCol;
-		auto visionColoumEnd = visionRotated.begin( ) + iterator.row * _maxCol + _maxCol;
-
-		std::reverse( tileColoumBegin, tileColoumEnd );
-		std::reverse( visionColoumBegin, visionColoumEnd );
-	}
-
-	_tileMap = tileRotated;
-	_visionMap = visionRotated;
-}
-void Dungeon::UpdateEntityPositions( )
-{
-	Vector2i iterator;
-
-	for( iterator.row = 0; iterator.row < _maxRow; iterator.row++ )
-	{
-		for( iterator.col = 0; iterator.col < _maxCol; iterator.col++ )
-		{
-			for( auto index : _tileMap[( iterator.row * _maxCol ) + iterator.col].indexOccupants )
-			{
-				_components.position[index] = iterator;
-				_components.positionPrevious[index] = iterator;
-			}
-		}
-	}
-}
-
-const std::pair<int, int> Dungeon::GetSize( ) const
-{
-	return std::make_pair( _maxCol, _maxRow );
-}
-const Tile& Dungeon::GetTile( const Vector2i& position ) const
-{
-	return _tileMap[( position.row * _maxCol ) + position.col];
-}
-bool Dungeon::GetVision( const Vector2i& position ) const
-{
-	return _visionMap[( position.row * _maxCol ) + position.col];
 }
 
 bool Dungeon::CheckTile( const Vector2i& position, int bitmask ) const

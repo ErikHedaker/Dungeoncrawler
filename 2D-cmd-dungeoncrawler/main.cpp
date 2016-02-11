@@ -7,7 +7,15 @@ int main( )
 
 	while( true )
 	{
-		const std::vector<char> choices { '1', '2', '3', '4', '5', '6' };
+		const std::vector<char> choices =
+		{
+			'1',
+			'2',
+			'3',
+			'4',
+			'5',
+			'6'
+		};
 		char choice;
 
 		system( "CLS" );

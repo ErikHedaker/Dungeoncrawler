@@ -16,15 +16,12 @@ class Game
 
 	private:
 		std::vector<Dungeon> _dungeons;
-
-		//std::list<Dungeon> _dungeons;
-
-		Graph<Dungeon*, Vector2i> _dungeonGraph;
 		std::size_t _indexCurrent;
 		DungeonConfiguration _config;
 		GameStatus _status;
 
+		void PlayerTurn( Dungeon& dungeon );
 		void FullLinkDungeon( std::size_t indexDungeon );
 		void SwitchDungeon( );
-		void PlayerTurn( Dungeon& dungeon );
+		void LinkExitsRotateClockwise( std::size_t index );
 };

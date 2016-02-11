@@ -88,6 +88,7 @@ void Game::GameLoop( )
 }
 void Game::SaveDungeons( )
 {
+	/*
 	const std::string nameFile = "2D-cmd-dungeoncrawler-save.txt";
 	std::ofstream outFile;
 
@@ -152,9 +153,11 @@ void Game::SaveDungeons( )
 	}
 	
 	outFile.close( );
+	*/
 }
 void Game::LoadDungeons( )
 {
+	/*
 	const std::string nameFile = "2D-cmd-dungeoncrawler-save.txt";
 	std::string line;
 	std::ifstream inFile;
@@ -216,7 +219,7 @@ void Game::LoadDungeons( )
 				indexNodeEdgeNodes.push_back( std::stoi( line ) );
 			}
 
-			/* Add something here */
+			// Add something here
 
 			std::getline( inFile, line );
 			maxCol = std::stoi( line );
@@ -310,46 +313,9 @@ void Game::LoadDungeons( )
 	}
 
 	inFile.close( );
+	*/
 }
 
-void Game::FullLinkDungeon( std::size_t indexDungeon )
-{
-	for( std::size_t index = 0; index < _dungeons[indexDungeon].links.size( ); index++ )
-	{
-		if( !_dungeons[indexDungeon].links[index].set )
-		{
-			_dungeons.emplace_back( _config );
-
-			const std::size_t indexDungeonNeighbor = _dungeons.size( ) - 1;
-			auto& linkNeighbor = _dungeons.back( ).links.back( );
-
-			_dungeons[indexDungeon].links[index].indexDungeon = indexDungeonNeighbor;
-			linkNeighbor.indexDungeon = indexDungeon;
-
-			_dungeons[indexDungeon].links[index].exit = linkNeighbor.entry;
-			linkNeighbor.exit = _dungeons[indexDungeon].links[index].entry;
-
-			_dungeons[indexDungeon].links[index].set = true;
-			linkNeighbor.set = true;
-
-			std::cout << "\nLink added\n\n";
-		}
-	}
-}
-void Game::SwitchDungeon( )
-{
-	for( const auto& link : _dungeons[_indexCurrent].links )
-	{
-		if( link.entry == _dungeons[_indexCurrent].GetPositionPlayer( ) )
-		{
-			_indexCurrent = link.indexDungeon;
-			_dungeons[_indexCurrent].SetPositionPlayer( link.exit );
-			FullLinkDungeon( _indexCurrent );
-
-			break;
-		}
-	}
-}
 void Game::PlayerTurn( Dungeon& dungeon )
 {
 	std::cout << "[W] Go North\n";
@@ -373,9 +339,9 @@ void Game::PlayerTurn( Dungeon& dungeon )
 	static const std::map<char, Orientation> direction
 	{
 		{ 'W', Orientation::North }, { 'w', Orientation::North },
-		{ 'A', Orientation::West  }, { 'a', Orientation::West  },
+		{ 'A', Orientation::West }, { 'a', Orientation::West },
 		{ 'S', Orientation::South }, { 's', Orientation::South },
-		{ 'D', Orientation::East  }, { 'd', Orientation::East  }
+		{ 'D', Orientation::East }, { 'd', Orientation::East }
 	};
 	const char choice = GetValidChar( "\nYour choice: ", choices );
 
@@ -399,12 +365,63 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		case 'F': case 'f':
 		{
 			dungeon.RotateDungeonClockwise( );
-			dungeon.UpdateEntityPositions( );
+			LinkExitsRotateClockwise( _indexCurrent );
 
 			break;
 		}
 		case 'Q': case 'q':
 		{
+			break;
+		}
+	}
+}
+void Game::FullLinkDungeon( std::size_t indexDungeon )
+{
+	for( std::size_t index = 0; index < _dungeons[indexDungeon].links.size( ); index++ )
+	{
+		if( !_dungeons[indexDungeon].links[index].set )
+		{
+			std::cout << "\nAdding link\n\n";
+
+			_dungeons.emplace_back( _config );
+
+			const std::size_t indexDungeonNeighbor = _dungeons.size( ) - 1;
+			auto& linkNeighbor = _dungeons.back( ).links.back( );
+
+			_dungeons[indexDungeon].links[index].indexDungeon = indexDungeonNeighbor;
+			linkNeighbor.indexDungeon = indexDungeon;
+
+			_dungeons[indexDungeon].links[index].exit = linkNeighbor.entry;
+			linkNeighbor.exit = _dungeons[indexDungeon].links[index].entry;
+
+			_dungeons[indexDungeon].links[index].set = true;
+			linkNeighbor.set = true;
+		}
+	}
+}
+void Game::LinkExitsRotateClockwise( std::size_t index )
+{
+	for( const auto& linkCurrent : _dungeons[index].links )
+	{
+		for( auto& link : _dungeons[linkCurrent.indexDungeon].links )
+		{
+			if( link.indexDungeon == index )
+			{
+				link.exit = PositionRotateClockwise( link.exit, _dungeons[index].GetSize( ).first );
+			}
+		}
+	}
+}
+void Game::SwitchDungeon( )
+{
+	for( const auto& link : _dungeons[_indexCurrent].links )
+	{
+		if( link.entry == _dungeons[_indexCurrent].GetPositionPlayer( ) )
+		{
+			_indexCurrent = link.indexDungeon;
+			_dungeons[_indexCurrent].SetPositionPlayer( link.exit );
+			FullLinkDungeon( _indexCurrent );
+
 			break;
 		}
 	}

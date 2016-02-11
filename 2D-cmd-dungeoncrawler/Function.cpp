@@ -6,28 +6,13 @@
 #include <random>
 #include <map>
 
-void GetEnter( )
+int RandomNumberGenerator( int min, int max )
 {
-	/* First one doesn't wait for user input */
-	std::cin.get( );
-	std::cin.get( );
-}
-char GetValidChar( const std::string& context, const std::vector<char>& valid )
-{
-	std::string choice;
+	static std::random_device rd;
+	static std::mt19937 generator( rd( ) );
+	std::uniform_int_distribution<int> randomNumber( min, max );
 
-	while( true )
-	{
-		std::cout << context;
-		std::cin >> choice;
-
-		if( std::find( valid.begin( ), valid.end( ), choice[0] ) != valid.end( ) )
-		{
-			break;
-		}
-	}
-
-	return choice[0];
+	return randomNumber( generator );
 }
 int GetPositiveInteger( const std::string& context )
 {
@@ -47,86 +32,29 @@ int GetPositiveInteger( const std::string& context )
 
 	return std::stoi( choice );
 }
-
-int RandomNumberGenerator( int min, int max )
+char GetValidChar( const std::string& context, const std::vector<char>& valid )
 {
-	static std::random_device rd;
-	static std::mt19937 generator( rd( ) );
-	std::uniform_int_distribution<int> randomNumber( min, max );
-
-	return randomNumber( generator );
-}
-
-Vector2i RotatePositionClockwise( const Vector2i& position, int maxCol )
-{
-	Vector2i rotated;
-
-	rotated.col = maxCol - position.row - 1;
-	rotated.row = position.col;
-
-	return rotated;
-}
-Vector2i MoveEntity( const Vector2i& position, const Orientation& orientation )
-{
-	static const std::map<Orientation, Vector2i> directions =
-	{
-		{ Orientation::North, Vector2i(  0, -1 ) },
-		{ Orientation::West,  Vector2i( -1,  0 ) },
-		{ Orientation::South, Vector2i(  0,  1 ) },
-		{ Orientation::East,  Vector2i(  1,  0 ) }
-	};
-
-	return position + directions.at( orientation );
-}
-Vector2i MoveEntityProbability( const Vector2i& position, int north, int south, int west, int east, int still )
-{
-	const int sumProbability = north + south + west + east + still;
-	const int random = RandomNumberGenerator( 0, sumProbability - 1 );
-	Vector2i result = position;
-
-	if( random < north )
-	{
-		result = MoveEntity( position, Orientation::North );
-	}
-	else if( random < north + south )
-	{
-		result = MoveEntity( position, Orientation::South );
-	}
-	else if( random < north + south + west )
-	{
-		result = MoveEntity( position, Orientation::West );
-	}
-	else if( random < north + south + west + east )
-	{
-		result = MoveEntity( position, Orientation::East );
-	}
-
-	return result;
-}
-void Battle( int* attackerHealth, int* attackerDamage, int* defenderHealth, int* defenderDamage )
-{
-	system( "CLS" );
-	AsciiArtSwords( );
+	std::string choice;
 
 	while( true )
 	{
-		*defenderHealth -= *attackerDamage;
+		std::cout << context;
+		std::cin >> choice;
 
-		if( *defenderHealth <= 0 )
+		if( std::find( valid.begin( ), valid.end( ), choice[0] ) != valid.end( ) )
 		{
 			break;
 		}
-		else
-		{
-			std::swap( attackerHealth, defenderHealth );
-			std::swap( attackerDamage, defenderDamage );
-		}
 	}
 
-	std::cout << "\nSomeone died.";
-	GetEnter( );
+	return choice[0];
 }
-
+void GetEnter( )
+{
+	/* First one doesn't wait for user input */
+	std::cin.get( );
+	std::cin.get( );
+}
 void AsciiArtSpider( )
 {
 	std::cout << "\n	  ;               ,";
@@ -196,4 +124,68 @@ void AsciiArtSwords( )
 	std::cout << "\t              z$RRM8F'                             'N8@M$bL             \n";
 	std::cout << "\t             5`RM$#                                  'R88f)R            \n";
 	std::cout << "\t             'h.$'                                     #$x*             \n";
+}
+void Battle( int* attackerHealth, int* attackerDamage, int* defenderHealth, int* defenderDamage )
+{
+	system( "CLS" );
+	AsciiArtSwords( );
+
+	while( true )
+	{
+		*defenderHealth -= *attackerDamage;
+
+		if( *defenderHealth <= 0 )
+		{
+			break;
+		}
+		else
+		{
+			std::swap( attackerHealth, defenderHealth );
+			std::swap( attackerDamage, defenderDamage );
+		}
+	}
+
+	std::cout << "\nSomeone died.";
+	GetEnter( );
+}
+Vector2i PositionRotateClockwise( const Vector2i& position, int maxCol )
+{
+	return { maxCol - position.row - 1, position.col };
+}
+Vector2i MoveEntity( const Vector2i& position, const Orientation& orientation )
+{
+	static const std::map<Orientation, Vector2i> directions =
+	{
+		{ Orientation::North, Vector2i(  0, -1 ) },
+		{ Orientation::West,  Vector2i( -1,  0 ) },
+		{ Orientation::South, Vector2i(  0,  1 ) },
+		{ Orientation::East,  Vector2i(  1,  0 ) }
+	};
+
+	return position + directions.at( orientation );
+}
+Vector2i MoveEntityProbability( const Vector2i& position, int north, int south, int west, int east, int still )
+{
+	const int sumProbability = north + south + west + east + still;
+	const int random = RandomNumberGenerator( 0, sumProbability - 1 );
+	Vector2i result = position;
+
+	if( random < north )
+	{
+		result = MoveEntity( position, Orientation::North );
+	}
+	else if( random < north + south )
+	{
+		result = MoveEntity( position, Orientation::South );
+	}
+	else if( random < north + south + west )
+	{
+		result = MoveEntity( position, Orientation::West );
+	}
+	else if( random < north + south + west + east )
+	{
+		result = MoveEntity( position, Orientation::East );
+	}
+
+	return result;
 }

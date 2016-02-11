@@ -67,18 +67,15 @@ class Dungeon
 
 		void SetPositionPlayer( const Vector2i& position );
 		const Vector2i& GetPositionPlayer( ) const;
+		const std::pair<int, int> GetSize( ) const;
+		const Tile& GetTile( const Vector2i& position ) const;
+		bool GetVision( const Vector2i& position ) const;
+		void RotateDungeonClockwise( );
 
 		void PrintDungeonCentered( const Vector2i& screenSize = { 40, 20 } );
 		void PlayerMovement( const Orientation& orientation );
 		void MonsterMovement( );
 		void HandleEvents( GameStatus& status );
-
-		void RotateDungeonClockwise( );
-		void UpdateEntityPositions( );
-
-		const std::pair<int, int> GetSize( ) const;
-		const Tile& GetTile( const Vector2i& position ) const;
-		bool GetVision( const Vector2i& position ) const;
 
 		/* Helper functions */
 		bool CheckTile( const Vector2i& position, int bitmask ) const;
