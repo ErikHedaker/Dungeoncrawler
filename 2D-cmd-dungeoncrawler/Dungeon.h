@@ -27,6 +27,14 @@ struct DungeonConfiguration
 	int amountMonsters = 0;
 };
 
+struct Link
+{
+	bool set;
+	std::size_t indexDungeon;
+	Vector2i exit;
+	Vector2i entry;
+};
+
 struct Components
 {
 	std::size_t indexCount = 0;
@@ -55,7 +63,10 @@ class Dungeon
 		Dungeon( const DungeonConfiguration& config );
 		Dungeon( int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
 
+		std::vector<Link> links;
+
 		void SetPositionPlayer( const Vector2i& position );
+		const Vector2i& GetPositionPlayer( ) const;
 
 		void PrintDungeonCentered( const Vector2i& screenSize = { 40, 20 } );
 		void PlayerMovement( const Orientation& orientation );
@@ -65,7 +76,6 @@ class Dungeon
 		void RotateDungeonClockwise( );
 		void UpdateEntityPositions( );
 
-		const std::vector<Vector2i> GetDoors( ) const;
 		const std::pair<int, int> GetSize( ) const;
 		const Tile& GetTile( const Vector2i& position ) const;
 		bool GetVision( const Vector2i& position ) const;
@@ -81,7 +91,6 @@ class Dungeon
 		int _maxCol;
 		int _maxRow;
 		Components _components;
-		std::vector<const std::size_t> _indexDoors;
 
 		/* 1D arrays interpreted as 2D grids */
 		std::vector<Tile> _tileMap;

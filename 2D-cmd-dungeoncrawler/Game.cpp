@@ -5,10 +5,10 @@
 #include <fstream>
 #include <string>
 
-Game::Game( ) :
-	existingGame( false )
-{ }
-
+bool Game::ExistingGame( ) const
+{
+	return _dungeons.size( ) != 0;
+}
 void Game::SetDungeonConfiguration( const ConfigType& type )
 {
 	switch( type )
@@ -62,38 +62,27 @@ void Game::SetDungeonConfiguration( const ConfigType& type )
 }
 void Game::NewGame( )
 {
-	Dungeon* dungeon;
-
 	_dungeons.clear( );
-	_dungeonGraph.nodes.clear( );
-	_dungeonGraph.edges.clear( );
-	_status = GameStatus::Neutral;
-	existingGame = true;
-
 	_dungeons.emplace_back( _config );
-	dungeon = &_dungeons.back( );
-	_dungeonGraph.nodes.push_back( { &_dungeons.back( ) } );
-	_indexNodeCurrent = _dungeonGraph.nodes.size( ) - 1;
-	FullLinkDungeon( _indexNodeCurrent );
+	_indexCurrent = _dungeons.size( ) - 1;
+	FullLinkDungeon( _indexCurrent );
 }
 void Game::GameLoop( )
 {
-	Dungeon* dungeon = _dungeonGraph.nodes[_indexNodeCurrent].data;
-
 	_status = GameStatus::Neutral;
 
 	while( _status == GameStatus::Neutral )
 	{
 		system( "CLS" );
-		dungeon->PrintDungeonCentered( );
-		PlayerTurn( *dungeon );
-		dungeon->MonsterMovement( );
-		dungeon->HandleEvents( _status );
+		_dungeons[_indexCurrent].PrintDungeonCentered( );
+		PlayerTurn( _dungeons[_indexCurrent] );
+		_dungeons[_indexCurrent].MonsterMovement( );
+		_dungeons[_indexCurrent].HandleEvents( _status );
 
 		if( _status == GameStatus::Next )
 		{
 			_status = GameStatus::Neutral;
-			SwitchDungeon( dungeon );
+			SwitchDungeon( );
 		}
 	}
 }
@@ -109,7 +98,7 @@ void Game::SaveDungeons( )
 		throw std::exception( std::string( "Could not open file " + nameFile ).c_str( ) );
 	}
 
-	outFile << _indexNodeCurrent << '\n';
+	outFile << _indexCurrent << '\n';
 	outFile << _dungeonGraph.edges.size( ) << '\n';
 
 	for( std::size_t indexEdge = 0; indexEdge < _dungeonGraph.edges.size( ); indexEdge++ )
@@ -182,7 +171,7 @@ void Game::LoadDungeons( )
 	try
 	{
 		std::getline( inFile, line );
-		_indexNodeCurrent = std::stoi( line );
+		_indexCurrent = std::stoi( line );
 
 		std::getline( inFile, line );
 		amountEdges = std::stoi( line );
@@ -323,81 +312,43 @@ void Game::LoadDungeons( )
 	inFile.close( );
 }
 
-void Game::FullLinkDungeon( std::size_t indexNodeParent )
+void Game::FullLinkDungeon( std::size_t indexDungeon )
 {
-	auto doors = _dungeonGraph.nodes[indexNodeParent].data->GetDoors( );
-	auto required = doors.size( );
-
-	while( _dungeonGraph.nodes[indexNodeParent].indexEdgesIn.size( ) < required &&
-		   _dungeonGraph.nodes[indexNodeParent].indexEdgesOut.size( ) < required )
+	for( std::size_t index = 0; index < _dungeons[indexDungeon].links.size( ); index++ )
 	{
-		for( auto door : doors )
+		if( !_dungeons[indexDungeon].links[index].set )
 		{
-			const auto& edges = _dungeonGraph.edges;
-			auto DoorLinked = [door]( const Edge<Vector2i>& edge )->bool{ return edge.data == door; };
+			_dungeons.emplace_back( _config );
 
-			if( std::find_if( edges.begin( ), edges.end( ), DoorLinked ) == edges.end( ) )
-			{
-				Dungeon* dungeonChild;
-				Node<Dungeon*> nodeChild;
-				Edge<Vector2i> edgeToParent;
-				Edge<Vector2i> edgeToChild;
-				std::size_t indexEdgeToParent;
-				std::size_t indexEdgeToChild;
-				std::size_t indexNodeChild;
+			const std::size_t indexDungeonNeighbor = _dungeons.size( ) - 1;
+			auto& linkNeighbor = _dungeons.back( ).links.back( );
 
-				std::cout << "\nAdding dungeon link\n\n";
+			_dungeons[indexDungeon].links[index].indexDungeon = indexDungeonNeighbor;
+			linkNeighbor.indexDungeon = indexDungeon;
 
-				_dungeons.emplace_back( _config );
-				dungeonChild = &_dungeons.back( );
+			_dungeons[indexDungeon].links[index].exit = linkNeighbor.entry;
+			linkNeighbor.exit = _dungeons[indexDungeon].links[index].entry;
 
-				_dungeonGraph.nodes.emplace_back( );
-				indexNodeChild = _dungeonGraph.nodes.size( ) - 1;
-				_dungeonGraph.edges.emplace_back( );
-				indexEdgeToParent = _dungeonGraph.edges.size( ) - 1;
-				_dungeonGraph.edges.emplace_back( );
-				indexEdgeToChild = _dungeonGraph.edges.size( ) - 1;
+			_dungeons[indexDungeon].links[index].set = true;
+			linkNeighbor.set = true;
 
-				edgeToParent = { door, indexNodeParent };
-				_dungeonGraph.edges[indexEdgeToParent] = edgeToParent;
-				edgeToChild = { dungeonChild->GetDoors( )[0], indexNodeChild };
-				_dungeonGraph.edges[indexEdgeToChild] = edgeToChild;
-				nodeChild = { dungeonChild, { indexEdgeToChild }, { indexEdgeToParent } };
-				_dungeonGraph.nodes[indexNodeChild] = nodeChild;
-
-				_dungeonGraph.nodes[indexNodeParent].indexEdgesIn.push_back( indexEdgeToParent );
-				_dungeonGraph.nodes[indexNodeChild].indexEdgesOut.push_back( indexEdgeToParent );
-
-				_dungeonGraph.nodes[indexNodeParent].indexEdgesOut.push_back( indexEdgeToChild );
-				_dungeonGraph.nodes[indexNodeChild].indexEdgesIn.push_back( indexEdgeToChild );
-			}
+			std::cout << "\nLink added\n\n";
 		}
 	}
 }
-void Game::SwitchDungeon( Dungeon* dungeon )
+void Game::SwitchDungeon( )
 {
-	/*
-	auto amountEdges = _dungeonGraph.nodes[_indexNodeCurrent].indexEdgesIn.size( );
-
-	for( std::size_t indexEdge = 0; indexEdge < amountEdges; indexEdge++ )
+	for( const auto& link : _dungeons[_indexCurrent].links )
 	{
-		auto indexEdgeToParent = _dungeonGraph.nodes[_indexNodeCurrent].indexEdgesIn[indexEdge];
-		auto positionDoor = _dungeonGraph.edges[indexEdgeToParent].data;
-
-		if( _player->GetPosition( ) == positionDoor )
+		if( link.entry == _dungeons[_indexCurrent].GetPositionPlayer( ) )
 		{
-			auto indexEdgeToChild = _dungeonGraph.nodes[_indexNodeCurrent].indexEdgesOut[indexEdge];
-			auto indexNodeChild = _dungeonGraph.edges[indexEdgeToChild].indexNode;
-
-			_indexNodeCurrent = indexNodeChild;
-			dungeon = _dungeonGraph.nodes[indexNodeChild].data;
-			dungeon->SetPositionPlayer( _dungeonGraph.edges[indexEdgeToChild].data );
-			FullLinkDungeon( indexNodeChild );
+			_indexCurrent = link.indexDungeon;
+			_dungeons[_indexCurrent].SetPositionPlayer( link.exit );
+			FullLinkDungeon( _indexCurrent );
 
 			break;
 		}
 	}
-	*/
 }
 void Game::PlayerTurn( Dungeon& dungeon )
 {
@@ -449,13 +400,6 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		{
 			dungeon.RotateDungeonClockwise( );
 			dungeon.UpdateEntityPositions( );
-
-			//for( auto& indexEdgeOut : _dungeonGraph.nodes[_indexNodeCurrent].indexEdgesOut )
-			//{
-			//	Vector2i& position = _dungeonGraph.edges[indexEdgeOut].data;
-
-			//	position = RotatePositionClockwise( position, dungeon.GetSize( ).first );
-			//}
 
 			break;
 		}

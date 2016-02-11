@@ -24,7 +24,7 @@ int main( )
 		{
 			case '1':
 			{
-				if( game.existingGame )
+				if( game.ExistingGame( ) )
 				{
 					game.GameLoop( );
 				}

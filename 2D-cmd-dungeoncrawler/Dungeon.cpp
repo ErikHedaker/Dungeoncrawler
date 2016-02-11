@@ -90,6 +90,8 @@ void Dungeon::SetPositionPlayer( const Vector2i& position )
 {
 	const std::size_t indexPlayer = 0;
 
+	OccupantRemove( indexPlayer );
+
 	if( CheckTile( position, Attribute::WalkableOthers ) )
 	{
 		_components.position[indexPlayer] = position;
@@ -119,6 +121,14 @@ void Dungeon::SetPositionPlayer( const Vector2i& position )
 			}
 		}
 	}
+
+	OccupantAdd( indexPlayer );
+}
+const Vector2i& Dungeon::GetPositionPlayer( ) const
+{
+	const std::size_t indexPlayer = 0;
+
+	return _components.position[indexPlayer];
 }
 
 void Dungeon::PrintDungeonCentered( const Vector2i& screenSize )
@@ -296,6 +306,15 @@ void Dungeon::HandleEvents( GameStatus& status )
 		}
 	}
 
+	for( const auto& link : links )
+	{
+		if( _components.active[indexPlayer] &&
+			_components.position[indexPlayer] == link.entry )
+		{
+			status = GameStatus::Next;
+		}
+	}
+
 	for( std::size_t index = 0; index < _components.indexCount; index++ )
 	{
 		if( _components.active[index] &&
@@ -358,17 +377,6 @@ void Dungeon::UpdateEntityPositions( )
 	}
 }
 
-const std::vector<Vector2i> Dungeon::GetDoors( ) const
-{
-	std::vector<Vector2i> doors;
-
-	for( auto index : _indexDoors )
-	{
-		doors.push_back( _components.position[index] );
-	}
-
-	return doors;
-}
 const std::pair<int, int> Dungeon::GetSize( ) const
 {
 	return std::make_pair( _maxCol, _maxRow );
@@ -526,7 +534,7 @@ void Dungeon::DoorAdd( const Vector2i& position )
 {
 	const std::size_t index = _components.Add( );
 
-	_indexDoors.push_back( index );
+	links.push_back( { false, 0, { -1, -1 }, position } );
 	_components.active[index] = true;
 	_components.attributes[index] = Attribute::WalkablePlayer;
 	_components.position[index] = position;
@@ -633,15 +641,15 @@ void Dungeon::GeneratePath( bool generate )
 		for( std::size_t index = 1; index < _components.indexCount; index++ )
 		{
 			if( _components.active[index] &&
-				_components.attributes[index] & Attribute::WalkableOthers )
+				!( _components.attributes[index] & Attribute::WalkableOthers ) )
 			{
 				walls.push_back( _components.position[index] );
 			}
 		}
 
-		for( auto index : _indexDoors )
+		for( const auto& link : links )
 		{
-			const Vector2i start = _components.position[index];
+			const Vector2i start = link.entry;
 			const Vector2i goal = _components.position[indexPlayer];
 
 			path = AStarAlgorithm( start, goal, _maxCol, _maxRow, walls );

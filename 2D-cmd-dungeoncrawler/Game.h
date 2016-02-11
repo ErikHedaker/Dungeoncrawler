@@ -7,10 +7,7 @@
 class Game
 {
 	public:
-		Game( );
-
-		bool existingGame;
-
+		bool ExistingGame( ) const;
 		void SetDungeonConfiguration( const ConfigType& type );
 		void NewGame( );
 		void GameLoop( );
@@ -18,13 +15,16 @@ class Game
 		void LoadDungeons( );
 
 	private:
-		std::list<Dungeon> _dungeons;
+		std::vector<Dungeon> _dungeons;
+
+		//std::list<Dungeon> _dungeons;
+
 		Graph<Dungeon*, Vector2i> _dungeonGraph;
-		std::size_t _indexNodeCurrent;
+		std::size_t _indexCurrent;
 		DungeonConfiguration _config;
 		GameStatus _status;
 
-		void FullLinkDungeon( std::size_t indexNodeParent );
-		void SwitchDungeon( Dungeon* dungeon );
+		void FullLinkDungeon( std::size_t indexDungeon );
+		void SwitchDungeon( );
 		void PlayerTurn( Dungeon& dungeon );
 };
