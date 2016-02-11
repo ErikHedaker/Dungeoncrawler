@@ -27,21 +27,11 @@ struct DungeonConfiguration
 	int amountMonsters = 0;
 };
 
-struct Properties
-{
-	bool movementRandom;
-	bool aggressive;
-	bool mortal;
-	bool hidden;
-	bool walkablePlayer;
-	bool walkableOthers;
-};
-
 struct Components
 {
-	std::size_t size = 0;
+	std::size_t indexCount = 0;
 	std::vector<bool> active;
-	std::vector<Properties> properties;
+	std::vector<int> attributes;
 	std::vector<Vector2i> position;
 	std::vector<Vector2i> positionPrevious;
 	std::vector<int> health;
@@ -81,8 +71,7 @@ class Dungeon
 		bool GetVision( const Vector2i& position ) const;
 
 		/* Helper functions */
-		bool WalkablePlayer( const Vector2i& position ) const;
-		bool WalkableOthers( const Vector2i& position ) const;
+		bool CheckTile( const Vector2i& position, int bitmask ) const;
 		bool InBounds( const Vector2i& position ) const;
 		bool IsCorner( const Vector2i& position ) const;
 		bool Unoccupied( const Vector2i& position ) const;

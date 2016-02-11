@@ -105,6 +105,9 @@ Vector2i MoveEntityProbability( const Vector2i& position, int north, int south, 
 }
 void Battle( int* attackerHealth, int* attackerDamage, int* defenderHealth, int* defenderDamage )
 {
+	system( "CLS" );
+	AsciiArtSwords( );
+
 	while( true )
 	{
 		*defenderHealth -= *attackerDamage;
@@ -119,6 +122,9 @@ void Battle( int* attackerHealth, int* attackerDamage, int* defenderHealth, int*
 			std::swap( attackerDamage, defenderDamage );
 		}
 	}
+
+	std::cout << "\nSomeone died.";
+	GetEnter( );
 }
 
 void AsciiArtSpider( )

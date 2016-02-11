@@ -409,7 +409,16 @@ void Game::PlayerTurn( Dungeon& dungeon )
 	std::cout << "[E] Exit to meny\n";
 	std::cout << "[F] Rotate dungeon 90 degrees clockwise\n";
 
-	static const std::vector<char> choices { 'W', 'w', 'A', 'a', 'S', 's', 'D', 'd', 'E', 'e', 'F', 'f', 'Q', 'q' };
+	static const std::vector<char> choices
+	{
+		'W', 'w',
+		'A', 'a',
+		'S', 's',
+		'D', 'd',
+		'E', 'e',
+		'F', 'f',
+		'Q', 'q'
+	};
 	static const std::map<char, Orientation> direction
 	{
 		{ 'W', Orientation::North }, { 'w', Orientation::North },

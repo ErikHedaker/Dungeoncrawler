@@ -10,14 +10,18 @@ struct Icon
 	static const char Ground = '-';
 };
 
-enum class EntityType
+namespace Attribute
 {
-	Player,
-	Monster,
-	Door,
-	Obstacle,
-	Path
-};
+	enum AttributeType
+	{
+		MovementRandom = 1,
+		Aggressive     = 1 << 1,
+		Mortal         = 1 << 2,
+		Hidden         = 1 << 3,
+		WalkablePlayer = 1 << 4,
+		WalkableOthers = 1 << 5
+	};
+}
 
 enum class ConfigType
 {
