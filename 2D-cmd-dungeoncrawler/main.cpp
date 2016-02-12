@@ -41,7 +41,7 @@ int main( )
 			}
 			case '2':
 			{
-				game.SetDungeonConfiguration( ConfigType::Default );
+				game.SetDungeonConfiguration( GameConfig::Default );
 				system( "CLS" );
 				game.NewGame( );
 				game.GameLoop( );
@@ -50,7 +50,7 @@ int main( )
 			}
 			case '3':
 			{
-				game.SetDungeonConfiguration( ConfigType::Configure );
+				game.SetDungeonConfiguration( GameConfig::Configure );
 				system( "CLS" );
 				game.NewGame( );
 				game.GameLoop( );
@@ -59,7 +59,7 @@ int main( )
 			}
 			case '4':
 			{
-				game.SetDungeonConfiguration( ConfigType::Default );
+				game.SetDungeonConfiguration( GameConfig::Default );
 
 				try
 				{

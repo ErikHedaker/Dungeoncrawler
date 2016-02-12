@@ -9,17 +9,17 @@ bool Game::ExistingGame( ) const
 {
 	return _dungeons.size( ) != 0;
 }
-void Game::SetDungeonConfiguration( const ConfigType& type )
+void Game::SetDungeonConfiguration( const GameConfig& type )
 {
 	switch( type )
 	{
-		case ConfigType::Default:
+		case GameConfig::Default:
 		{
 			_config = DungeonConfiguration( );
 
 			break;
 		}
-		case ConfigType::Configure:
+		case GameConfig::Configure:
 		{
 			const std::vector<char> choices { 'Y', 'y', 'N', 'n' };
 			auto GetBool = [] ( char input ) -> bool
@@ -74,9 +74,9 @@ void Game::GameLoop( )
 	while( _status == GameStatus::Neutral )
 	{
 		system( "CLS" );
-		_dungeons[_indexCurrent].PrintDungeonCentered( );
+		_dungeons[_indexCurrent].PrintCentered( );
 		PlayerTurn( _dungeons[_indexCurrent] );
-		_dungeons[_indexCurrent].MonsterMovement( );
+		_dungeons[_indexCurrent].RandomMovement( );
 		_dungeons[_indexCurrent].HandleEvents( _status );
 
 		if( _status == GameStatus::Next )
@@ -196,7 +196,7 @@ void Game::LoadDungeons( )
 			for( std::size_t indexLink = 0; indexLink < linkCount; indexLink++ )
 			{
 				std::getline( inFile, line );
-				set = std::stoi( line );
+				set = line != "0";
 
 				std::getline( inFile, line );
 				indexDungeon = std::stoi( line );
@@ -295,7 +295,8 @@ void Game::LoadDungeons( )
 			}
 		}
 
-		_dungeons.emplace_back( links, maxCol, maxRow, visionMap, iconMap );
+		_dungeons.emplace_back( maxCol, maxRow, visionMap, iconMap );
+		_dungeons.back( ).links = links;
 	}
 }
 
@@ -309,24 +310,24 @@ void Game::PlayerTurn( Dungeon& dungeon )
 	std::cout << "[E] Exit to meny\n";
 	std::cout << "[F] Rotate dungeon 90 degrees clockwise\n";
 
-	static const std::vector<char> choices
+	static const std::vector<char> choices =
 	{
 		'W', 'w',
 		'A', 'a',
 		'S', 's',
 		'D', 'd',
+		'Q', 'q',
 		'E', 'e',
-		'F', 'f',
-		'Q', 'q'
+		'F', 'f'
 	};
-	static const std::map<char, Orientation> direction
+	static const std::map<char, Orientation> direction =
 	{
 		{ 'W', Orientation::North }, { 'w', Orientation::North },
-		{ 'A', Orientation::West }, { 'a', Orientation::West },
+		{ 'A', Orientation::West  }, { 'a', Orientation::West  },
 		{ 'S', Orientation::South }, { 's', Orientation::South },
-		{ 'D', Orientation::East }, { 'd', Orientation::East }
+		{ 'D', Orientation::East  }, { 'd', Orientation::East  }
 	};
-	const char choice = GetValidChar( "\nYour choice: ", choices );
+	const char choice = GetValidChar( "\nEnter choice: ", choices );
 
 	switch( choice )
 	{
@@ -337,6 +338,10 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		{
 			dungeon.PlayerMovement( direction.at( choice ) );
 
+			break;
+		}
+		case 'Q': case 'q':
+		{
 			break;
 		}
 		case 'E': case 'e':
@@ -350,10 +355,6 @@ void Game::PlayerTurn( Dungeon& dungeon )
 			dungeon.RotateDungeonClockwise( );
 			LinkExitsRotateClockwise( _indexCurrent );
 
-			break;
-		}
-		case 'Q': case 'q':
-		{
 			break;
 		}
 	}

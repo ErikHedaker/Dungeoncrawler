@@ -2,15 +2,18 @@
 
 struct Icon
 {
-	static const char Player = '@';
-	static const char Monster = 'M';
-	static const char Door = '+';
-	static const char Wall = '#';
-	static const char Path = ':';
-	static const char Ground = '-';
+	enum IconType
+	{
+		Player  = '@',
+		Monster = 'M',
+		Door    = '+',
+		Wall    = '#',
+		Path    = ':',
+		Ground  = '-'
+	};
 };
 
-namespace Attribute
+struct Attribute
 {
 	enum AttributeType
 	{
@@ -21,9 +24,9 @@ namespace Attribute
 		WalkablePlayer = 1 << 4,
 		WalkableOthers = 1 << 5
 	};
-}
+};
 
-enum class ConfigType
+enum class GameConfig
 {
 	Default,
 	Configure

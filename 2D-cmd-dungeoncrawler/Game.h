@@ -1,14 +1,13 @@
 #pragma once
 
 #include "Dungeon.h"
-#include "Templates.h"
 #include <memory>
 
 class Game
 {
 	public:
 		bool ExistingGame( ) const;
-		void SetDungeonConfiguration( const ConfigType& type );
+		void SetDungeonConfiguration( const GameConfig& type );
 		void NewGame( );
 		void GameLoop( );
 		void SaveDungeons( );

@@ -39,9 +39,9 @@ struct Components
 {
 	std::size_t indexCount = 0;
 	std::vector<bool> active;
-	std::vector<int> attributes;
 	std::vector<Vector2i> position;
 	std::vector<Vector2i> positionPrevious;
+	std::vector<int> attributes;
 	std::vector<int> health;
 	std::vector<int> damage;
 	std::vector<int> visionReach;
@@ -61,7 +61,7 @@ class Dungeon
 {
 	public:
 		Dungeon( const DungeonConfiguration& config );
-		Dungeon( const std::vector<Link>& links, int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
+		Dungeon( int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
 
 		std::vector<Link> links;
 
@@ -72,9 +72,10 @@ class Dungeon
 		bool GetVision( const Vector2i& position ) const;
 		void RotateDungeonClockwise( );
 
-		void PrintDungeonCentered( const Vector2i& screenSize = { 40, 20 } );
+		/* Game loop */
+		void PrintCentered( const Vector2i& screenSize = { 40, 20 } );
 		void PlayerMovement( const Orientation& orientation );
-		void MonsterMovement( );
+		void RandomMovement( );
 		void HandleEvents( GameStatus& status );
 
 		/* Helper functions */
@@ -88,8 +89,9 @@ class Dungeon
 		int _maxCol;
 		int _maxRow;
 		Components _components;
+		std::size_t _indexPlayer;
 
-		/* 1D arrays interpreted as 2D grids */
+		/* 1D arrays interpreted as 2D arrays */
 		std::vector<Tile> _tileMap;
 		std::vector<bool> _visionMap;
 
@@ -100,8 +102,8 @@ class Dungeon
 
 		/* Preset entities */
 		void PlayerAdd( const Vector2i& position );
-		void WallAdd( const Vector2i& position );
 		void DoorAdd( const Vector2i& position );
+		void WallAdd( const Vector2i& position );
 		void StepAdd( const Vector2i& position );
 		void MonsterAdd( const Vector2i& position );
 
