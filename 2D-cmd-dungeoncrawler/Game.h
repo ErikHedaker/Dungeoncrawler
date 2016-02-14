@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Dungeon.h"
+#include "Player.h"
 #include <memory>
 
 class Game
@@ -18,6 +19,7 @@ class Game
 		std::size_t _indexCurrent;
 		DungeonConfiguration _config;
 		GameStatus _status;
+		Player _player;
 
 		void PlayerTurn( Dungeon& dungeon );
 		void FullLinkDungeon( std::size_t indexDungeon );

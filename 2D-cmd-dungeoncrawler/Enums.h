@@ -35,14 +35,15 @@ enum class GameConfig
 enum class Orientation
 {
 	North,
+	West,
 	South,
-	East,
-	West
+	East
 };
 
 enum class GameStatus
 {
 	Neutral,
 	Menu,
+	Dead,
 	Next
 };

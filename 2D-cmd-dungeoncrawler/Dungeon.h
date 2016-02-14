@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Enums.h"
-#include "Functions.h"
+#include "Player.h"
 #include <vector>
 #include <list>
 #include <utility>
@@ -49,6 +49,7 @@ struct Components
 	std::vector<char> icon;
 
 	std::size_t Add( );
+	void Delete( std::size_t index );
 };
 
 struct Tile
@@ -61,22 +62,21 @@ class Dungeon
 {
 	public:
 		Dungeon( const DungeonConfiguration& config );
-		Dungeon( int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
+		Dungeon( int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap, Player& player );
 
 		std::vector<Link> links;
 
-		void SetPositionPlayer( const Vector2i& position );
-		const Vector2i& GetPositionPlayer( ) const;
+		void CreatePlayerLocal( const Vector2i& position, Player& player );
+		void RotateDungeonClockwise( );
+
 		const std::pair<int, int> GetSize( ) const;
 		const Tile& GetTile( const Vector2i& position ) const;
 		bool GetVision( const Vector2i& position ) const;
-		void RotateDungeonClockwise( );
 
 		/* Game loop */
-		void PrintCentered( const Vector2i& screenSize = { 40, 20 } );
 		void PlayerMovement( const Orientation& orientation );
 		void RandomMovement( );
-		void HandleEvents( GameStatus& status );
+		void HandleEvents( Player& player, GameStatus& status );
 
 		/* Helper functions */
 		bool CheckTile( const Vector2i& position, int bitmask ) const;
@@ -89,7 +89,7 @@ class Dungeon
 		int _maxCol;
 		int _maxRow;
 		Components _components;
-		std::size_t _indexPlayer;
+		std::size_t _indexPlayerLocal;
 
 		/* 1D arrays interpreted as 2D arrays */
 		std::vector<Tile> _tileMap;
@@ -99,9 +99,9 @@ class Dungeon
 		void UpdateTile( const Vector2i& position );
 		void OccupantAdd( std::size_t index );
 		void OccupantRemove( std::size_t index );
+		void DeleteEntity( std::size_t index );
 
 		/* Preset entities */
-		void PlayerAdd( const Vector2i& position );
 		void DoorAdd( const Vector2i& position );
 		void WallAdd( const Vector2i& position );
 		void StepAdd( const Vector2i& position );

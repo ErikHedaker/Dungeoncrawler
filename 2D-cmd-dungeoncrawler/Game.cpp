@@ -7,7 +7,7 @@
 
 bool Game::ExistingGame( ) const
 {
-	return _dungeons.size( ) != 0;
+	return _dungeons.size( ) != 0 && _status != GameStatus::Dead;
 }
 void Game::SetDungeonConfiguration( const GameConfig& type )
 {
@@ -66,6 +66,10 @@ void Game::NewGame( )
 	_dungeons.emplace_back( _config );
 	_indexCurrent = _dungeons.size( ) - 1;
 	FullLinkDungeon( _indexCurrent );
+
+	auto maxCol = _dungeons[_indexCurrent].GetSize( ).first;
+	auto maxRow = _dungeons[_indexCurrent].GetSize( ).second;
+	_dungeons[_indexCurrent].CreatePlayerLocal( { maxCol / 2, maxRow / 2 }, _player );
 }
 void Game::GameLoop( )
 {
@@ -74,15 +78,15 @@ void Game::GameLoop( )
 	while( _status == GameStatus::Neutral )
 	{
 		system( "CLS" );
-		_dungeons[_indexCurrent].PrintCentered( );
+		PrintDungeonCentered( _dungeons[_indexCurrent], _player.visionReach, _player.position );
 		PlayerTurn( _dungeons[_indexCurrent] );
 		_dungeons[_indexCurrent].RandomMovement( );
-		_dungeons[_indexCurrent].HandleEvents( _status );
+		_dungeons[_indexCurrent].HandleEvents( _player, _status );
 
 		if( _status == GameStatus::Next )
 		{
-			_status = GameStatus::Neutral;
 			SwitchDungeon( );
+			_status = GameStatus::Neutral;
 		}
 	}
 }
@@ -295,7 +299,7 @@ void Game::LoadDungeons( )
 			}
 		}
 
-		_dungeons.emplace_back( maxCol, maxRow, visionMap, iconMap );
+		_dungeons.emplace_back( maxCol, maxRow, visionMap, iconMap, _player );
 		_dungeons.back( ).links = links;
 	}
 }
@@ -383,6 +387,20 @@ void Game::FullLinkDungeon( std::size_t indexDungeon )
 		}
 	}
 }
+void Game::SwitchDungeon( )
+{
+	for( const auto& link : _dungeons[_indexCurrent].links )
+	{
+		if( link.entry == _player.position )
+		{
+			_indexCurrent = link.indexDungeon;
+			_dungeons[_indexCurrent].CreatePlayerLocal( link.exit, _player );
+			FullLinkDungeon( _indexCurrent );
+
+			break;
+		}
+	}
+}
 void Game::LinkExitsRotateClockwise( std::size_t index )
 {
 	for( const auto& linkCurrent : _dungeons[index].links )
@@ -393,20 +411,6 @@ void Game::LinkExitsRotateClockwise( std::size_t index )
 			{
 				link.exit = PositionRotateClockwise( link.exit, _dungeons[index].GetSize( ).first );
 			}
-		}
-	}
-}
-void Game::SwitchDungeon( )
-{
-	for( const auto& link : _dungeons[_indexCurrent].links )
-	{
-		if( link.entry == _dungeons[_indexCurrent].GetPositionPlayer( ) )
-		{
-			_indexCurrent = link.indexDungeon;
-			_dungeons[_indexCurrent].SetPositionPlayer( link.exit );
-			FullLinkDungeon( _indexCurrent );
-
-			break;
 		}
 	}
 }

@@ -1,4 +1,5 @@
 #include "Functions.h"
+#include "Vector2i.h"
 #include "Enums.h"
 #include <iostream>
 #include <string>
@@ -125,6 +126,51 @@ void AsciiArtSwords( )
 	std::cout << "\t             5`RM$#                                  'R88f)R            \n";
 	std::cout << "\t             'h.$'                                     #$x*             \n";
 }
+void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2i& center, const Vector2i& screenSize )
+{
+	const Vector2i cameraOrigo = center - screenSize / 2;
+	const Vector2i iteratorBegin = cameraOrigo - 1;
+	const Vector2i iteratorEnd = cameraOrigo + screenSize + 1;
+	auto InsideVisionReach = [visionReach, center] ( const Vector2i& iterator ) -> bool
+	{
+		return
+			iterator >= center - visionReach &&
+			iterator <= center + visionReach;
+	};
+	Vector2i iterator;
+
+	for( iterator.row = iteratorBegin.row; iterator.row <= iteratorEnd.row; iterator.row++ )
+	{
+		for( iterator.col = iteratorBegin.col; iterator.col <= iteratorEnd.col; iterator.col++ )
+		{
+			if( iterator.col == iteratorBegin.col ||
+				iterator.row == iteratorBegin.row ||
+				iterator.col == iteratorEnd.col ||
+				iterator.row == iteratorEnd.row )
+			{
+				std::cout << '\\';
+			}
+			else if( dungeon.InBounds( iterator ) &&
+					 InsideVisionReach( iterator ) )
+			{
+				std::cout << dungeon.GetTile( iterator ).icon;
+			}
+			else if( dungeon.InBounds( iterator ) &&
+					 dungeon.GetVision( iterator ) )
+			{
+				std::cout << ':';
+			}
+			else
+			{
+				std::cout << ' ';
+			}
+		}
+
+		std::cout << '\n';
+	}
+
+	std::cout << '\n';
+}
 void Battle( int* attackerHealth, int* attackerDamage, int* defenderHealth, int* defenderDamage )
 {
 	system( "CLS" );
@@ -152,40 +198,41 @@ Vector2i PositionRotateClockwise( const Vector2i& position, int maxCol )
 {
 	return { maxCol - position.row - 1, position.col };
 }
-Vector2i MoveEntity( const Vector2i& position, const Orientation& orientation )
+Vector2i PositionMove( const Vector2i& position, const Orientation& orientation )
 {
 	static const std::map<Orientation, Vector2i> directions =
 	{
-		{ Orientation::North, Vector2i(  0, -1 ) },
-		{ Orientation::West,  Vector2i( -1,  0 ) },
-		{ Orientation::South, Vector2i(  0,  1 ) },
-		{ Orientation::East,  Vector2i(  1,  0 ) }
+		{ Orientation::North, {  0, -1 } },
+		{ Orientation::West,  { -1,  0 } },
+		{ Orientation::South, {  0,  1 } },
+		{ Orientation::East,  {  1,  0 } }
 	};
 
 	return position + directions.at( orientation );
 }
-Vector2i MoveEntityProbability( const Vector2i& position, int north, int south, int west, int east, int still )
+Vector2i PositionMoveProbability( const Vector2i& position, int north, int west, int south, int east, int still )
 {
-	const int sumProbability = north + south + west + east + still;
-	const int random = RandomNumberGenerator( 0, sumProbability - 1 );
-	Vector2i result = position;
+	const int random = RandomNumberGenerator( 1, north + west + south + east + still );
 
-	if( random < north )
+	if( random <= north )
 	{
-		result = MoveEntity( position, Orientation::North );
+		return PositionMove( position, Orientation::North );
 	}
-	else if( random < north + south )
+	
+	if( random <= north + west )
 	{
-		result = MoveEntity( position, Orientation::South );
+		return PositionMove( position, Orientation::West );
 	}
-	else if( random < north + south + west )
+	
+	if( random <= north + west + south )
 	{
-		result = MoveEntity( position, Orientation::West );
+		return PositionMove( position, Orientation::South );
 	}
-	else if( random < north + south + west + east )
+	
+	if( random <= north + west + south + east )
 	{
-		result = MoveEntity( position, Orientation::East );
+		return PositionMove( position, Orientation::East );
 	}
 
-	return result;
+	return position;
 }
