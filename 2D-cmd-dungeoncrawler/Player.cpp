@@ -1,5 +1,7 @@
 #include "Player.h"
 
 Player::Player( ) :
-	visionReach( 5 )
+	position( { -1, -1 } ),
+	visionReach( 5 ),
+	status( PlayerStatus::Traveling )
 { }

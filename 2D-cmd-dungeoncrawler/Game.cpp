@@ -7,7 +7,7 @@
 
 bool Game::ExistingGame( ) const
 {
-	return _dungeons.size( ) != 0 && _status != GameStatus::Dead;
+	return _dungeons.size( ) != 0 && _player.status != PlayerStatus::Dead;
 }
 void Game::SetDungeonConfiguration( const GameConfig& type )
 {
@@ -73,20 +73,20 @@ void Game::NewGame( )
 }
 void Game::GameLoop( )
 {
-	_status = GameStatus::Neutral;
+	_player.status = PlayerStatus::Wandering;
 
-	while( _status == GameStatus::Neutral )
+	while( _player.status == PlayerStatus::Wandering )
 	{
 		system( "CLS" );
 		PrintDungeonCentered( _dungeons[_indexCurrent], _player.visionReach, _player.position );
 		PlayerTurn( _dungeons[_indexCurrent] );
 		_dungeons[_indexCurrent].RandomMovement( );
-		_dungeons[_indexCurrent].HandleEvents( _player, _status );
+		_dungeons[_indexCurrent].HandleEvents( _player );
 
-		if( _status == GameStatus::Next )
+		if( _player.status == PlayerStatus::Traveling )
 		{
 			SwitchDungeon( );
-			_status = GameStatus::Neutral;
+			_player.status = PlayerStatus::Wandering;
 		}
 	}
 }
@@ -276,18 +276,20 @@ void Game::LoadDungeons( )
 				}
 				else
 				{
-					Vector2i position( iterator.col % 2, iterator.row );
+					Vector2i position( iterator.col % maxCol, iterator.row );
 
 					switch( line[iterator.col] )
 					{
 						case '1':
 						{
 							visionMap[( position.row * maxCol ) + position.col] = true;
+
 							break;
 						}
 						case '0':
 						{
 							visionMap[( position.row * maxCol ) + position.col] = false;
+
 							break;
 						}
 						default:
@@ -350,7 +352,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		}
 		case 'E': case 'e':
 		{
-			_status = GameStatus::Menu;
+			_player.status = PlayerStatus::Inactive;
 
 			break;
 		}

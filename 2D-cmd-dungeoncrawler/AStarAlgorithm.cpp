@@ -8,9 +8,9 @@ Grid::Grid( int maxCol, int maxRow, const std::vector<Vector2i>& obstacles ) :
 	_directions
 	( { {
 			Vector2i(  0, -1 ),
-			Vector2i(  1,  0 ),
-			Vector2i(  0,  1 ),
 			Vector2i( -1,  0 ),
+			Vector2i(  0,  1 ),
+			Vector2i(  1,  0 ),
 	} } )
 { }
 bool Grid::InBounds( const Vector2i& position ) const
@@ -38,12 +38,6 @@ const std::vector<Vector2i> Grid::GetValidNeighbors( const Vector2i& position ) 
 		{
 			results.push_back( neighbor );
 		}
-	}
-
-	if( ( position.col + position.row ) % 2 == 0 )
-	{
-		// aesthetic improvement on square grids
-		std::reverse( results.begin( ), results.end( ) );
 	}
 
 	return results;

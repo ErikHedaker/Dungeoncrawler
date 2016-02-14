@@ -38,15 +38,12 @@ struct Link
 struct Components
 {
 	std::size_t indexCount = 0;
-	std::vector<bool> active;
+	std::vector<char> icon;
 	std::vector<Vector2i> position;
 	std::vector<Vector2i> positionPrevious;
-	std::vector<int> attributes;
 	std::vector<int> health;
 	std::vector<int> damage;
-	std::vector<int> visionReach;
-	std::vector<int> iconPriority;
-	std::vector<char> icon;
+	std::vector<int> attributes;
 
 	std::size_t Add( );
 	void Delete( std::size_t index );
@@ -55,7 +52,7 @@ struct Components
 struct Tile
 {
 	std::vector<std::size_t> indexOccupants;
-	char icon = '-';
+	char icon = Icon::Ground;
 };
 
 class Dungeon
@@ -76,7 +73,7 @@ class Dungeon
 		/* Game loop */
 		void PlayerMovement( const Orientation& orientation );
 		void RandomMovement( );
-		void HandleEvents( Player& player, GameStatus& status );
+		void HandleEvents( Player& player );
 
 		/* Helper functions */
 		bool CheckTile( const Vector2i& position, int bitmask ) const;

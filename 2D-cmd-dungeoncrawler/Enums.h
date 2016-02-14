@@ -8,7 +8,6 @@ struct Icon
 		Monster = 'M',
 		Door    = '+',
 		Wall    = '#',
-		Path    = ':',
 		Ground  = '-'
 	};
 };
@@ -18,7 +17,7 @@ struct Attribute
 	enum AttributeType
 	{
 		MovementRandom = 1,
-		Aggressive     = 1 << 1,
+		Monster        = 1 << 1,
 		Mortal         = 1 << 2,
 		Hidden         = 1 << 3,
 		WalkablePlayer = 1 << 4,
@@ -40,10 +39,10 @@ enum class Orientation
 	East
 };
 
-enum class GameStatus
+enum class PlayerStatus
 {
-	Neutral,
-	Menu,
-	Dead,
-	Next
+	Wandering,
+	Traveling,
+	Inactive,
+	Dead
 };

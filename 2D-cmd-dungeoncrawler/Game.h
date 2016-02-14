@@ -18,7 +18,6 @@ class Game
 		std::vector<Dungeon> _dungeons;
 		std::size_t _indexCurrent;
 		DungeonConfiguration _config;
-		GameStatus _status;
 		Player _player;
 
 		void PlayerTurn( Dungeon& dungeon );

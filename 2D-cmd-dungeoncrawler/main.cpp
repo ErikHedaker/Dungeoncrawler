@@ -69,6 +69,7 @@ int main( )
 				catch( const std::exception& e )
 				{
 					std::cout << "Exception: " << e.what( );
+					GetEnter( );
 
 					break;
 				}

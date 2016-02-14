@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vector2i.h"
+#include "Enums.h"
 
 class Player
 {
@@ -9,4 +10,6 @@ class Player
 
 		Vector2i position;
 		int visionReach;
+		PlayerStatus status;
+
 };
