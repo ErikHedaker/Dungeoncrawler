@@ -2,11 +2,14 @@
 
 #include "Dungeon.h"
 #include "Player.h"
+#include "BattleSystem.h"
 #include <memory>
 
 class Game
 {
 	public:
+		Game( );
+
 		bool ExistingGame( ) const;
 		void SetDungeonConfiguration( const GameConfig& type );
 		void NewGame( );
@@ -18,7 +21,9 @@ class Game
 		std::vector<Dungeon> _dungeons;
 		std::size_t _indexCurrent;
 		DungeonConfiguration _config;
+		BattleSystem _battleSystem;
 		Player _player;
+		GameStatus _status;
 
 		void PlayerTurn( Dungeon& dungeon );
 		void FullLinkDungeon( std::size_t indexDungeon );

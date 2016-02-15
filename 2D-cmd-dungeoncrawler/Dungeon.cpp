@@ -11,8 +11,6 @@ std::size_t Components::Add( )
 	icon.emplace_back( );
 	position.emplace_back( );
 	positionPrevious.emplace_back( );
-	health.emplace_back( );
-	damage.emplace_back( );
 	attributes.emplace_back( );
 
 	return indexCount - 1;
@@ -24,16 +22,12 @@ void Components::Delete( std::size_t index )
 	std::swap( icon[index], icon[indexLast] );
 	std::swap( position[index], position[indexLast] );
 	std::swap( positionPrevious[index], positionPrevious[indexLast] );
-	std::swap( health[index], health[indexLast] );
-	std::swap( damage[index], damage[indexLast] );
 	std::swap( attributes[index], attributes[indexLast] );
 
 	indexCount--;
 	icon.pop_back( );
 	position.pop_back( );
 	positionPrevious.pop_back( );
-	health.pop_back( );
-	damage.pop_back( );
 	attributes.pop_back( );
 }
 
@@ -101,8 +95,6 @@ void Dungeon::CreatePlayerLocal( const Vector2i& position, Player& player )
 	_components.position[_indexPlayerLocal] = { _maxCol / 2, _maxRow / 2 };
 	_components.positionPrevious[_indexPlayerLocal] = { _maxCol / 2, _maxRow / 2 };
 	_components.attributes[_indexPlayerLocal] = Attribute::Mortal | Attribute::WalkableOthers | Attribute::WalkablePlayer;
-	_components.health[_indexPlayerLocal] = 100;
-	_components.damage[_indexPlayerLocal] = 100;
 	_components.icon[_indexPlayerLocal] = '@';
 
 	if( CheckTile( position, Attribute::WalkableOthers ) )
@@ -244,21 +236,8 @@ void Dungeon::HandleEvents( Player& player )
 	{
 		if( _components.attributes[index] & Attribute::Monster )
 		{
-			Battle( &_components.health[index],
-					&_components.damage[index],
-					&_components.health[_indexPlayerLocal],
-					&_components.damage[_indexPlayerLocal] );
-
-			if( _components.health[index] <= 0 )
-			{
-				deleteEntites.push_back( index );
-			}
-
-			if( _components.health[_indexPlayerLocal] <= 0 )
-			{
-				deleteEntites.push_back( _indexPlayerLocal );
-				player.status = PlayerStatus::Dead;
-			}
+			deleteEntites.push_back( index );
+			player.status = PlayerStatus::Combat;
 		}
 	}
 
@@ -420,7 +399,7 @@ void Dungeon::WallAdd( const Vector2i& position )
 
 	_components.icon[index] = Icon::Wall;
 	_components.position[index] = position;
-	_components.attributes[index] = 0;
+	_components.attributes[index] = Attribute::None;
 	OccupantAdd( index );
 }
 void Dungeon::StepAdd( const Vector2i& position )
@@ -440,8 +419,6 @@ void Dungeon::MonsterAdd( const Vector2i& position )
 	_components.icon[index] = Icon::Monster;
 	_components.position[index] = position;
 	_components.positionPrevious[index] = position;
-	_components.health[index] = 100;
-	_components.damage[index] = 10;
 	_components.attributes[index] = Attribute::Monster |
 									Attribute::Mortal |
 									Attribute::MovementRandom |

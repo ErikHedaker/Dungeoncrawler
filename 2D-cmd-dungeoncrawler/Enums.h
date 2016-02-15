@@ -16,12 +16,23 @@ struct Attribute
 {
 	enum AttributeType
 	{
+		None           = 0,
 		MovementRandom = 1,
 		Monster        = 1 << 1,
 		Mortal         = 1 << 2,
 		Hidden         = 1 << 3,
 		WalkablePlayer = 1 << 4,
 		WalkableOthers = 1 << 5
+	};
+};
+
+struct Ability
+{
+	enum AbilityType
+	{
+		None     = 0,
+		Fireball = 1,
+		IceBlast = 1 << 1
 	};
 };
 
@@ -43,6 +54,12 @@ enum class PlayerStatus
 {
 	Wandering,
 	Traveling,
-	Inactive,
+	Combat,
 	Dead
+};
+
+enum class GameStatus
+{
+	Menu,
+	Gameloop
 };

@@ -1,15 +1,14 @@
 #pragma once
 
+#include "Combatant.h"
 #include "Vector2i.h"
 #include "Enums.h"
 
-class Player
+struct Player : public Combatant
 {
-	public:
-		Player( );
+	Player( int health, int damage, int abilities );
 
-		Vector2i position;
-		int visionReach;
-		PlayerStatus status;
-
+	int visionReach;
+	Vector2i position;
+	PlayerStatus status;
 };

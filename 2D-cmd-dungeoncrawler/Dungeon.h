@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Enums.h"
+#include "BattleSystem.h"
 #include "Player.h"
 #include <vector>
 #include <list>
@@ -41,8 +42,6 @@ struct Components
 	std::vector<char> icon;
 	std::vector<Vector2i> position;
 	std::vector<Vector2i> positionPrevious;
-	std::vector<int> health;
-	std::vector<int> damage;
 	std::vector<int> attributes;
 
 	std::size_t Add( );

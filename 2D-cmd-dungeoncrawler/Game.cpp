@@ -5,9 +5,17 @@
 #include <fstream>
 #include <string>
 
+Game::Game( ) :
+	_player( 100, 50, Ability::Fireball | Ability::IceBlast )
+{
+	_battleSystem.AddMonsterToLibrary( Combatant( "Zombie", 120, 20, Ability::None ) );
+	_battleSystem.AddMonsterToLibrary( Combatant( "Frozen Skeleton", 80, 10, Ability::IceBlast ) );
+	_battleSystem.AddMonsterToLibrary( Combatant( "Flaming Corpse", 70, 10, Ability::Fireball ) );
+}
+
 bool Game::ExistingGame( ) const
 {
-	return _dungeons.size( ) != 0 && _player.status != PlayerStatus::Dead;
+	return _dungeons.size( ) != 0;
 }
 void Game::SetDungeonConfiguration( const GameConfig& type )
 {
@@ -62,6 +70,8 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 }
 void Game::NewGame( )
 {
+	_player.status = PlayerStatus::Wandering;
+	_player.health = 100;
 	_dungeons.clear( );
 	_dungeons.emplace_back( _config );
 	_indexCurrent = _dungeons.size( ) - 1;
@@ -73,9 +83,10 @@ void Game::NewGame( )
 }
 void Game::GameLoop( )
 {
-	_player.status = PlayerStatus::Wandering;
+	_status = GameStatus::Gameloop;
 
-	while( _player.status == PlayerStatus::Wandering )
+	while( _status == GameStatus::Gameloop &&
+		   _player.status != PlayerStatus::Dead )
 	{
 		system( "CLS" );
 		PrintDungeonCentered( _dungeons[_indexCurrent], _player.visionReach, _player.position );
@@ -87,6 +98,20 @@ void Game::GameLoop( )
 		{
 			SwitchDungeon( );
 			_player.status = PlayerStatus::Wandering;
+		}
+
+		if( _player.status == PlayerStatus::Combat )
+		{
+			_battleSystem.TempEngageRandomMonster( _player );
+
+			if( _player.health <= 0 )
+			{
+				_player.status = PlayerStatus::Dead;
+			}
+			else
+			{
+				_player.status = PlayerStatus::Wandering;
+			}
 		}
 	}
 }
@@ -352,7 +377,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		}
 		case 'E': case 'e':
 		{
-			_player.status = PlayerStatus::Inactive;
+			_status = GameStatus::Menu;
 
 			break;
 		}
