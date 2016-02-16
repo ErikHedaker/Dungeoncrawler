@@ -1,43 +1,147 @@
 #include "BattleSystem.h"
 #include "Functions.h"
+#include <algorithm>
+#include <utility>
 
-void BattleSystem::EngageRandomMonster( Combatant& character )
+Spell::Spell( const std::string& name, double damageMultiplier ) :
+	name( name ),
+	damageMultiplier( damageMultiplier )
+{ }
+
+Combatant::Combatant( const std::string& name, int health, int healthMax, int healthRegeneration, int damage, int spells ) :
+	name( name ),
+	health( health ),
+	healthMax( healthMax ),
+	healthRegeneration( healthRegeneration ),
+	damage( damage ),
+	spells( spells )
+{ }
+void Combatant::Update( )
 {
-	Combatant monster = GetRandomMonster( );
-}
-void BattleSystem::TempEngageRandomMonster( Combatant& character )
-{
-	Combatant monster = GetRandomMonster( );
-	Combatant* attacker = &monster;
-	Combatant* defender = &character;
+	health += healthRegeneration;
 
-	system( "CLS" );
-	AsciiArtSwords( );
-
-	while( true )
+	if( health > healthMax )
 	{
-		defender->health -= attacker->damage;
+		health = healthMax;
+	}
+}
 
-		if( defender->health <= 0 )
-		{
-			std::cout << '\n' << defender->name << " died.";
+BattleSystem::BattleSystem( ) :
+	_libraryMonster
+	( {
+		{ "Rotten Zombie",  120, 120, 5, 20, Spells::None     },
+		{ "Frozen Skeleton", 80,  80, 0, 10, Spells::Iceblast },
+		{ "Burning Lunatic", 70,  70, 0, 10, Spells::Fireball }
+	} ),
+	_librarySpell
+	( {
+		{ Spells::None,     { "None",     0.0 } },
+		{ Spells::Iceblast, { "Fireball", 1.5 } },
+		{ Spells::Fireball, { "Iceblast", 1.3 } }
+	} )
+{ }
 
-			break;
-		}
-		else
+Combatant BattleSystem::GetRandomMonster( )
+{
+	return _libraryMonster[RandomNumberGenerator( 0, _libraryMonster.size( ) - 1 )];
+}
+Spell BattleSystem::GetSpell( Combatant& player )
+{
+	const int bitMax = _librarySpell.size( ) - 2;
+	std::map<char, Spell> idSpell;
+	std::vector<char> choices;
+	char id = '1';
+	char choice;
+
+	std::cout << "\nChoose a spell:\n";
+
+	for( int bit = 1; bit <= 1 << bitMax; bit <<= 1 )
+	{
+		if( player.spells & bit )
 		{
-			std::swap( attacker, defender );
+			idSpell.emplace( id, _librarySpell.at( bit ) );
+			choices.push_back( id );
+			std::cout << "[" << id << "] " << idSpell.at( id ).name << "\n";
+			id++;
 		}
 	}
 
-	std::cout << "\n\nPress enter to continue: ";
-	GetEnter( );
+	choice = GetValidChar( "\nEnter choice: ", choices );
+	
+	return idSpell.at( choice );
 }
-void BattleSystem::AddMonsterToLibrary( Combatant& monster )
+void BattleSystem::CastSpell( const Spell& spell, Combatant& caster, Combatant& target )
 {
-	monsters.push_back( monster );
+	std::cout << "\n" << caster.name << " casts " << spell.name << " on " << target.name << "!\n";
+	target.health -= static_cast<int>( caster.damage * spell.damageMultiplier );
 }
-Combatant BattleSystem::GetRandomMonster( )
+void BattleSystem::WeaponAttack( Combatant& attacker, Combatant& target )
 {
-	return monsters[RandomNumberGenerator( 0, monsters.size( ) - 1 )];
+	std::cout << "\n" << attacker.name << " attacks " << target.name << " with its weapon!\n";
+	target.health -= attacker.damage;
+}
+void BattleSystem::PlayerTurn( Combatant& player, Combatant& monster )
+{
+	std::cout << "\n";
+	std::cout << "[1] Attack with weapon\n";
+	std::cout << "[2] Attack with spell\n\n";
+
+	const std::vector<char> choices =
+	{
+		'1',
+		'2'
+	};
+	const char choice = GetValidChar( "Enter choice: ", choices );
+
+	switch( choice )
+	{
+		case '1':
+		{
+			WeaponAttack( player, monster );
+
+			break;
+		}
+		case '2':
+		{
+			if( player.spells != 0 )
+			{
+				CastSpell( GetSpell( player ), player, monster );
+			}
+
+			break;
+		}
+	}
+}
+void BattleSystem::MonsterTurn( Combatant& player, Combatant& monster )
+{
+	WeaponAttack( monster, player );
+}
+void BattleSystem::EngageRandomMonster( Combatant& player )
+{
+	Combatant monster = GetRandomMonster( );
+
+	system( "CLS" );
+	std::cout << "You've been engaged in combat with a " << monster.name << "!\n";
+
+	while( true )
+	{
+		std::cout << "\n-------------------\n\n";
+		player.Update( );
+		monster.Update( );
+		PrintCombatantInformation( player );
+		std::cout << "\n";
+		PrintCombatantInformation( monster );
+		PlayerTurn( player, monster );
+		MonsterTurn( player, monster );
+
+		if( player.health <= 0 ||
+			monster.health <= 0 )
+		{
+			std::cout << "\n" << ( player.health <= 0 ? player.name : monster.name ) << " died!";
+			std::cout << "\n\nPress enter to continue: ";
+			GetEnter( );
+
+			break;
+		}
+	}
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Dungeon.h"
+#include "Player.h"
 #include "Vector2i.h"
 #include "Enums.h"
 #include <algorithm>
@@ -13,6 +14,7 @@ void GetEnter( );
 void AsciiArtSpider( );
 void AsciiArtSwords( );
 void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2i& center, const Vector2i& screenSize = { 40, 20 } );
+void PrintCombatantInformation( const Combatant& combatant );
 void Battle( int* attackerHealth, int* attackerDamage, int* defenderHealth, int* defenderDamage );
 Vector2i PositionRotateClockwise( const Vector2i& position, int maxCol );
 Vector2i PositionMove( const Vector2i& position, const Orientation& orientation );

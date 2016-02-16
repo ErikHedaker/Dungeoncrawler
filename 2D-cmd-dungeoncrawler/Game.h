@@ -26,6 +26,7 @@ class Game
 		GameStatus _status;
 
 		void PlayerTurn( Dungeon& dungeon );
+		void CheckEventsPlayer( );
 		void FullLinkDungeon( std::size_t indexDungeon );
 		void SwitchDungeon( );
 		void LinkExitsRotateClockwise( std::size_t index );

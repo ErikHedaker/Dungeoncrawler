@@ -1,17 +1,47 @@
 #pragma once
 
-#include "Player.h"
-#include "Combatant.h"
+#include "BattleSystem.h"
 #include <vector>
+#include <string>
+#include <map>
+#include <intrin.h>
+
+struct Spell
+{
+	Spell( const std::string& name, double damageMultiplier );
+
+	const std::string name;
+	const double damageMultiplier;
+};
+
+struct Combatant
+{
+	Combatant( const std::string& name, int health, int healthMax, int healthRegeneration, int damage, int spells );
+
+	std::string name;
+	int health;
+	int healthMax;
+	int healthRegeneration;
+	int damage;
+	int spells;
+
+	void Update( );
+};
 
 class BattleSystem
 {
 	public:
-		void EngageRandomMonster( Combatant& character );
-		void TempEngageRandomMonster( Combatant& character );
-		void AddMonsterToLibrary( Combatant& monster );
+		BattleSystem( );
+
 		Combatant GetRandomMonster( );
+		Spell GetSpell( Combatant& player );
+		void CastSpell( const Spell& spell, Combatant& caster, Combatant& target );
+		void WeaponAttack( Combatant& attacker, Combatant& target );
+		void PlayerTurn( Combatant& player, Combatant& monster );
+		void MonsterTurn( Combatant& player, Combatant& monster );
+		void EngageRandomMonster( Combatant& player );
 
 	private:
-		std::vector<Combatant> monsters;
+		const std::vector<Combatant> _libraryMonster;
+		const std::map<int, const Spell> _librarySpell;
 };

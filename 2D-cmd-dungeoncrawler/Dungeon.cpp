@@ -94,10 +94,10 @@ void Dungeon::CreatePlayerLocal( const Vector2i& position, Player& player )
 	_indexPlayerLocal = _components.Add( );
 	_components.position[_indexPlayerLocal] = { _maxCol / 2, _maxRow / 2 };
 	_components.positionPrevious[_indexPlayerLocal] = { _maxCol / 2, _maxRow / 2 };
-	_components.attributes[_indexPlayerLocal] = Attribute::Mortal | Attribute::WalkableOthers | Attribute::WalkablePlayer;
-	_components.icon[_indexPlayerLocal] = '@';
+	_components.attributes[_indexPlayerLocal] = Attributes::Mortal | Attributes::WalkableOthers | Attributes::WalkablePlayer;
+	_components.icon[_indexPlayerLocal] = Icon::Player;
 
-	if( CheckTile( position, Attribute::WalkableOthers ) )
+	if( CheckTile( position, Attributes::WalkableOthers ) )
 	{
 		_components.position[_indexPlayerLocal] = position;
 		_components.positionPrevious[_indexPlayerLocal] = position;
@@ -117,7 +117,7 @@ void Dungeon::CreatePlayerLocal( const Vector2i& position, Player& player )
 			Vector2i nearby = position + direction;
 
 			if( InBounds( nearby ) &&
-				CheckTile( nearby, Attribute::WalkablePlayer ) )
+				CheckTile( nearby, Attributes::WalkablePlayer ) )
 			{
 				_components.position[_indexPlayerLocal] = nearby;
 				_components.positionPrevious[_indexPlayerLocal] = nearby;
@@ -195,7 +195,7 @@ void Dungeon::RandomMovement( )
 {
 	for( std::size_t index = 0; index < _components.indexCount; index++ )
 	{
-		if( _components.attributes[index] & Attribute::MovementRandom )
+		if( _components.attributes[index] & Attributes::MovementRandom )
 		{
 			OccupantRemove( index );
 			_components.positionPrevious[index] = _components.position[index];
@@ -204,12 +204,12 @@ void Dungeon::RandomMovement( )
 		}
 	}
 }
-void Dungeon::HandleEvents( Player& player )
+void Dungeon::CheckEvents( Player& player )
 {
 	std::vector<std::size_t> deleteEntites;
 
 	/* Collision detection for player */
-	if( !CheckTile( _components.position[_indexPlayerLocal], Attribute::WalkablePlayer ) )
+	if( !CheckTile( _components.position[_indexPlayerLocal], Attributes::WalkablePlayer ) )
 	{
 		OccupantRemove( _indexPlayerLocal );
 		std::swap( _components.position[_indexPlayerLocal], _components.positionPrevious[_indexPlayerLocal] );
@@ -219,8 +219,8 @@ void Dungeon::HandleEvents( Player& player )
 	/* Collision detection for other entities */
 	for( std::size_t index = 0; index < _components.indexCount; index++ )
 	{
-		if( _components.attributes[index] & Attribute::MovementRandom &&
-			!CheckTile( _components.position[index], Attribute::WalkableOthers ) )
+		if( _components.attributes[index] & Attributes::MovementRandom &&
+			!CheckTile( _components.position[index], Attributes::WalkableOthers ) )
 		{
 			OccupantRemove( index );
 			std::swap( _components.position[index], _components.positionPrevious[index] );
@@ -234,7 +234,7 @@ void Dungeon::HandleEvents( Player& player )
 	/* Fight aggressive entities on player's position */
 	for( auto index : _tileMap[( _components.position[_indexPlayerLocal].row * _maxCol ) + _components.position[_indexPlayerLocal].col].indexOccupants )
 	{
-		if( _components.attributes[index] & Attribute::Monster )
+		if( _components.attributes[index] & Attributes::Monster )
 		{
 			deleteEntites.push_back( index );
 			player.status = PlayerStatus::Combat;
@@ -343,7 +343,7 @@ void Dungeon::UpdateTile( const Vector2i& position )
 
 	for( auto index : tile.indexOccupants )
 	{
-		if( !( _components.attributes[index] & Attribute::Hidden ) )
+		if( !( _components.attributes[index] & Attributes::Hidden ) )
 		{
 			tile.icon = _components.icon[index];
 		}
@@ -390,7 +390,7 @@ void Dungeon::DoorAdd( const Vector2i& position )
 	links.push_back( { false, 0, { -1, -1 }, position } );
 	_components.icon[index] = Icon::Door;
 	_components.position[index] = position;
-	_components.attributes[index] = Attribute::WalkablePlayer;
+	_components.attributes[index] = Attributes::WalkablePlayer;
 	OccupantAdd( index );
 }
 void Dungeon::WallAdd( const Vector2i& position )
@@ -399,7 +399,7 @@ void Dungeon::WallAdd( const Vector2i& position )
 
 	_components.icon[index] = Icon::Wall;
 	_components.position[index] = position;
-	_components.attributes[index] = Attribute::None;
+	_components.attributes[index] = Attributes::None;
 	OccupantAdd( index );
 }
 void Dungeon::StepAdd( const Vector2i& position )
@@ -407,9 +407,9 @@ void Dungeon::StepAdd( const Vector2i& position )
 	const std::size_t index = _components.Add( );
 
 	_components.position[index] = position;
-	_components.attributes[index] = Attribute::Hidden |
-									Attribute::WalkableOthers |
-									Attribute::WalkablePlayer;
+	_components.attributes[index] = Attributes::Hidden |
+									Attributes::WalkableOthers |
+									Attributes::WalkablePlayer;
 	OccupantAdd( index );
 }
 void Dungeon::MonsterAdd( const Vector2i& position )
@@ -419,11 +419,11 @@ void Dungeon::MonsterAdd( const Vector2i& position )
 	_components.icon[index] = Icon::Monster;
 	_components.position[index] = position;
 	_components.positionPrevious[index] = position;
-	_components.attributes[index] = Attribute::Monster |
-									Attribute::Mortal |
-									Attribute::MovementRandom |
-									Attribute::WalkablePlayer |
-									Attribute::WalkableOthers;
+	_components.attributes[index] = Attributes::Monster |
+									Attributes::Mortal |
+									Attributes::MovementRandom |
+									Attributes::WalkablePlayer |
+									Attributes::WalkableOthers;
 	OccupantAdd( index );
 }
 
@@ -501,7 +501,7 @@ void Dungeon::GeneratePath( bool generate )
 
 		for( std::size_t index = 1; index < _components.indexCount; index++ )
 		{
-			if( !( _components.attributes[index] & Attribute::WalkableOthers ) )
+			if( !( _components.attributes[index] & Attributes::WalkableOthers ) )
 			{
 				obstacles.push_back( _components.position[index] );
 			}
@@ -566,8 +566,8 @@ void Dungeon::GenerateExtensionWalls( bool generate, int amount )
 		{
 			for( std::size_t index = 1; index < _components.indexCount; index++ )
 			{
-				if( !( _components.attributes[index] & Attribute::WalkablePlayer ) &&
-					!( _components.attributes[index] & Attribute::WalkableOthers ) )
+				if( !( _components.attributes[index] & Attributes::WalkablePlayer ) &&
+					!( _components.attributes[index] & Attributes::WalkableOthers ) )
 				{
 					const int indexDirection = RandomNumberGenerator( 0, 3 );
 					const Vector2i position = _components.position[index] + directions[indexDirection];

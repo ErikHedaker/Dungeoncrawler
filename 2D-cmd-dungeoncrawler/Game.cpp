@@ -6,12 +6,8 @@
 #include <string>
 
 Game::Game( ) :
-	_player( 100, 50, Ability::Fireball | Ability::IceBlast )
-{
-	_battleSystem.AddMonsterToLibrary( Combatant( "Zombie", 120, 20, Ability::None ) );
-	_battleSystem.AddMonsterToLibrary( Combatant( "Frozen Skeleton", 80, 10, Ability::IceBlast ) );
-	_battleSystem.AddMonsterToLibrary( Combatant( "Flaming Corpse", 70, 10, Ability::Fireball ) );
-}
+	_player( 100, 100, 1, 50, Spells::Fireball | Spells::Iceblast )
+{ }
 
 bool Game::ExistingGame( ) const
 {
@@ -90,29 +86,11 @@ void Game::GameLoop( )
 	{
 		system( "CLS" );
 		PrintDungeonCentered( _dungeons[_indexCurrent], _player.visionReach, _player.position );
+		PrintCombatantInformation( _player );
 		PlayerTurn( _dungeons[_indexCurrent] );
 		_dungeons[_indexCurrent].RandomMovement( );
-		_dungeons[_indexCurrent].HandleEvents( _player );
-
-		if( _player.status == PlayerStatus::Traveling )
-		{
-			SwitchDungeon( );
-			_player.status = PlayerStatus::Wandering;
-		}
-
-		if( _player.status == PlayerStatus::Combat )
-		{
-			_battleSystem.TempEngageRandomMonster( _player );
-
-			if( _player.health <= 0 )
-			{
-				_player.status = PlayerStatus::Dead;
-			}
-			else
-			{
-				_player.status = PlayerStatus::Wandering;
-			}
-		}
+		_dungeons[_indexCurrent].CheckEvents( _player );
+		CheckEventsPlayer( );
 	}
 }
 void Game::SaveDungeons( )
@@ -333,6 +311,7 @@ void Game::LoadDungeons( )
 
 void Game::PlayerTurn( Dungeon& dungeon )
 {
+	std::cout << "\n";
 	std::cout << "[W] Go North\n";
 	std::cout << "[A] Go West\n";
 	std::cout << "[S] Go South\n";
@@ -388,6 +367,35 @@ void Game::PlayerTurn( Dungeon& dungeon )
 
 			break;
 		}
+	}
+}
+void Game::CheckEventsPlayer( )
+{
+	if( _player.status == PlayerStatus::Traveling )
+	{
+		SwitchDungeon( );
+		_player.status = PlayerStatus::Wandering;
+	}
+
+	if( _player.status == PlayerStatus::Combat )
+	{
+		_battleSystem.EngageRandomMonster( _player );
+
+		if( _player.health <= 0 )
+		{
+			_player.status = PlayerStatus::Dead;
+		}
+		else
+		{
+			_player.status = PlayerStatus::Wandering;
+		}
+	}
+
+	_player.health += _player.healthRegeneration;
+
+	if( _player.health > _player.healthMax )
+	{
+		_player.health = _player.healthMax;
 	}
 }
 void Game::FullLinkDungeon( std::size_t indexDungeon )

@@ -72,7 +72,7 @@ class Dungeon
 		/* Game loop */
 		void PlayerMovement( const Orientation& orientation );
 		void RandomMovement( );
-		void HandleEvents( Player& player );
+		void CheckEvents( Player& player );
 
 		/* Helper functions */
 		bool CheckTile( const Vector2i& position, int bitmask ) const;

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <map>
+#include <string>
+
 struct Icon
 {
 	enum IconType
@@ -12,9 +15,9 @@ struct Icon
 	};
 };
 
-struct Attribute
+struct Attributes
 {
-	enum AttributeType
+	enum AttributesType
 	{
 		None           = 0,
 		MovementRandom = 1,
@@ -26,13 +29,13 @@ struct Attribute
 	};
 };
 
-struct Ability
+struct Spells
 {
-	enum AbilityType
+	enum SpellsType
 	{
 		None     = 0,
 		Fireball = 1,
-		IceBlast = 1 << 1
+		Iceblast = 1 << 1
 	};
 };
 

@@ -8,6 +8,14 @@ int main( )
 
 	while( true )
 	{
+		system( "CLS" );
+		std::cout << "[1] Continue current game\n";
+		std::cout << "[2] Build new dungeon (Randomization)\n";
+		std::cout << "[3] Build new dungeon (Configuration)\n";
+		std::cout << "[4] Load dungeons from file\n";
+		std::cout << "[5] Save dungeons to file\n";
+		std::cout << "[6] Exit\n";
+
 		const std::vector<char> choices =
 		{
 			'1',
@@ -17,17 +25,7 @@ int main( )
 			'5',
 			'6'
 		};
-		char choice;
-
-		system( "CLS" );
-		std::cout << "[1] Continue current game\n";
-		std::cout << "[2] Build new dungeon (Randomization)\n";
-		std::cout << "[3] Build new dungeon (Configuration)\n";
-		std::cout << "[4] Load dungeons from file\n";
-		std::cout << "[5] Save dungeons to file\n";
-		std::cout << "[6] Exit\n";
-
-		choice = GetValidChar( "\nEnter choice: ", choices );
+		const char choice = GetValidChar( "\nEnter choice: ", choices );
 
 		switch( choice )
 		{

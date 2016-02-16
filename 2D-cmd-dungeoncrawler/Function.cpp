@@ -171,6 +171,18 @@ void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector
 
 	std::cout << '\n';
 }
+void PrintCombatantInformation( const Combatant& combatant )
+{
+	std::cout << combatant.name << " HP: " << combatant.health << " (";
+
+	if( combatant.healthRegeneration > 0 )
+	{
+		std::cout << "+";
+	}
+
+	std::cout << combatant.healthRegeneration << ")\n";
+	std::cout << combatant.name << " spells owned: " << __popcnt( combatant.spells ) << "\n";
+}
 void Battle( int* attackerHealth, int* attackerDamage, int* defenderHealth, int* defenderDamage )
 {
 	system( "CLS" );
