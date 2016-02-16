@@ -4,6 +4,7 @@
 #include <map>
 #include <fstream>
 #include <string>
+#include <sstream>
 
 Game::Game( ) :
 	_player( 100, 100, 1, 50, Spells::Fireball | Spells::Iceblast )
@@ -25,10 +26,16 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 		}
 		case GameConfig::Configure:
 		{
-			const std::vector<char> choices { 'Y', 'y', 'N', 'n' };
+			const std::vector<char> choices =
+			{ 
+				'Y', 'y',
+				'N', 'n'
+			};
 			auto GetBool = [] ( char input ) -> bool
 			{
-				return input == 'Y' || input == 'y';
+				return 
+					input == 'Y' ||
+					input == 'y';
 			};
 
 			std::cout << "\n";
@@ -73,9 +80,11 @@ void Game::NewGame( )
 	_indexCurrent = _dungeons.size( ) - 1;
 	FullLinkDungeon( _indexCurrent );
 
-	auto maxCol = _dungeons[_indexCurrent].GetSize( ).first;
-	auto maxRow = _dungeons[_indexCurrent].GetSize( ).second;
-	_dungeons[_indexCurrent].CreatePlayerLocal( { maxCol / 2, maxRow / 2 }, _player );
+	const int maxCol = _dungeons[_indexCurrent].GetSize( ).first;
+	const int maxRow = _dungeons[_indexCurrent].GetSize( ).second;
+	const Vector2i center = { maxCol / 2, maxRow / 2 };
+
+	_dungeons[_indexCurrent].CreatePlayerLocal( center, _player );
 }
 void Game::GameLoop( )
 {
@@ -96,9 +105,7 @@ void Game::GameLoop( )
 void Game::SaveDungeons( )
 {
 	const std::string fileName = "2D-cmd-dungeoncrawler-save.txt";
-	std::ofstream outFile;
-
-	outFile.open( fileName, std::ios::out | std::ios::trunc );
+	std::ofstream outFile( fileName, std::ios::out | std::ios::trunc );
 
 	if( !outFile.is_open( ) )
 	{
@@ -114,17 +121,16 @@ void Game::SaveDungeons( )
 		const auto maxRow = dungeon.GetSize( ).second;
 		Vector2i iterator;
 
-		outFile << maxCol << '\n';
+		outFile << maxCol << '\t';
 		outFile << maxRow << '\n';
 		outFile << dungeon.links.size( ) << '\n';
 		
 		for( const auto& link : dungeon.links )
 		{
-			outFile << link.set << '\n';
-			outFile << link.indexDungeon << '\n';
-			outFile << link.exit.col << '\n';
-			outFile << link.exit.row << '\n';
-			outFile << link.entry.col << '\n';
+			outFile << link.indexDungeon << '\t';
+			outFile << link.exit.col << '\t';
+			outFile << link.exit.row << '\t';
+			outFile << link.entry.col << '\t';
 			outFile << link.entry.row << '\n';
 		}
 
@@ -149,11 +155,9 @@ void Game::SaveDungeons( )
 void Game::LoadDungeons( )
 {
 	const std::string fileName = "2D-cmd-dungeoncrawler-save.txt";
+	std::ifstream inFile( fileName, std::ios::in );
 	std::string line;
-	std::ifstream inFile;
 	std::size_t dungeonCount;
-
-	inFile.open( fileName, std::ios::in );
 
 	if( !inFile.is_open( ) )
 	{
@@ -166,14 +170,14 @@ void Game::LoadDungeons( )
 	{
 		std::getline( inFile, line );
 		_indexCurrent = std::stoi( line );
+
+		std::getline( inFile, line );
+		dungeonCount = std::stoi( line );
 	}
 	catch( ... )
 	{
 		throw std::exception( std::string( "Could not read integers" ).c_str( ) );
 	}
-
-	std::getline( inFile, line );
-	dungeonCount = std::stoi( line );
 
 	for( std::size_t index = 0; index < dungeonCount; index++ )
 	{
@@ -183,15 +187,11 @@ void Game::LoadDungeons( )
 		int maxRow;
 		std::size_t linkCount;
 		std::vector<Link> links;
-		bool set;
-		std::size_t indexDungeon;
-		Vector2i exit;
-		Vector2i entry;
 		Vector2i iterator;
 
 		try
 		{
-			std::getline( inFile, line );
+			std::getline( inFile, line, '\t' );
 			maxCol = std::stoi( line );
 
 			std::getline( inFile, line );
@@ -203,24 +203,9 @@ void Game::LoadDungeons( )
 			for( std::size_t indexLink = 0; indexLink < linkCount; indexLink++ )
 			{
 				std::getline( inFile, line );
-				set = line != "0";
-
-				std::getline( inFile, line );
-				indexDungeon = std::stoi( line );
-
-				std::getline( inFile, line );
-				exit.col = std::stoi( line );
-
-				std::getline( inFile, line );
-				exit.row = std::stoi( line );
-
-				std::getline( inFile, line );
-				entry.col = std::stoi( line );
-
-				std::getline( inFile, line );
-				entry.row = std::stoi( line );
-
-				links.push_back( { set, indexDungeon, exit, entry } );
+				std::stringstream lineStream( line );
+				std::vector<int> numbers( ( std::istream_iterator<int>( lineStream ) ), std::istream_iterator<int>( ) );
+				links.push_back( { numbers[0], { numbers[1], numbers[2] }, { numbers[3], numbers[4] } } );
 			}
 		}
 		catch( ... )
@@ -318,7 +303,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
 	std::cout << "[D] Go East\n";
 	std::cout << "[Q] Stand still\n";
 	std::cout << "[E] Exit to meny\n";
-	std::cout << "[F] Rotate dungeon 90 degrees clockwise\n";
+	std::cout << "[F] Rotate dungeon 90 degrees clockwise\n\n";
 
 	static const std::vector<char> choices =
 	{
@@ -337,7 +322,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		{ 'S', Orientation::South }, { 's', Orientation::South },
 		{ 'D', Orientation::East  }, { 'd', Orientation::East  }
 	};
-	const char choice = GetValidChar( "\nEnter choice: ", choices );
+	const char choice = GetValidChar( "Enter choice: ", choices );
 
 	switch( choice )
 	{
@@ -371,6 +356,8 @@ void Game::PlayerTurn( Dungeon& dungeon )
 }
 void Game::CheckEventsPlayer( )
 {
+	_player.Update( );
+
 	if( _player.status == PlayerStatus::Traveling )
 	{
 		SwitchDungeon( );
@@ -390,19 +377,14 @@ void Game::CheckEventsPlayer( )
 			_player.status = PlayerStatus::Wandering;
 		}
 	}
-
-	_player.health += _player.healthRegeneration;
-
-	if( _player.health > _player.healthMax )
-	{
-		_player.health = _player.healthMax;
-	}
 }
 void Game::FullLinkDungeon( std::size_t indexDungeon )
 {
+	const Vector2i notSet = { -1, -1 };
+
 	for( std::size_t index = 0; index < _dungeons[indexDungeon].links.size( ); index++ )
 	{
-		if( !_dungeons[indexDungeon].links[index].set )
+		if( _dungeons[indexDungeon].links[index].exit == notSet )
 		{
 			std::cout << "\nAdding link\n\n";
 
@@ -416,9 +398,6 @@ void Game::FullLinkDungeon( std::size_t indexDungeon )
 
 			_dungeons[indexDungeon].links[index].exit = linkNeighbor.entry;
 			linkNeighbor.exit = _dungeons[indexDungeon].links[index].entry;
-
-			_dungeons[indexDungeon].links[index].set = true;
-			linkNeighbor.set = true;
 		}
 	}
 }
@@ -438,13 +417,15 @@ void Game::SwitchDungeon( )
 }
 void Game::LinkExitsRotateClockwise( std::size_t index )
 {
+	const int maxCol = _dungeons[index].GetSize( ).first;
+
 	for( const auto& linkCurrent : _dungeons[index].links )
 	{
 		for( auto& link : _dungeons[linkCurrent.indexDungeon].links )
 		{
 			if( link.indexDungeon == index )
 			{
-				link.exit = PositionRotateClockwise( link.exit, _dungeons[index].GetSize( ).first );
+				link.exit = PositionRotateClockwise( link.exit, maxCol );
 			}
 		}
 	}

@@ -183,29 +183,6 @@ void PrintCombatantInformation( const Combatant& combatant )
 	std::cout << combatant.healthRegeneration << ")\n";
 	std::cout << combatant.name << " spells owned: " << __popcnt( combatant.spells ) << "\n";
 }
-void Battle( int* attackerHealth, int* attackerDamage, int* defenderHealth, int* defenderDamage )
-{
-	system( "CLS" );
-	AsciiArtSwords( );
-
-	while( true )
-	{
-		*defenderHealth -= *attackerDamage;
-
-		if( *defenderHealth <= 0 )
-		{
-			break;
-		}
-		else
-		{
-			std::swap( attackerHealth, defenderHealth );
-			std::swap( attackerDamage, defenderDamage );
-		}
-	}
-
-	std::cout << "\nSomeone died.";
-	GetEnter( );
-}
 Vector2i PositionRotateClockwise( const Vector2i& position, int maxCol )
 {
 	return { maxCol - position.row - 1, position.col };
@@ -230,17 +207,17 @@ Vector2i PositionMoveProbability( const Vector2i& position, int north, int west,
 	{
 		return PositionMove( position, Orientation::North );
 	}
-	
+
 	if( random <= north + west )
 	{
 		return PositionMove( position, Orientation::West );
 	}
-	
+
 	if( random <= north + west + south )
 	{
 		return PositionMove( position, Orientation::South );
 	}
-	
+
 	if( random <= north + west + south + east )
 	{
 		return PositionMove( position, Orientation::East );

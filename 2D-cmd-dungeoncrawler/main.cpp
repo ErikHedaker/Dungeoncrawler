@@ -14,7 +14,7 @@ int main( )
 		std::cout << "[3] Build new dungeon (Configuration)\n";
 		std::cout << "[4] Load dungeons from file\n";
 		std::cout << "[5] Save dungeons to file\n";
-		std::cout << "[6] Exit\n";
+		std::cout << "[6] Exit\n\n";
 
 		const std::vector<char> choices =
 		{
@@ -25,7 +25,7 @@ int main( )
 			'5',
 			'6'
 		};
-		const char choice = GetValidChar( "\nEnter choice: ", choices );
+		const char choice = GetValidChar( "Enter choice: ", choices );
 
 		switch( choice )
 		{

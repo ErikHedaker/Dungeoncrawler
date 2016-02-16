@@ -30,7 +30,6 @@ struct DungeonConfiguration
 
 struct Link
 {
-	bool set;
 	std::size_t indexDungeon;
 	Vector2i exit;
 	Vector2i entry;
