@@ -94,7 +94,7 @@ void Dungeon::CreatePlayerLocal( const Vector2i& position, Player& player )
 	_indexPlayerLocal = _components.Add( );
 	_components.position[_indexPlayerLocal] = { _maxCol / 2, _maxRow / 2 };
 	_components.positionPrevious[_indexPlayerLocal] = { _maxCol / 2, _maxRow / 2 };
-	_components.attributes[_indexPlayerLocal] = Attributes::Mortal | Attributes::WalkableOthers | Attributes::WalkablePlayer;
+	_components.attributes[_indexPlayerLocal] = Attributes::WalkableOthers | Attributes::WalkablePlayer;
 	_components.icon[_indexPlayerLocal] = Icon::Player;
 
 	if( CheckTile( position, Attributes::WalkableOthers ) )
@@ -399,7 +399,7 @@ void Dungeon::WallAdd( const Vector2i& position )
 
 	_components.icon[index] = Icon::Wall;
 	_components.position[index] = position;
-	_components.attributes[index] = Attributes::None;
+	_components.attributes[index] = 0;
 	OccupantAdd( index );
 }
 void Dungeon::StepAdd( const Vector2i& position )
@@ -420,7 +420,6 @@ void Dungeon::MonsterAdd( const Vector2i& position )
 	_components.position[index] = position;
 	_components.positionPrevious[index] = position;
 	_components.attributes[index] = Attributes::Monster |
-									Attributes::Mortal |
 									Attributes::MovementRandom |
 									Attributes::WalkablePlayer |
 									Attributes::WalkableOthers;

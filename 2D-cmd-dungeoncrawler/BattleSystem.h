@@ -16,7 +16,7 @@ struct Spell
 
 struct Combatant
 {
-	Combatant( const std::string& name, int health, int healthMax, int healthRegeneration, int damage, int spells );
+	Combatant( const std::string& name, int health, int healthMax, int healthRegeneration, int damage, int spells = 0 );
 
 	std::string name;
 	int health;

@@ -10,7 +10,85 @@ Game::Game( ) :
 	_player( 100, 100, 1, 50, Spells::Fireball | Spells::Iceblast )
 { }
 
-bool Game::ExistingGame( ) const
+void Game::Menu( )
+{
+	while( true )
+	{
+		system( "CLS" );
+		std::cout << "[1] Continue current game\n";
+		std::cout << "[2] Build new dungeon (Randomization)\n";
+		std::cout << "[3] Build new dungeon (Configuration)\n";
+		std::cout << "[4] Load dungeons from file\n";
+		std::cout << "[5] Save dungeons to file\n";
+		std::cout << "[6] Exit\n\n";
+
+		const std::vector<char> choices =
+		{
+			'1',
+			'2',
+			'3',
+			'4',
+			'5',
+			'6'
+		};
+		const char choice = GetValidChar( "Enter choice: ", choices );
+
+		switch( choice )
+		{
+			case '1':
+			{
+				if( Exist( ) )
+				{
+					Loop( );
+				}
+
+				break;
+			}
+			case '2':
+			{
+				SetDungeonConfiguration( GameConfig::Default );
+				system( "CLS" );
+				Reset( );
+				Loop( );
+
+				break;
+			}
+			case '3':
+			{
+				SetDungeonConfiguration( GameConfig::Configure );
+				system( "CLS" );
+				Reset( );
+				Loop( );
+
+				break;
+			}
+			case '4':
+			{
+				SetDungeonConfiguration( GameConfig::Default );
+
+				if( Load( ) )
+				{
+					Loop( );
+				}
+
+				Loop( );
+
+				break;
+			}
+			case '5':
+			{
+				Save( );
+
+				break;
+			}
+			case '6':
+			{
+				exit( 0 );
+			}
+		}
+	}
+}
+bool Game::Exist( ) const
 {
 	return _dungeons.size( ) != 0;
 }
@@ -71,7 +149,7 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 		}
 	}
 }
-void Game::NewGame( )
+void Game::Reset( )
 {
 	_player.status = PlayerStatus::Wandering;
 	_player.health = 100;
@@ -86,7 +164,7 @@ void Game::NewGame( )
 
 	_dungeons[_indexCurrent].CreatePlayerLocal( center, _player );
 }
-void Game::GameLoop( )
+void Game::Loop( )
 {
 	_status = GameStatus::Gameloop;
 
@@ -102,7 +180,7 @@ void Game::GameLoop( )
 		CheckEventsPlayer( );
 	}
 }
-void Game::SaveDungeons( )
+void Game::Save( )
 {
 	const std::string fileName = "2D-cmd-dungeoncrawler-save.txt";
 	std::ofstream outFile( fileName, std::ios::out | std::ios::trunc );
@@ -112,6 +190,21 @@ void Game::SaveDungeons( )
 		throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
 	}
 
+	//outFile << _config.fixedDungeonSize << '\t';
+	//outFile << _config.maxCol << '\t';
+	//outFile << _config.maxRow << '\t';
+	//outFile << _config.generateDoors << '\t';
+	//outFile << _config.generateOuterWalls << '\t';
+	//outFile << _config.generatePath << '\t';
+	//outFile << _config.generateSourceWalls << '\t';
+	//outFile << _config.generateExtensionWalls << '\t';
+	//outFile << _config.generateFillerWalls << '\t';
+	//outFile << _config.generateMonsters << '\t';
+	//outFile << _config.amountDoors << '\t';
+	//outFile << _config.amountSourceWalls << '\t';
+	//outFile << _config.amountExtensionWalls << '\t';
+	//outFile << _config.amountFillerWallsCycles << '\t';
+	//outFile << _config.amountMonsters << '\t';
 	outFile << _indexCurrent << '\n';
 	outFile << _dungeons.size( ) << '\n';
 
@@ -152,45 +245,60 @@ void Game::SaveDungeons( )
 		}
 	}
 }
-void Game::LoadDungeons( )
+bool Game::Load( )
 {
-	const std::string fileName = "2D-cmd-dungeoncrawler-save.txt";
-	std::ifstream inFile( fileName, std::ios::in );
-	std::string line;
-	std::size_t dungeonCount;
-
-	if( !inFile.is_open( ) )
-	{
-		throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
-	}
-
-	_dungeons.clear( );
-
 	try
 	{
+		const std::string fileName = "2D-cmd-dungeoncrawler-save.txt";
+		std::ifstream inFile( fileName, std::ios::in );
+		std::string line;
+		std::size_t dungeonCount;
+		DungeonConfiguration config;
+
+		if( !inFile.is_open( ) )
+		{
+			throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
+		}
+
+		_dungeons.clear( );
+
+		//std::getline( inFile, line );
+		//std::vector<int> configArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
+		//DungeonConfiguration config
+		//{
+		//	configArgs[0],
+		//	configArgs[1],
+		//	configArgs[2],
+		//	configArgs[3],
+		//	configArgs[4],
+		//	configArgs[5],
+		//	configArgs[6],
+		//	configArgs[7],
+		//	configArgs[8],
+		//	configArgs[9],
+		//	configArgs[10],
+		//	configArgs[11],
+		//	configArgs[12],
+		//	configArgs[13],
+		//	configArgs[14]
+		//};
+
 		std::getline( inFile, line );
 		_indexCurrent = std::stoi( line );
 
 		std::getline( inFile, line );
 		dungeonCount = std::stoi( line );
-	}
-	catch( ... )
-	{
-		throw std::exception( std::string( "Could not read integers" ).c_str( ) );
-	}
 
-	for( std::size_t index = 0; index < dungeonCount; index++ )
-	{
-		std::vector<char> iconMap;
-		std::vector<bool> visionMap;
-		int maxCol;
-		int maxRow;
-		std::size_t linkCount;
-		std::vector<Link> links;
-		Vector2i iterator;
-
-		try
+		for( std::size_t index = 0; index < dungeonCount; index++ )
 		{
+			std::vector<char> iconMap;
+			std::vector<bool> visionMap;
+			int maxCol;
+			int maxRow;
+			std::size_t linkCount;
+			std::vector<Link> links;
+			Vector2i iterator;
+
 			std::getline( inFile, line, '\t' );
 			maxCol = std::stoi( line );
 
@@ -203,95 +311,100 @@ void Game::LoadDungeons( )
 			for( std::size_t indexLink = 0; indexLink < linkCount; indexLink++ )
 			{
 				std::getline( inFile, line );
-				std::stringstream lineStream( line );
-				std::vector<int> numbers( ( std::istream_iterator<int>( lineStream ) ), std::istream_iterator<int>( ) );
-				links.push_back( { numbers[0], { numbers[1], numbers[2] }, { numbers[3], numbers[4] } } );
+				std::vector<int> linkArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
+				links.push_back( { linkArgs[0], { linkArgs[1], linkArgs[2] }, { linkArgs[3], linkArgs[4] } } );
 			}
-		}
-		catch( ... )
-		{
-			throw std::exception( std::string( "Could not read integers" ).c_str( ) );
-		}
 
-		iconMap.resize( maxCol * maxRow );
-		visionMap.resize( maxCol * maxRow );
+			iconMap.resize( maxCol * maxRow );
+			visionMap.resize( maxCol * maxRow );
 
-		for( iterator.row = 0; iterator.row < maxRow; iterator.row++ )
-		{
-			std::getline( inFile, line );
-
-			for( iterator.col = 0; iterator.col < maxCol * 2; iterator.col++ )
+			for( iterator.row = 0; iterator.row < maxRow; iterator.row++ )
 			{
-				if( iterator.col < maxCol )
+				std::getline( inFile, line );
+
+				for( iterator.col = 0; iterator.col < maxCol * 2; iterator.col++ )
 				{
-					switch( line[iterator.col] )
+					if( iterator.col < maxCol )
 					{
-						case Icon::Player:
+						switch( line[iterator.col] )
 						{
-							iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Player;
+							case Icon::Player:
+							{
+								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Player;
 
-							break;
-						}
-						case Icon::Monster:
-						{
-							iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Monster;
+								break;
+							}
+							case Icon::Monster:
+							{
+								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Monster;
 
-							break;
-						}
-						case Icon::Door:
-						{
-							iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Door;
+								break;
+							}
+							case Icon::Door:
+							{
+								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Door;
 
-							break;
-						}
-						case Icon::Wall:
-						{
-							iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Wall;
+								break;
+							}
+							case Icon::Wall:
+							{
+								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Wall;
 
-							break;
-						}
-						case Icon::Ground:
-						{
-							iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Ground;
+								break;
+							}
+							case Icon::Ground:
+							{
+								iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Ground;
 
-							break;
-						}
-						default:
-						{
-							throw std::exception( std::string( "Could not read tile icons" ).c_str( ) );
+								break;
+							}
+							default:
+							{
+								throw std::exception( std::string( "Could not read tile icons" ).c_str( ) );
+							}
 						}
 					}
-				}
-				else
-				{
-					Vector2i position( iterator.col % maxCol, iterator.row );
-
-					switch( line[iterator.col] )
+					else
 					{
-						case '1':
-						{
-							visionMap[( position.row * maxCol ) + position.col] = true;
+						Vector2i position( iterator.col % maxCol, iterator.row );
 
-							break;
-						}
-						case '0':
+						switch( line[iterator.col] )
 						{
-							visionMap[( position.row * maxCol ) + position.col] = false;
+							case '1':
+							{
+								visionMap[( position.row * maxCol ) + position.col] = true;
 
-							break;
-						}
-						default:
-						{
-							throw std::exception( std::string( "Could not read vision" ).c_str( ) );
+								break;
+							}
+							case '0':
+							{
+								visionMap[( position.row * maxCol ) + position.col] = false;
+
+								break;
+							}
+							default:
+							{
+								throw std::exception( std::string( "Could not read vision" ).c_str( ) );
+							}
 						}
 					}
 				}
 			}
-		}
 
-		_dungeons.emplace_back( maxCol, maxRow, visionMap, iconMap, _player );
-		_dungeons.back( ).links = links;
+			_dungeons.emplace_back( maxCol, maxRow, visionMap, iconMap, _player );
+			_dungeons.back( ).links = links;
+		}
 	}
+	catch( const std::exception& e )
+	{
+		std::cout << "\nException: " << e.what( );
+		std::cout << "\n\nPress enter to continue: ";
+		GetEnter( );
+
+		return false;
+	}
+
+	return true;
 }
 
 void Game::PlayerTurn( Dungeon& dungeon )
@@ -301,7 +414,6 @@ void Game::PlayerTurn( Dungeon& dungeon )
 	std::cout << "[A] Go West\n";
 	std::cout << "[S] Go South\n";
 	std::cout << "[D] Go East\n";
-	std::cout << "[Q] Stand still\n";
 	std::cout << "[E] Exit to meny\n";
 	std::cout << "[F] Rotate dungeon 90 degrees clockwise\n\n";
 
@@ -311,7 +423,6 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		'A', 'a',
 		'S', 's',
 		'D', 'd',
-		'Q', 'q',
 		'E', 'e',
 		'F', 'f'
 	};
@@ -333,10 +444,6 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		{
 			dungeon.PlayerMovement( direction.at( choice ) );
 
-			break;
-		}
-		case 'Q': case 'q':
-		{
 			break;
 		}
 		case 'E': case 'e':

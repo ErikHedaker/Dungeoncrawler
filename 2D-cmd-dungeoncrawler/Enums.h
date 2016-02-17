@@ -19,13 +19,11 @@ struct Attributes
 {
 	enum AttributesType
 	{
-		None           = 0,
-		MovementRandom = 1,
+		MovementRandom = 1 << 0,
 		Monster        = 1 << 1,
-		Mortal         = 1 << 2,
-		Hidden         = 1 << 3,
-		WalkablePlayer = 1 << 4,
-		WalkableOthers = 1 << 5
+		Hidden         = 1 << 2,
+		WalkablePlayer = 1 << 3,
+		WalkableOthers = 1 << 4
 	};
 };
 
@@ -33,8 +31,7 @@ struct Spells
 {
 	enum SpellsType
 	{
-		None     = 0,
-		Fireball = 1,
+		Fireball = 1 << 0,
 		Iceblast = 1 << 1
 	};
 };

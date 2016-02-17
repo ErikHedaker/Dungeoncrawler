@@ -10,12 +10,13 @@ class Game
 	public:
 		Game( );
 
-		bool ExistingGame( ) const;
+		void Menu( );
+		bool Exist( ) const;
 		void SetDungeonConfiguration( const GameConfig& type );
-		void NewGame( );
-		void GameLoop( );
-		void SaveDungeons( );
-		void LoadDungeons( );
+		void Reset( );
+		void Loop( );
+		void Save( );
+		bool Load( );
 
 	private:
 		std::vector<Dungeon> _dungeons;
