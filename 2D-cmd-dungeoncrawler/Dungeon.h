@@ -64,9 +64,9 @@ class Dungeon
 		void CreatePlayerLocal( const Vector2i& position, Player& player );
 		void RotateDungeonClockwise( );
 
-		const std::pair<int, int> GetSize( ) const;
 		const Tile& GetTile( const Vector2i& position ) const;
 		bool GetVision( const Vector2i& position ) const;
+		std::pair<int, int> GetSize( ) const;
 
 		/* Game loop */
 		void PlayerMovement( const Orientation& orientation );

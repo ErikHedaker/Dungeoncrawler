@@ -29,15 +29,14 @@ void Combatant::Update( )
 BattleSystem::BattleSystem( ) :
 	_libraryMonster
 	( {
-		{ "Rotten Zombie",  120, 120, 5, 20, Spells::None     },
+		{ "Rotten Zombie",  120, 120, 5, 20 },
 		{ "Frozen Skeleton", 80,  80, 0, 10, Spells::Iceblast },
 		{ "Burning Lunatic", 70,  70, 0, 10, Spells::Fireball }
 	} ),
 	_librarySpell
 	( {
-		{ Spells::None,     { "None",     0.0 } },
-		{ Spells::Iceblast, { "Fireball", 1.5 } },
-		{ Spells::Fireball, { "Iceblast", 1.3 } }
+		{ Spells::Iceblast, { "Iceblast", 1.2 } },
+		{ Spells::Fireball, { "Fireball", 1.5 } }
 	} )
 { }
 
@@ -47,13 +46,13 @@ Combatant BattleSystem::GetRandomMonster( )
 }
 Spell BattleSystem::GetSpell( Combatant& player )
 {
-	const int bitMax = _librarySpell.size( ) - 2;
+	const int bitMax = _librarySpell.size( ) - 1;
 	std::map<char, Spell> idSpell;
 	std::vector<char> choices;
 	char id = '1';
 	char choice;
 
-	std::cout << "\nChoose a spell:\n";
+	std::cout << "\nChoose a spell:\n\n";
 
 	for( int bit = 1; bit <= 1 << bitMax; bit <<= 1 )
 	{
@@ -72,12 +71,12 @@ Spell BattleSystem::GetSpell( Combatant& player )
 }
 void BattleSystem::CastSpell( const Spell& spell, Combatant& caster, Combatant& target )
 {
-	std::cout << "\n" << caster.name << " casts " << spell.name << " on " << target.name << "!\n";
+	std::cout << caster.name << " casts " << spell.name << " on " << target.name << "!\n";
 	target.health -= static_cast<int>( caster.damage * spell.damageMultiplier );
 }
 void BattleSystem::WeaponAttack( Combatant& attacker, Combatant& target )
 {
-	std::cout << "\n" << attacker.name << " attacks " << target.name << " with its weapon!\n";
+	std::cout << attacker.name << " attacks " << target.name << " with its weapon!\n";
 	target.health -= attacker.damage;
 }
 void BattleSystem::PlayerTurn( Combatant& player, Combatant& monster )
@@ -93,10 +92,12 @@ void BattleSystem::PlayerTurn( Combatant& player, Combatant& monster )
 	};
 	const char choice = GetValidChar( "Enter choice: ", choices );
 
+
 	switch( choice )
 	{
 		case '1':
 		{
+			system( "CLS" );
 			WeaponAttack( player, monster );
 
 			break;
@@ -105,7 +106,9 @@ void BattleSystem::PlayerTurn( Combatant& player, Combatant& monster )
 		{
 			if( player.spells != 0 )
 			{
-				CastSpell( GetSpell( player ), player, monster );
+				Spell spell = GetSpell( player );
+				system( "CLS" );
+				CastSpell( spell, player, monster );
 			}
 
 			break;
@@ -114,6 +117,20 @@ void BattleSystem::PlayerTurn( Combatant& player, Combatant& monster )
 }
 void BattleSystem::MonsterTurn( Combatant& player, Combatant& monster )
 {
+	const int bitMax = _librarySpell.size( ) - 1;
+	const int actionsMax = __popcnt( monster.spells ) + 1;
+
+	for( int bit = 1; bit <= 1 << bitMax; bit <<= 1 )
+	{
+		if( monster.spells & bit &&
+			RandomNumberGenerator( 1, actionsMax ) == actionsMax )
+		{
+			CastSpell( _librarySpell.at( bit ), monster, player );
+
+			return;
+		}
+	}
+
 	WeaponAttack( monster, player );
 }
 void BattleSystem::EngageRandomMonster( Combatant& player )

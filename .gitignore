@@ -1,5 +1,6 @@
 *.vcxproj
 *.vcxproj.filters
+*.vcxproj.user
 *.opensdf
 *.sdf
 *.sln
@@ -11,6 +12,11 @@
 *.txt
 *.lastbuildstate
 *.obj
+*.VC.opendb
+*.iobj
+*.ipdb
 
 2D-cmd-dungeoncrawler/Debug/
 2D-cmd-dungeoncrawler/Release/
+2D-cmd-dungeoncrawler/.vs/
+2D-cmd-dungeoncrawler/2D-cmd-dungeoncrawler/

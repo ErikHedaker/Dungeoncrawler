@@ -94,7 +94,7 @@ void Dungeon::CreatePlayerLocal( const Vector2i& position, Player& player )
 	_indexPlayerLocal = _components.Add( );
 	_components.position[_indexPlayerLocal] = { _maxCol / 2, _maxRow / 2 };
 	_components.positionPrevious[_indexPlayerLocal] = { _maxCol / 2, _maxRow / 2 };
-	_components.attributes[_indexPlayerLocal] = Attributes::Mortal | Attributes::WalkableOthers | Attributes::WalkablePlayer;
+	_components.attributes[_indexPlayerLocal] = Attributes::WalkableOthers | Attributes::WalkablePlayer;
 	_components.icon[_indexPlayerLocal] = Icon::Player;
 
 	if( CheckTile( position, Attributes::WalkableOthers ) )
@@ -147,10 +147,10 @@ void Dungeon::RotateDungeonClockwise( )
 			visionRotated[( iterator.row * _maxCol ) + iterator.col] = _visionMap[( iterator.col * _maxRow ) + iterator.row];
 		}
 
-		auto tileColoumBegin = tileRotated.begin( ) + iterator.row * _maxCol;
-		auto tileColoumEnd   = tileRotated.begin( ) + iterator.row * _maxCol + _maxCol;
-		auto visionColoumBegin = visionRotated.begin( ) + iterator.row * _maxCol;
-		auto visionColoumEnd   = visionRotated.begin( ) + iterator.row * _maxCol + _maxCol;
+		auto& tileColoumBegin   = tileRotated.begin( )   + iterator.row * _maxCol;
+		auto& tileColoumEnd     = tileRotated.begin( )   + iterator.row * _maxCol + _maxCol;
+		auto& visionColoumBegin = visionRotated.begin( ) + iterator.row * _maxCol;
+		auto& visionColoumEnd   = visionRotated.begin( ) + iterator.row * _maxCol + _maxCol;
 
 		std::reverse( tileColoumBegin, tileColoumEnd );
 		std::reverse( visionColoumBegin, visionColoumEnd );
@@ -171,10 +171,6 @@ void Dungeon::RotateDungeonClockwise( )
 	}
 }
 
-const std::pair<int, int> Dungeon::GetSize( ) const
-{
-	return std::make_pair( _maxCol, _maxRow );
-}
 const Tile& Dungeon::GetTile( const Vector2i& position ) const
 {
 	return _tileMap[( position.row * _maxCol ) + position.col];
@@ -182,6 +178,10 @@ const Tile& Dungeon::GetTile( const Vector2i& position ) const
 bool Dungeon::GetVision( const Vector2i& position ) const
 {
 	return _visionMap[( position.row * _maxCol ) + position.col];
+}
+std::pair<int, int> Dungeon::GetSize( ) const
+{
+	return std::make_pair( _maxCol, _maxRow );
 }
 
 void Dungeon::PlayerMovement( const Orientation& orientation )
@@ -399,7 +399,7 @@ void Dungeon::WallAdd( const Vector2i& position )
 
 	_components.icon[index] = Icon::Wall;
 	_components.position[index] = position;
-	_components.attributes[index] = Attributes::None;
+	_components.attributes[index] = 0;
 	OccupantAdd( index );
 }
 void Dungeon::StepAdd( const Vector2i& position )
@@ -420,7 +420,6 @@ void Dungeon::MonsterAdd( const Vector2i& position )
 	_components.position[index] = position;
 	_components.positionPrevious[index] = position;
 	_components.attributes[index] = Attributes::Monster |
-									Attributes::Mortal |
 									Attributes::MovementRandom |
 									Attributes::WalkablePlayer |
 									Attributes::WalkableOthers;
@@ -469,7 +468,7 @@ void Dungeon::GenerateOuterWalls( bool generate )
 	{
 		Vector2i iterator;
 
-		std::cout << "Generating outer obstacles\n";
+		std::cout << "Generating outer walls\n";
 
 		for( iterator.row = 0; iterator.row < _maxRow; iterator.row++ )
 		{
@@ -528,7 +527,7 @@ void Dungeon::GenerateSourceWalls( bool generate, int amount )
 		const Vector2i center = { _maxCol / 2, _maxRow / 2 };
 		int sourceWallsLeft = amount ? amount : ( _maxCol * _maxRow ) / 20;
 
-		std::cout << "Generating source obstacles\n";
+		std::cout << "Generating source walls\n";
 
 		while( sourceWallsLeft > 0 )
 		{
@@ -560,11 +559,11 @@ void Dungeon::GenerateExtensionWalls( bool generate, int amount )
 		};
 		int extensionWallsLeft = amount ? amount : ( _maxCol * _maxRow ) / 5;
 
-		std::cout << "Generating extension obstacles\n";
+		std::cout << "Generating extension walls\n";
 
 		while( extensionWallsLeft > 0 )
 		{
-			for( std::size_t index = 1; index < _components.indexCount; index++ )
+			for( std::size_t index = 0; index < _components.indexCount; index++ )
 			{
 				if( !( _components.attributes[index] & Attributes::WalkablePlayer ) &&
 					!( _components.attributes[index] & Attributes::WalkableOthers ) )
@@ -592,7 +591,7 @@ void Dungeon::GenerateFillerWalls( bool generate, int amount )
 		const int amountWalls = amount ? amount : 5;
 		Vector2i iterator;
 
-		std::cout << "Generating filler obstacles\n";
+		std::cout << "Generating filler walls\n";
 
 		for( int i = 0; i < amountWalls; i++ )
 		{
