@@ -15,6 +15,7 @@
 *.VC.opendb
 *.iobj
 *.ipdb
+*.suo
 
 2D-cmd-dungeoncrawler/Debug/
 2D-cmd-dungeoncrawler/Release/
