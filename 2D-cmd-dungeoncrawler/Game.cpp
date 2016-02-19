@@ -13,6 +13,7 @@ Game::Game( ) :
 
 void Game::Menu( )
 {
+<<<<<<< HEAD
 	const std::vector<char> choices =
 	{
 		'1',
@@ -23,6 +24,8 @@ void Game::Menu( )
 		'6'
 	};
 
+=======
+>>>>>>> 873005cdeeaf45bc10da1e32f76390deece7c60e
 	while( true )
 	{
 		system( "CLS" );
@@ -33,6 +36,18 @@ void Game::Menu( )
 		std::cout << "[5] Save dungeons to file\n";
 		std::cout << "[6] Exit\n\n";
 
+<<<<<<< HEAD
+=======
+		const std::vector<char> choices =
+		{
+			'1',
+			'2',
+			'3',
+			'4',
+			'5',
+			'6'
+		};
+>>>>>>> 873005cdeeaf45bc10da1e32f76390deece7c60e
 		const char choice = GetValidChar( "Enter choice: ", choices );
 
 		switch( choice )
@@ -73,6 +88,11 @@ void Game::Menu( )
 					Loop( );
 				}
 
+<<<<<<< HEAD
+=======
+				Loop( );
+
+>>>>>>> 873005cdeeaf45bc10da1e32f76390deece7c60e
 				break;
 			}
 			case '5':
@@ -253,6 +273,10 @@ bool Game::Load( )
 		std::ifstream inFile( fileName, std::ios::in );
 		std::string line;
 		std::size_t dungeonCount;
+<<<<<<< HEAD
+=======
+		DungeonConfiguration config;
+>>>>>>> 873005cdeeaf45bc10da1e32f76390deece7c60e
 
 		if( !inFile.is_open( ) )
 		{
@@ -263,7 +287,11 @@ bool Game::Load( )
 
 		//std::getline( inFile, line );
 		//std::vector<int> configArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
+<<<<<<< HEAD
 		//DungeonConfiguration config =
+=======
+		//DungeonConfiguration config
+>>>>>>> 873005cdeeaf45bc10da1e32f76390deece7c60e
 		//{
 		//	configArgs[0],
 		//	configArgs[1],
@@ -311,12 +339,21 @@ bool Game::Load( )
 			{
 				std::getline( inFile, line );
 				std::vector<int> linkArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
+<<<<<<< HEAD
 				links.push_back( { (std::size_t)linkArgs[0], { linkArgs[1], linkArgs[2] }, { linkArgs[3], linkArgs[4] } } );
 			}
 
 			iconMap.resize( maxCol * maxRow );
 			visionMap.resize( maxCol * maxRow );
 
+=======
+				links.push_back( { linkArgs[0], { linkArgs[1], linkArgs[2] }, { linkArgs[3], linkArgs[4] } } );
+			}
+
+			iconMap.resize( maxCol * maxRow );
+			visionMap.resize( maxCol * maxRow );
+
+>>>>>>> 873005cdeeaf45bc10da1e32f76390deece7c60e
 			for( iterator.row = 0; iterator.row < maxRow; iterator.row++ )
 			{
 				std::getline( inFile, line );
