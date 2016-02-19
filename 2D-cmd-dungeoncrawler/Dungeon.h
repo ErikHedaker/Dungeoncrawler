@@ -1,10 +1,8 @@
 #pragma once
 
 #include "Enums.h"
-#include "BattleSystem.h"
 #include "Player.h"
 #include <vector>
-#include <list>
 #include <utility>
 
 struct DungeonConfiguration
@@ -62,7 +60,7 @@ class Dungeon
 		std::vector<Link> links;
 
 		void CreatePlayerLocal( const Vector2i& position, Player& player );
-		void RotateDungeonClockwise( );
+		void RotateClockwise( );
 
 		const Tile& GetTile( const Vector2i& position ) const;
 		bool GetVision( const Vector2i& position ) const;
@@ -74,7 +72,7 @@ class Dungeon
 		void CheckEvents( Player& player );
 
 		/* Helper functions */
-		bool CheckTile( const Vector2i& position, int bitmask ) const;
+		bool CheckTile( const Vector2i& position, int bit ) const;
 		bool InBounds( const Vector2i& position ) const;
 		bool IsCorner( const Vector2i& position ) const;
 		bool Unoccupied( const Vector2i& position ) const;

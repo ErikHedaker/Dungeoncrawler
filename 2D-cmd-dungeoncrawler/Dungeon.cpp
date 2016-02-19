@@ -131,7 +131,7 @@ void Dungeon::CreatePlayerLocal( const Vector2i& position, Player& player )
 	UpdateVision( player.position, player.visionReach );
 	OccupantAdd( _indexPlayerLocal );
 }
-void Dungeon::RotateDungeonClockwise( )
+void Dungeon::RotateClockwise( )
 {
 	auto tileRotated = _tileMap;
 	auto visionRotated = _visionMap;
@@ -257,14 +257,14 @@ void Dungeon::CheckEvents( Player& player )
 	}
 }
 
-bool Dungeon::CheckTile( const Vector2i& position, int bitmask ) const
+bool Dungeon::CheckTile( const Vector2i& position, int bit ) const
 {
 	const auto& indexes = GetTile( position ).indexOccupants;
 	int count = 0;
 
 	for( auto index : indexes )
 	{
-		if( _components.attributes[index] & bitmask )
+		if( _components.attributes[index] & bit )
 		{
 			count++;
 		}

@@ -3,32 +3,39 @@
 #include "Dungeon.h"
 #include "Player.h"
 #include "BattleSystem.h"
-#include <memory>
 
 class Game
 {
 	public:
 		Game( );
 
+		/* Called in main */
 		void Menu( );
+
+		/* Helper functions */
 		bool Exist( ) const;
+
+	private:
+		Player _player;
+		GameStatus _status;
+		BattleSystem _battleSystem;
+		DungeonConfiguration _config;
+		std::vector<Dungeon> _dungeons;
+		std::size_t _indexCurrent;
+
+		/* Called in Menu */
 		void SetDungeonConfiguration( const GameConfig& type );
 		void Reset( );
 		void Loop( );
+
+		/* File IO */
 		void Save( );
 		bool Load( );
 
-	private:
-		std::vector<Dungeon> _dungeons;
-		std::size_t _indexCurrent;
-		DungeonConfiguration _config;
-		BattleSystem _battleSystem;
-		Player _player;
-		GameStatus _status;
-
+		/* Various functions */
 		void PlayerTurn( Dungeon& dungeon );
 		void CheckEventsPlayer( );
-		void FullLinkDungeon( std::size_t indexDungeon );
 		void SwitchDungeon( );
-		void LinkExitsRotateClockwise( std::size_t index );
+		void FullLinkDungeon( std::size_t indexDungeon );
+		void LinkExitsRotateClockwise( std::size_t indexDungeon );
 };

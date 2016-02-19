@@ -42,6 +42,6 @@ class BattleSystem
 		void EngageRandomMonster( Combatant& player );
 
 	private:
-		const std::vector<Combatant> _libraryMonster;
-		const std::map<int, const Spell> _librarySpell;
+		const std::vector<Combatant> _libraryMonsters;
+		const std::map<int, const Spell> _librarySpells;
 };

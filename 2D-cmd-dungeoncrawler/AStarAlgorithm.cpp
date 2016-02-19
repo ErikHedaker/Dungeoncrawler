@@ -1,4 +1,8 @@
 #include "AStarAlgorithm.h"
+#include <unordered_set>
+#include <unordered_map>
+#include <queue>
+#include <vector>
 #include <iostream>
 
 Grid::Grid( int maxCol, int maxRow, const std::vector<Vector2i>& obstacles ) :
@@ -37,6 +41,12 @@ const std::vector<Vector2i> Grid::GetValidNeighbors( const Vector2i& position ) 
 			Passable( neighbor ) )
 		{
 			results.push_back( neighbor );
+		}
+
+		if( ( position.col + position.row ) % 2 == 0 )
+		{
+			/* Aesthetic improvement on square grids according to original author */
+			std::reverse( results.begin( ), results.end( ) );
 		}
 	}
 

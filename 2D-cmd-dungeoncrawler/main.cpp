@@ -1,6 +1,4 @@
 #include "Game.h"
-#include "Functions.h"
-#include <vector>
 
 int main( )
 {

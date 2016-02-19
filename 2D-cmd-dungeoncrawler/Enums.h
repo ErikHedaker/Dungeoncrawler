@@ -1,8 +1,5 @@
 #pragma once
 
-#include <map>
-#include <string>
-
 struct Icon
 {
 	enum IconType
@@ -60,6 +57,6 @@ enum class PlayerStatus
 
 enum class GameStatus
 {
-	Menu,
-	Gameloop
+	Neutral,
+	Menu
 };

@@ -8,7 +8,7 @@
 #include <iterator>
 
 Game::Game( ) :
-	_player( 100, 100, 1, 50, Spells::Fireball | Spells::Iceblast )
+	_player( 200, 70, 1, 50, Spells::Fireball | Spells::Iceblast )
 { }
 
 void Game::Menu( )
@@ -19,18 +19,19 @@ void Game::Menu( )
 		'2',
 		'3',
 		'4',
-		'5',
-		'6'
+		'5'
 	};
+
 	while( true )
 	{
 		system( "CLS" );
 		std::cout << "[1] Continue current game\n";
-		std::cout << "[2] Build new dungeon (Randomization)\n";
-		std::cout << "[3] Build new dungeon (Configuration)\n";
-		std::cout << "[4] Load dungeons from file\n";
-		std::cout << "[5] Save dungeons to file\n";
-		std::cout << "[6] Exit\n\n";
+		std::cout << "[2] Load game from file\n";
+		std::cout << "[3] Build new game (Randomization)\n";
+		std::cout << "[4] Build new game (Configuration)\n";
+		std::cout << "[5] Exit\n\n";
+
+		_status = GameStatus::Neutral;
 
 		const char choice = GetValidChar( "Enter choice: ", choices );
 
@@ -47,16 +48,16 @@ void Game::Menu( )
 			}
 			case '2':
 			{
-				SetDungeonConfiguration( GameConfig::Default );
-				system( "CLS" );
-				Reset( );
-				Loop( );
+				if( Load( ) )
+				{
+					Loop( );
+				}
 
 				break;
 			}
 			case '3':
 			{
-				SetDungeonConfiguration( GameConfig::Configure );
+				SetDungeonConfiguration( GameConfig::Default );
 				system( "CLS" );
 				Reset( );
 				Loop( );
@@ -65,32 +66,26 @@ void Game::Menu( )
 			}
 			case '4':
 			{
-				SetDungeonConfiguration( GameConfig::Default );
-
-				if( Load( ) )
-				{
-					Loop( );
-				}
+				SetDungeonConfiguration( GameConfig::Configure );
+				system( "CLS" );
+				Reset( );
+				Loop( );
 
 				break;
 			}
 			case '5':
 			{
-				Save( );
-
-				break;
-			}
-			case '6':
-			{
-				exit( 0 );
+				return;
 			}
 		}
 	}
 }
+
 bool Game::Exist( ) const
 {
 	return _dungeons.size( ) != 0;
 }
+
 void Game::SetDungeonConfiguration( const GameConfig& type )
 {
 	switch( type )
@@ -151,7 +146,7 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 void Game::Reset( )
 {
 	_player.status = PlayerStatus::Wandering;
-	_player.health = 100;
+	_player.health = _player.healthMax;
 	_dungeons.clear( );
 	_dungeons.emplace_back( _config );
 	_indexCurrent = _dungeons.size( ) - 1;
@@ -165,9 +160,7 @@ void Game::Reset( )
 }
 void Game::Loop( )
 {
-	_status = GameStatus::Gameloop;
-
-	while( _status == GameStatus::Gameloop &&
+	while( _status == GameStatus::Neutral &&
 		   _player.status != PlayerStatus::Dead )
 	{
 		system( "CLS" );
@@ -179,6 +172,7 @@ void Game::Loop( )
 		CheckEventsPlayer( );
 	}
 }
+
 void Game::Save( )
 {
 	const std::string fileName = "2D-cmd-dungeoncrawler-save.txt";
@@ -189,21 +183,22 @@ void Game::Save( )
 		throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
 	}
 
-	//outFile << _config.fixedDungeonSize << '\t';
-	//outFile << _config.maxCol << '\t';
-	//outFile << _config.maxRow << '\t';
-	//outFile << _config.generateDoors << '\t';
-	//outFile << _config.generateOuterWalls << '\t';
-	//outFile << _config.generatePath << '\t';
-	//outFile << _config.generateSourceWalls << '\t';
-	//outFile << _config.generateExtensionWalls << '\t';
-	//outFile << _config.generateFillerWalls << '\t';
-	//outFile << _config.generateMonsters << '\t';
-	//outFile << _config.amountDoors << '\t';
-	//outFile << _config.amountSourceWalls << '\t';
-	//outFile << _config.amountExtensionWalls << '\t';
-	//outFile << _config.amountFillerWallsCycles << '\t';
-	//outFile << _config.amountMonsters << '\t';
+	outFile << _config.fixedDungeonSize << '\t';
+	outFile << _config.maxCol << '\t';
+	outFile << _config.maxRow << '\t';
+	outFile << _config.generateDoors << '\t';
+	outFile << _config.generateOuterWalls << '\t';
+	outFile << _config.generatePath << '\t';
+	outFile << _config.generateSourceWalls << '\t';
+	outFile << _config.generateExtensionWalls << '\t';
+	outFile << _config.generateFillerWalls << '\t';
+	outFile << _config.generateMonsters << '\t';
+	outFile << _config.amountDoors << '\t';
+	outFile << _config.amountSourceWalls << '\t';
+	outFile << _config.amountExtensionWalls << '\t';
+	outFile << _config.amountFillerWallsCycles << '\t';
+	outFile << _config.amountMonsters << '\n';
+
 	outFile << _indexCurrent << '\n';
 	outFile << _dungeons.size( ) << '\n';
 
@@ -260,26 +255,23 @@ bool Game::Load( )
 
 		_dungeons.clear( );
 
-		//std::getline( inFile, line );
-		//std::vector<int> configArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
-		//_config =
-		//{
-		//	configArgs[0],
-		//	configArgs[1],
-		//	configArgs[2],
-		//	configArgs[3],
-		//	configArgs[4],
-		//	configArgs[5],
-		//	configArgs[6],
-		//	configArgs[7],
-		//	configArgs[8],
-		//	configArgs[9],
-		//	configArgs[10],
-		//	configArgs[11],
-		//	configArgs[12],
-		//	configArgs[13],
-		//	configArgs[14]
-		//};
+		std::getline( inFile, line );
+		std::vector<int> configArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
+		_config.fixedDungeonSize        = configArgs[0] != 0;
+		_config.maxCol                  = configArgs[1];
+		_config.maxRow                  = configArgs[2];
+		_config.generateDoors           = configArgs[3] != 0;
+		_config.generateOuterWalls      = configArgs[4] != 0;
+		_config.generatePath            = configArgs[5] != 0;
+		_config.generateSourceWalls     = configArgs[6] != 0;
+		_config.generateExtensionWalls  = configArgs[7] != 0;
+		_config.generateFillerWalls     = configArgs[8] != 0;
+		_config.generateMonsters        = configArgs[9] != 0;
+		_config.amountDoors             = configArgs[10];
+		_config.amountSourceWalls       = configArgs[11];
+		_config.amountExtensionWalls    = configArgs[12];
+		_config.amountFillerWallsCycles = configArgs[13];
+		_config.amountMonsters          = configArgs[14];
 
 		std::getline( inFile, line );
 		_indexCurrent = std::stoi( line );
@@ -310,7 +302,7 @@ bool Game::Load( )
 			{
 				std::getline( inFile, line );
 				std::vector<int> linkArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
-				links.push_back( { (std::size_t)linkArgs[0], { linkArgs[1], linkArgs[2] }, { linkArgs[3], linkArgs[4] } } );
+				links.push_back( { static_cast<std::size_t>( linkArgs[0] ), { linkArgs[1], linkArgs[2] }, { linkArgs[3], linkArgs[4] } } );
 			}
 
 			iconMap.resize( maxCol * maxRow );
@@ -358,7 +350,7 @@ bool Game::Load( )
 							}
 							default:
 							{
-								throw std::exception( std::string( "Could not read tile icons" ).c_str( ) );
+								throw std::exception( std::string( "Could not read tile" ).c_str( ) );
 							}
 						}
 					}
@@ -412,7 +404,8 @@ void Game::PlayerTurn( Dungeon& dungeon )
 	std::cout << "[A] Go West\n";
 	std::cout << "[S] Go South\n";
 	std::cout << "[D] Go East\n";
-	std::cout << "[E] Exit to meny\n";
+	std::cout << "[E] Save and exit to meny\n";
+	std::cout << "[R] Exit to meny\n";
 	std::cout << "[F] Rotate dungeon 90 degrees clockwise\n\n";
 
 	static const std::vector<char> choices =
@@ -422,6 +415,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		'S', 's',
 		'D', 'd',
 		'E', 'e',
+		'R', 'r',
 		'F', 'f'
 	};
 	static const std::map<char, Orientation> direction =
@@ -448,11 +442,19 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		{
 			_status = GameStatus::Menu;
 
+			Save( );
+
+			break;
+		}
+		case 'R': case 'r':
+		{
+			_status = GameStatus::Menu;
+
 			break;
 		}
 		case 'F': case 'f':
 		{
-			dungeon.RotateDungeonClockwise( );
+			dungeon.RotateClockwise( );
 			LinkExitsRotateClockwise( _indexCurrent );
 
 			break;
@@ -483,6 +485,20 @@ void Game::CheckEventsPlayer( )
 		}
 	}
 }
+void Game::SwitchDungeon( )
+{
+	for( const auto& link : _dungeons[_indexCurrent].links )
+	{
+		if( link.entry == _player.position )
+		{
+			_indexCurrent = link.indexDungeon;
+			_dungeons[_indexCurrent].CreatePlayerLocal( link.exit, _player );
+			FullLinkDungeon( _indexCurrent );
+
+			break;
+		}
+	}
+}
 void Game::FullLinkDungeon( std::size_t indexDungeon )
 {
 	const Vector2i notSet = { -1, -1 };
@@ -506,29 +522,15 @@ void Game::FullLinkDungeon( std::size_t indexDungeon )
 		}
 	}
 }
-void Game::SwitchDungeon( )
+void Game::LinkExitsRotateClockwise( std::size_t indexDungeon )
 {
-	for( const auto& link : _dungeons[_indexCurrent].links )
-	{
-		if( link.entry == _player.position )
-		{
-			_indexCurrent = link.indexDungeon;
-			_dungeons[_indexCurrent].CreatePlayerLocal( link.exit, _player );
-			FullLinkDungeon( _indexCurrent );
+	const int maxCol = _dungeons[indexDungeon].GetSize( ).first;
 
-			break;
-		}
-	}
-}
-void Game::LinkExitsRotateClockwise( std::size_t index )
-{
-	const int maxCol = _dungeons[index].GetSize( ).first;
-
-	for( const auto& linkCurrent : _dungeons[index].links )
+	for( const auto& linkCurrent : _dungeons[indexDungeon].links )
 	{
 		for( auto& link : _dungeons[linkCurrent.indexDungeon].links )
 		{
-			if( link.indexDungeon == index )
+			if( link.indexDungeon == indexDungeon )
 			{
 				link.exit = PositionRotateClockwise( link.exit, maxCol );
 			}
