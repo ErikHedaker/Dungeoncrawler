@@ -9,13 +9,6 @@ Vector2i::Vector2i( int col, int row ) :
 	row( row )
 { }
 
-std::ostream& operator<<( std::ostream& stream, const Vector2i& position )
-{
-	stream << "( " << position.col << ", " << position.row << " )";
-
-	return stream;
-}
-
 bool operator==( const Vector2i& lhs, const Vector2i& rhs )
 {
 	return lhs.col == rhs.col && lhs.row == rhs.row;

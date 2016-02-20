@@ -1,7 +1,6 @@
 #pragma once
 
 #include <utility>
-#include <iostream>
 
 struct Vector2i
 {
@@ -10,11 +9,7 @@ struct Vector2i
 
 	int col;
 	int row;
-
-	friend std::ostream& operator<<( std::ostream& stream, const Vector2i& position );
 };
-
-std::ostream& operator<<( std::ostream& stream, const Vector2i& position );
 
 bool operator==( const Vector2i& lhs, const Vector2i& rhs );
 bool operator!=( const Vector2i& lhs, const Vector2i& rhs );

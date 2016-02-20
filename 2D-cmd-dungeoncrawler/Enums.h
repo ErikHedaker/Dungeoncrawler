@@ -16,11 +16,11 @@ struct Attributes
 {
 	enum AttributesType
 	{
-		MovementRandom = 1 << 0,
-		Monster        = 1 << 1,
-		Hidden         = 1 << 2,
-		WalkablePlayer = 1 << 3,
-		WalkableOthers = 1 << 4
+		PassablePlayer = 1 << 0,
+		PassableOthers = 1 << 1,
+		MovementRandom = 1 << 2,
+		Monster        = 1 << 3,
+		Hidden         = 1 << 4
 	};
 };
 
@@ -32,20 +32,6 @@ struct Spells
 		Fireball     = 1 << 1,
 		Iceblast     = 1 << 2
 	};
-};
-
-enum class GameConfig
-{
-	Default,
-	Configure
-};
-
-enum class Orientation
-{
-	North,
-	West,
-	South,
-	East
 };
 
 enum class PlayerStatus
@@ -60,4 +46,18 @@ enum class GameStatus
 {
 	Neutral,
 	Menu
+};
+
+enum class GameConfig
+{
+	Default,
+	Configure
+};
+
+enum class Orientation
+{
+	North,
+	West,
+	South,
+	East
 };

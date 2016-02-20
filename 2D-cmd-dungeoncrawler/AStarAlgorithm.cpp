@@ -3,19 +3,11 @@
 #include <unordered_map>
 #include <queue>
 #include <vector>
-#include <iostream>
 
 Grid::Grid( int maxCol, int maxRow, const std::vector<Vector2i>& obstacles ) :
 	_maxCol( maxCol ),
 	_maxRow( maxRow ),
-	_obstacles( obstacles.begin( ), obstacles.end( ) ),
-	_directions
-	( { {
-			Vector2i(  0, -1 ),
-			Vector2i( -1,  0 ),
-			Vector2i(  0,  1 ),
-			Vector2i(  1,  0 ),
-	} } )
+	_obstacles( obstacles.begin( ), obstacles.end( ) )
 { }
 bool Grid::InBounds( const Vector2i& position ) const
 {
@@ -29,11 +21,18 @@ bool Grid::Passable( const Vector2i& position ) const
 {
 	return !( _obstacles.count( position ) );
 }
-const std::vector<Vector2i> Grid::GetValidNeighbors( const Vector2i& position ) const
+std::vector<Vector2i> Grid::GetNeighbors( const Vector2i& position ) const
 {
+	const std::array<Vector2i, 4> directions =
+	{ {
+		{  0, -1 },
+		{ -1,  0 },
+		{  0,  1 },
+		{  1,  0 }
+	} };
 	std::vector<Vector2i> results;
 
-	for( const auto& direction : _directions )
+	for( const auto& direction : directions )
 	{
 		Vector2i neighbor = position + direction;
 
@@ -63,16 +62,16 @@ bool CompareNodes::operator()( const Node& lhs, const Node& rhs ) const
 	return lhs.priority > rhs.priority;
 }
 
-int Heuristic( const Vector2i& positionFrom, const Vector2i& positionTo )
+int Heuristic( const Vector2i& from, const Vector2i& to )
 {
-	return abs( positionFrom.col - positionTo.col ) + abs( positionFrom.row - positionTo.row );
+	return abs( from.col - to.col ) + abs( from.row - to.row );
 }
 
-std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vector2i& positionGoal, int maxCol, int maxRow, const std::vector<Vector2i>& obstacles )
+std::vector<Vector2i> AStarAlgorithm( const Vector2i& start, const Vector2i& goal, int maxCol, int maxRow, const std::vector<Vector2i>& obstacles )
 {
 	/*
 		http://www.redblobgames.com/pathfinding/a-star/implementation.html
-		Algorithm copied from source and then rewritten.
+		My implementation of the A* algorithm is based on this article
 	*/
 
 	std::priority_queue<Node, std::vector<Node>, CompareNodes> activeNodes;
@@ -80,9 +79,9 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 	std::unordered_map<Vector2i, int, Vector2iHasher> positionCost;
 	const Grid grid( maxCol, maxRow, obstacles );
 
-	activeNodes.emplace( positionStart, 0 );
-	positionCameFrom[positionStart] = positionStart;
-	positionCost[positionStart] = 0;
+	activeNodes.emplace( start, 0 );
+	positionCameFrom[start] = start;
+	positionCost[start] = 0;
 
 	while( !activeNodes.empty( ) )
 	{
@@ -90,46 +89,39 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& positionStart, const Vecto
 
 		activeNodes.pop( );
 
-		if( current.position == positionGoal )
+		if( current.position == goal )
 		{
 			break;
 		}
 
-		for( const auto& positionNeighbor : grid.GetValidNeighbors( current.position ) )
+		for( const auto& neighbor : grid.GetNeighbors( current.position ) )
 		{
 			const int newCost = positionCost[current.position] + 1; /* Position-in-grid cost goes here for weighted grid. */
 
-			if( !positionCost.count( positionNeighbor ) /* Node hasn't been visited before */ ||
-				newCost < positionCost[positionNeighbor] )
+			if( !positionCost.count( neighbor ) ||
+				newCost < positionCost[neighbor] )
 			{
-				const int priority = newCost + Heuristic( positionNeighbor, positionGoal );
+				const int priority = newCost + Heuristic( neighbor, goal );
 
-				activeNodes.emplace( positionNeighbor, priority );
-				positionCameFrom[positionNeighbor] = current.position;
-				positionCost[positionNeighbor] = newCost;
+				activeNodes.emplace( neighbor, priority );
+				positionCameFrom[neighbor] = current.position;
+				positionCost[neighbor] = newCost;
 			}
 		}
 	}
 
 	/* Reconstruct path */
+	const Vector2i notSet = { -1, -1 };
+	Vector2i current = goal;
 	std::vector<Vector2i> path;
-	Vector2i positionCurrent = positionGoal;
 
-	path.push_back( positionCurrent );
+	path.push_back( current );
 
-	while( positionCurrent != positionStart )
+	while( current != start &&
+		   positionCameFrom.at( current ) != notSet )
 	{
-		try
-		{
-			positionCurrent = positionCameFrom.at( positionCurrent );
-			path.push_back( positionCurrent );
-		}
-		catch( const std::exception& e )
-		{
-			std::cout << "\nException: " << e.what( );
-			
-			break;
-		}
+		current = positionCameFrom.at( current );
+		path.push_back( current );
 	}
 
 	std::reverse( path.begin( ), path.end( ) );

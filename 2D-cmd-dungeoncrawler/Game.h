@@ -37,5 +37,5 @@ class Game
 		void CheckEventsPlayer( );
 		void SwitchDungeon( );
 		void FullLinkDungeon( std::size_t indexDungeon );
-		void LinkExitsRotateClockwise( std::size_t indexDungeon );
+		void LinksRotateClockwise( std::size_t indexDungeon );
 };

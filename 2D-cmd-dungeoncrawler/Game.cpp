@@ -48,6 +48,9 @@ void Game::Menu( )
 			}
 			case '2':
 			{
+				system( "CLS" );
+				std::cout << "Loading, please wait.";
+
 				if( Load( ) )
 				{
 					Loop( );
@@ -58,7 +61,10 @@ void Game::Menu( )
 			case '3':
 			{
 				SetDungeonConfiguration( GameConfig::Default );
+
 				system( "CLS" );
+				std::cout << "Loading, please wait.";
+
 				Reset( );
 				Loop( );
 
@@ -67,7 +73,10 @@ void Game::Menu( )
 			case '4':
 			{
 				SetDungeonConfiguration( GameConfig::Configure );
+
 				system( "CLS" );
+				std::cout << "Loading, please wait.";
+
 				Reset( );
 				Loop( );
 
@@ -247,7 +256,6 @@ bool Game::Load( )
 		const std::string fileName = "2D-cmd-dungeoncrawler-save.txt";
 		std::ifstream inFile( fileName, std::ios::in );
 		std::string line;
-		std::size_t dungeonCount;
 
 		if( !inFile.is_open( ) )
 		{
@@ -278,25 +286,20 @@ bool Game::Load( )
 		_indexCurrent = std::stoi( line );
 
 		std::getline( inFile, line );
-		dungeonCount = std::stoi( line );
+		const std::size_t dungeonCount = std::stoi( line );
 
 		for( std::size_t index = 0; index < dungeonCount; index++ )
 		{
-			int maxCol;
-			int maxRow;
-			std::vector<char> iconMap;
-			std::vector<bool> visionMap;
-			std::size_t linkCount;
-			Vector2i iterator;
-
 			std::getline( inFile, line, '\t' );
-			maxCol = std::stoi( line );
+			const int maxCol = std::stoi( line );
 
 			std::getline( inFile, line );
-			maxRow = std::stoi( line );
+			const int maxRow = std::stoi( line );
 
-			iconMap.resize( maxCol * maxRow );
-			visionMap.resize( maxCol * maxRow );
+			std::vector<char> iconMap( maxCol * maxRow );
+			std::vector<bool> visionMap( maxCol * maxRow );
+
+			Vector2i iterator;
 
 			for( iterator.row = 0; iterator.row < maxRow; iterator.row++ )
 			{
@@ -346,7 +349,7 @@ bool Game::Load( )
 					}
 					else
 					{
-						Vector2i position( iterator.col % maxCol, iterator.row );
+						const Vector2i position = { iterator.col % maxCol, iterator.row };
 
 						switch( line[iterator.col] )
 						{
@@ -374,7 +377,7 @@ bool Game::Load( )
 			_dungeons.emplace_back( maxCol, maxRow, visionMap, iconMap, _player );
 
 			std::getline( inFile, line );
-			linkCount = std::stoi( line );
+			const std::size_t linkCount = std::stoi( line );
 
 			for( std::size_t indexLink = 0; indexLink < linkCount; indexLink++ )
 			{
@@ -454,7 +457,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
 		case 'F': case 'f':
 		{
 			dungeon.RotateClockwise( );
-			LinkExitsRotateClockwise( _indexCurrent );
+			LinksRotateClockwise( _indexCurrent );
 
 			break;
 		}
@@ -506,8 +509,6 @@ void Game::FullLinkDungeon( std::size_t indexDungeon )
 	{
 		if( _dungeons[indexDungeon].links[index].exit == notSet )
 		{
-			std::cout << "\nAdding link\n\n";
-
 			_dungeons.emplace_back( _config );
 
 			const std::size_t indexDungeonNeighbor = _dungeons.size( ) - 1;
@@ -521,7 +522,7 @@ void Game::FullLinkDungeon( std::size_t indexDungeon )
 		}
 	}
 }
-void Game::LinkExitsRotateClockwise( std::size_t indexDungeon )
+void Game::LinksRotateClockwise( std::size_t indexDungeon )
 {
 	const int maxCol = _dungeons[indexDungeon].GetSize( ).first;
 

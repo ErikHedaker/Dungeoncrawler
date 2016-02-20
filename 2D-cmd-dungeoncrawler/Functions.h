@@ -6,6 +6,7 @@
 #include "BattleSystem.h"
 #include <vector>
 #include <string>
+#include <iostream>
 
 int RandomNumberGenerator( int min, int max );
 int GetPositiveInteger( const std::string& context );

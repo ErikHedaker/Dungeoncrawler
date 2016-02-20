@@ -2,6 +2,7 @@
 #include "Functions.h"
 #include <algorithm>
 #include <utility>
+#include <iostream>
 
 Spell::Spell( const std::string& name, double damageMultiplier ) :
 	name( name ),
@@ -72,17 +73,19 @@ Spell BattleSystem::GetSpell( Combatant& player )
 }
 void BattleSystem::CastSpell( const Spell& spell, Combatant& caster, Combatant& target )
 {
-	auto healthOld = target.health;
+	const double random = RandomNumberGenerator( 90, 110 ) / 100.0;
+	const int healthOld = target.health;
 
-	target.health -= static_cast<int>( caster.damage * spell.damageMultiplier );
+	target.health -= static_cast<int>( caster.damage * spell.damageMultiplier * random );
 
 	std::cout << caster.name << " casts " << spell.name << " on " << target.name << ", which dealt " << healthOld - target.health << " damage!\n";
 }
 void BattleSystem::WeaponAttack( Combatant& attacker, Combatant& target )
 {
-	auto healthOld = target.health;
+	const double random = RandomNumberGenerator( 90, 110 ) / 100.0;
+	const int healthOld = target.health;
 
-	target.health -= attacker.damage;
+	target.health -= static_cast<int>( attacker.damage * random );
 
 	std::cout << attacker.name << " attacks " << target.name << " with a weapon, which dealt " << healthOld - target.health << " damage!\n";
 }
