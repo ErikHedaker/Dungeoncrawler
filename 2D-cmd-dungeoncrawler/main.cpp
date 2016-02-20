@@ -2,9 +2,9 @@
 
 int main( )
 {
-	Game game;
+    Game game;
 
-	game.Menu( );
+    game.Menu( );
 
-	return 0;
+    return 0;
 }

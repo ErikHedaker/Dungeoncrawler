@@ -6,9 +6,9 @@
 
 struct Player : public Combatant
 {
-	Player( int health, int healthMax, int healthRegeneration, int damage, int abilities );
+    Player( int health, int healthMax, int healthRegeneration, int damage, int abilities );
 
-	int visionReach;
-	Vector2i position;
-	PlayerStatus status;
+    int visionReach;
+    Vector2i position;
+    PlayerStatus status;
 };
