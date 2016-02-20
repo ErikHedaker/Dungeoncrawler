@@ -387,7 +387,6 @@ void Dungeon::DoorAdd( const Vector2i& position )
 {
 	const std::size_t index = _components.Add( );
 
-	links.push_back( { 0, { -1, -1 }, position } );
 	_components.icon[index] = Icon::Door;
 	_components.position[index] = position;
 	_components.attributes[index] = Attributes::WalkablePlayer;
@@ -458,6 +457,7 @@ void Dungeon::GenerateDoors( bool generate, int amount )
 			int index = RandomNumberGenerator( 0, valid.size( ) - 1 );
 
 			DoorAdd( valid[index] );
+			links.push_back( { 0, { -1, -1 }, valid[index] } );
 			valid.erase( valid.begin( ) + index );
 		}
 	}

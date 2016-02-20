@@ -28,8 +28,9 @@ struct Spells
 {
 	enum SpellsType
 	{
-		Fireball = 1 << 0,
-		Iceblast = 1 << 1
+		TouchOfDeath = 1 << 0,
+		Fireball     = 1 << 1,
+		Iceblast     = 1 << 2
 	};
 };
 

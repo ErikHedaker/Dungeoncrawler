@@ -8,7 +8,7 @@
 #include <iterator>
 
 Game::Game( ) :
-	_player( 200, 70, 1, 50, Spells::Fireball | Spells::Iceblast )
+	_player( 200, 70, 1, 50, Spells::TouchOfDeath | Spells::Fireball | Spells::Iceblast )
 { }
 
 void Game::Menu( )
@@ -180,7 +180,7 @@ void Game::Save( )
 
 	if( !outFile.is_open( ) )
 	{
-		throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
+		return;
 	}
 
 	outFile << _config.fixedDungeonSize << '\t';
@@ -204,22 +204,12 @@ void Game::Save( )
 
 	for( const auto& dungeon : _dungeons )
 	{
-		const auto maxCol = dungeon.GetSize( ).first;
-		const auto maxRow = dungeon.GetSize( ).second;
+		const int maxCol = dungeon.GetSize( ).first;
+		const int maxRow = dungeon.GetSize( ).second;
 		Vector2i iterator;
 
 		outFile << maxCol << '\t';
 		outFile << maxRow << '\n';
-		outFile << dungeon.links.size( ) << '\n';
-		
-		for( const auto& link : dungeon.links )
-		{
-			outFile << link.indexDungeon << '\t';
-			outFile << link.exit.col << '\t';
-			outFile << link.exit.row << '\t';
-			outFile << link.entry.col << '\t';
-			outFile << link.entry.row << '\n';
-		}
 
 		for( iterator.row = 0; iterator.row < maxRow; iterator.row++ )
 		{
@@ -236,6 +226,17 @@ void Game::Save( )
 			}
 
 			outFile << '\n';
+		}
+
+		outFile << dungeon.links.size( ) << '\n';
+
+		for( const auto& link : dungeon.links )
+		{
+			outFile << link.indexDungeon << '\t';
+			outFile << link.exit.col << '\t';
+			outFile << link.exit.row << '\t';
+			outFile << link.entry.col << '\t';
+			outFile << link.entry.row << '\n';
 		}
 	}
 }
@@ -281,12 +282,11 @@ bool Game::Load( )
 
 		for( std::size_t index = 0; index < dungeonCount; index++ )
 		{
-			std::vector<char> iconMap;
-			std::vector<bool> visionMap;
 			int maxCol;
 			int maxRow;
+			std::vector<char> iconMap;
+			std::vector<bool> visionMap;
 			std::size_t linkCount;
-			std::vector<Link> links;
 			Vector2i iterator;
 
 			std::getline( inFile, line, '\t' );
@@ -294,16 +294,6 @@ bool Game::Load( )
 
 			std::getline( inFile, line );
 			maxRow = std::stoi( line );
-
-			std::getline( inFile, line );
-			linkCount = std::stoi( line );
-
-			for( std::size_t indexLink = 0; indexLink < linkCount; indexLink++ )
-			{
-				std::getline( inFile, line );
-				std::vector<int> linkArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
-				links.push_back( { static_cast<std::size_t>( linkArgs[0] ), { linkArgs[1], linkArgs[2] }, { linkArgs[3], linkArgs[4] } } );
-			}
 
 			iconMap.resize( maxCol * maxRow );
 			visionMap.resize( maxCol * maxRow );
@@ -382,7 +372,16 @@ bool Game::Load( )
 			}
 
 			_dungeons.emplace_back( maxCol, maxRow, visionMap, iconMap, _player );
-			_dungeons.back( ).links = links;
+
+			std::getline( inFile, line );
+			linkCount = std::stoi( line );
+
+			for( std::size_t indexLink = 0; indexLink < linkCount; indexLink++ )
+			{
+				std::getline( inFile, line );
+				std::vector<int> linkArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
+				_dungeons.back( ).links.push_back( { static_cast<std::size_t>( linkArgs[0] ), { linkArgs[1], linkArgs[2] }, { linkArgs[3], linkArgs[4] } } );
+			}
 		}
 	}
 	catch( const std::exception& e )

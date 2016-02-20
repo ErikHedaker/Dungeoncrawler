@@ -35,8 +35,9 @@ BattleSystem::BattleSystem( ) :
 	} ),
 	_librarySpells
 	( {
-		{ Spells::Iceblast, { "Iceblast", 1.2 } },
-		{ Spells::Fireball, { "Fireball", 1.5 } }
+		{ Spells::TouchOfDeath, { "Touch of Death", 1000.0 } },
+		{ Spells::Iceblast,     { "Iceblast",       1.2    } },
+		{ Spells::Fireball,     { "Fireball",       1.5    } }
 	} )
 { }
 
