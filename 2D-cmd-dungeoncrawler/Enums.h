@@ -19,8 +19,7 @@ struct Attributes
         PassablePlayer = 1 << 0,
         PassableOthers = 1 << 1,
         MovementRandom = 1 << 2,
-        Monster        = 1 << 3,
-        Hidden         = 1 << 4
+        Monster        = 1 << 3
     };
 };
 

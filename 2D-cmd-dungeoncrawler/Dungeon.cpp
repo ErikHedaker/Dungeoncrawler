@@ -308,7 +308,7 @@ bool Dungeon::Surrounded( const Vector2i& position, int threshold ) const
     {
         Vector2i neighbor = position + direction;
 
-        if( !Unoccupied( neighbor ) )
+        if( !CheckTile( neighbor, Attributes::PassablePlayer ) )
         {
             surroundingEntity++;
         }
@@ -342,10 +342,7 @@ void Dungeon::UpdateTile( const Vector2i& position )
 
     for( auto index : tile.indexOccupants )
     {
-        if( !( _components.attributes[index] & Attributes::Hidden ) )
-        {
-            tile.icon = _components.icon[index];
-        }
+        tile.icon = _components.icon[index];
     }
 }
 void Dungeon::OccupantAdd( std::size_t index )
@@ -389,6 +386,7 @@ void Dungeon::DoorAdd( const Vector2i& position )
 
     _components.icon[index] = Icon::Door;
     _components.position[index] = position;
+    _components.positionPrevious[index] = position;
     _components.attributes[index] = Attributes::PassablePlayer;
     OccupantAdd( index );
 }
@@ -398,6 +396,7 @@ void Dungeon::WallAdd( const Vector2i& position )
 
     _components.icon[index] = Icon::Wall;
     _components.position[index] = position;
+    _components.positionPrevious[index] = position;
     _components.attributes[index] = 0;
     OccupantAdd( index );
 }
@@ -405,10 +404,11 @@ void Dungeon::StepAdd( const Vector2i& position )
 {
     const std::size_t index = _components.Add( );
 
+    _components.icon[index] = Icon::Ground;
     _components.position[index] = position;
-    _components.attributes[index] = Attributes::Hidden |
-                                    Attributes::PassableOthers |
-                                    Attributes::PassablePlayer;
+    _components.positionPrevious[index] = position;
+    _components.attributes[index] = Attributes::PassablePlayer |
+                                    Attributes::PassableOthers;
     OccupantAdd( index );
 }
 void Dungeon::MonsterAdd( const Vector2i& position )
@@ -418,10 +418,10 @@ void Dungeon::MonsterAdd( const Vector2i& position )
     _components.icon[index] = Icon::Monster;
     _components.position[index] = position;
     _components.positionPrevious[index] = position;
-    _components.attributes[index] = Attributes::Monster |
+    _components.attributes[index] = Attributes::PassablePlayer |
+                                    Attributes::PassableOthers |
                                     Attributes::MovementRandom |
-                                    Attributes::PassablePlayer |
-                                    Attributes::PassableOthers;
+                                    Attributes::Monster;
     OccupantAdd( index );
 }
 
@@ -452,7 +452,7 @@ void Dungeon::GenerateDoors( bool generate, int amount )
 
         for( int i = 0; i < amountDoors; i++ )
         {
-            int index = RandomNumberGenerator( 0, valid.size( ) - 1 );
+            const int index = RandomNumberGenerator( 0, valid.size( ) - 1 );
 
             DoorAdd( valid[index] );
             links.push_back( { 0, { -1, -1 }, valid[index] } );

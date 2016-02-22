@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include <map>
-#include <intrin.h>
 
 struct Spell
 {
@@ -18,7 +17,7 @@ struct Combatant
 {
     Combatant( const std::string& name, int health, int healthMax, int healthRegeneration, int damage, int spells = 0 );
 
-    std::string name;
+    const std::string name;
     int health;
     int healthMax;
     int healthRegeneration;
@@ -33,15 +32,16 @@ class BattleSystem
     public:
         BattleSystem( );
 
+        void EngageRandomMonster( Combatant& player );
+
+    private:
+        const std::vector<Combatant> _libraryMonsters;
+        const std::map<int, const Spell> _librarySpells;
+
         Combatant GetRandomMonster( );
         Spell GetSpell( Combatant& player );
         void CastSpell( const Spell& spell, Combatant& caster, Combatant& target );
         void WeaponAttack( Combatant& attacker, Combatant& target );
         void PlayerTurn( Combatant& player, Combatant& monster );
         void MonsterTurn( Combatant& player, Combatant& monster );
-        void EngageRandomMonster( Combatant& player );
-
-    private:
-        const std::vector<Combatant> _libraryMonsters;
-        const std::map<int, const Spell> _librarySpells;
 };

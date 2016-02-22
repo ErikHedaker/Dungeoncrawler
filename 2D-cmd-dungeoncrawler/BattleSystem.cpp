@@ -30,17 +30,47 @@ void Combatant::Update( )
 BattleSystem::BattleSystem( ) :
     _libraryMonsters
     ( {
-        { "Rotten Zombie",  120, 120, 5, 20 },
+        { "Rotten Zombie",  120, 120, 5, 20                   },
         { "Frozen Skeleton", 80,  80, 0, 10, Spells::Iceblast },
         { "Burning Lunatic", 70,  70, 0, 10, Spells::Fireball }
     } ),
     _librarySpells
     ( {
-        { Spells::TouchOfDeath, { "Touch of Death", 1000.0 } },
+        { Spells::TouchOfDeath, { "Touch of Death", 100.0 } },
         { Spells::Iceblast,     { "Iceblast",       1.2    } },
         { Spells::Fireball,     { "Fireball",       1.5    } }
     } )
 { }
+
+void BattleSystem::EngageRandomMonster( Combatant& player )
+{
+    Combatant monster = GetRandomMonster( );
+
+    system( "CLS" );
+    std::cout << "You've been engaged in combat with a " << monster.name << "!\n";
+
+    while( true )
+    {
+        std::cout << "\n-------------------\n\n";
+        player.Update( );
+        monster.Update( );
+        PrintCombatantInformation( player );
+        std::cout << "\n";
+        PrintCombatantInformation( monster );
+        PlayerTurn( player, monster );
+        MonsterTurn( player, monster );
+
+        if( player.health <= 0 ||
+            monster.health <= 0 )
+        {
+            std::cout << "\n" << ( player.health <= 0 ? player.name : monster.name ) << " died!";
+            std::cout << "\n\nPress enter to continue: ";
+            GetEnter( );
+
+            break;
+        }
+    }
+}
 
 Combatant BattleSystem::GetRandomMonster( )
 {
@@ -142,33 +172,4 @@ void BattleSystem::MonsterTurn( Combatant& player, Combatant& monster )
     }
 
     WeaponAttack( monster, player );
-}
-void BattleSystem::EngageRandomMonster( Combatant& player )
-{
-    Combatant monster = GetRandomMonster( );
-
-    system( "CLS" );
-    std::cout << "You've been engaged in combat with a " << monster.name << "!\n";
-
-    while( true )
-    {
-        std::cout << "\n-------------------\n\n";
-        player.Update( );
-        monster.Update( );
-        PrintCombatantInformation( player );
-        std::cout << "\n";
-        PrintCombatantInformation( monster );
-        PlayerTurn( player, monster );
-        MonsterTurn( player, monster );
-
-        if( player.health <= 0 ||
-            monster.health <= 0 )
-        {
-            std::cout << "\n" << ( player.health <= 0 ? player.name : monster.name ) << " died!";
-            std::cout << "\n\nPress enter to continue: ";
-            GetEnter( );
-
-            break;
-        }
-    }
 }

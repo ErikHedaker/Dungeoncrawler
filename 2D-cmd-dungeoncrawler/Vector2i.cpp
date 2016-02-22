@@ -93,8 +93,8 @@ const Vector2i operator/( const Vector2i& lhs, int rhs )
 void Vector2iHasher::HashCombine( std::size_t& seed, int value )
 {
     /*
-    https://www.quora.com/How-can-I-declare-an-unordered-set-of-pair-of-int-int-in-C++11
-    Function copied from source and then rewritten.
+        https://www.quora.com/How-can-I-declare-an-unordered-set-of-pair-of-int-int-in-C++11
+        Function implementation is based on the source
     */
 
     std::hash<int> hasher;
