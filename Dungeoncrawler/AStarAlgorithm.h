@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vector2i.h"
+#include "Vector2.h"
 #include <unordered_set>
 #include <array>
 #include <vector>
@@ -8,23 +8,22 @@
 class Grid
 {
     public:
-        Grid( int maxCol, int maxRow, const std::vector<Vector2i>& obstacles );
+        Grid( const Vector2<int>& size, const std::vector<Vector2<int>>& obstacles );
 
-        bool InBounds( const Vector2i& position ) const;
-        bool Passable( const Vector2i& position ) const;
-        std::vector<Vector2i> GetNeighbors( const Vector2i& position ) const;
+        bool InBounds( const Vector2<int>& position ) const;
+        bool Passable( const Vector2<int>& position ) const;
+        std::vector<Vector2<int>> GetNeighbors( const Vector2<int>& position ) const;
 
     private:
-        const int _maxCol;
-        const int _maxRow;
-        const std::unordered_set<Vector2i, Vector2iHasher> _obstacles;
+        const Vector2<int> _size;
+        const std::unordered_set<Vector2<int>, HasherVector2<int>> _obstacles;
 };
 
 struct Node
 {
-    Node( const Vector2i& position, int priority );
+    Node( const Vector2<int>& position, int priority );
 
-    Vector2i position;
+    Vector2<int> position;
     int priority;
 };
 
@@ -33,6 +32,6 @@ struct CompareNodes
     bool operator()( const Node& lhs, const Node& rhs ) const;
 };
 
-int Heuristic( const Vector2i& from, const Vector2i& to );
+int Heuristic( const Vector2<int>& from, const Vector2<int>& to );
 
-std::vector<Vector2i> AStarAlgorithm( const Vector2i& start, const Vector2i& goal, int maxCol, int maxRow, const std::vector<Vector2i>& obstacles );
+std::vector<Vector2<int>> AStarAlgorithm( const Vector2<int>& start, const Vector2<int>& goal, const Vector2<int>& sizeDungeon, const std::vector<Vector2<int>>& obstacles );

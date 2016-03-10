@@ -121,7 +121,7 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 
             std::cout << "\n";
 
-            _config.fixedDungeonSize       = GetBool( GetValidChar( "Fixed dungeon size, [Y/N]: ",        choices ) );
+            _config.sizeDungeonFixed = GetBool( GetValidChar( "Fixed dungeon size, [Y/N]: ",        choices ) );
             _config.generateDoors          = GetBool( GetValidChar( "Generate doors, [Y/N]: ",            choices ) );
             _config.generateOuterWalls     = GetBool( GetValidChar( "Generate outer obstacles, [Y/N]: ",  choices ) );
             _config.generatePath           = GetBool( GetValidChar( "Generate path, [Y/N]: ",             choices ) );
@@ -132,10 +132,10 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 
             std::cout << "\n";
 
-            if( _config.fixedDungeonSize )
+            if( _config.sizeDungeonFixed )
             {
-                _config.maxCol = GetPositiveInteger( "Enter dungeon col size: " );
-                _config.maxRow = GetPositiveInteger( "Enter dungeon row size: " );
+                _config.sizeDungeon.x = GetPositiveInteger( "Enter dungeon width: " );
+                _config.sizeDungeon.y = GetPositiveInteger( "Enter dungeon height: " );
             }
             if( _config.generateDoors )
                 _config.amountDoors             = GetPositiveInteger( "Enter amount of doors: " );
@@ -160,12 +160,7 @@ void Game::Reset( )
     _dungeons.emplace_back( _config );
     _indexCurrent = _dungeons.size( ) - 1;
     FullLinkDungeon( _indexCurrent );
-
-    const int maxCol = _dungeons[_indexCurrent].GetSize( ).first;
-    const int maxRow = _dungeons[_indexCurrent].GetSize( ).second;
-    const Vector2i center = { maxCol / 2, maxRow / 2 };
-
-    _dungeons[_indexCurrent].CreatePlayerLocal( center, _player );
+    _dungeons[_indexCurrent].CreatePlayerLocal( _dungeons[_indexCurrent].GetSize( ) / 2, _player );
 }
 void Game::Loop( )
 {
@@ -192,9 +187,9 @@ void Game::Save( )
         return;
     }
 
-    outFile << _config.fixedDungeonSize << '\t';
-    outFile << _config.maxCol << '\t';
-    outFile << _config.maxRow << '\t';
+    outFile << _config.sizeDungeonFixed << '\t';
+    outFile << _config.sizeDungeon.x << '\t';
+    outFile << _config.sizeDungeon.x << '\t';
     outFile << _config.generateDoors << '\t';
     outFile << _config.generateOuterWalls << '\t';
     outFile << _config.generatePath << '\t';
@@ -213,24 +208,23 @@ void Game::Save( )
 
     for( const auto& dungeon : _dungeons )
     {
-        const int maxCol = dungeon.GetSize( ).first;
-        const int maxRow = dungeon.GetSize( ).second;
-        Vector2i iterator;
+        const Vector2<int> sizeDungeon = dungeon.GetSize( );
+        Vector2<int> iterator;
 
-        outFile << maxCol << '\t';
-        outFile << maxRow << '\n';
+        outFile << sizeDungeon.x << '\t';
+        outFile << sizeDungeon.y << '\n';
 
-        for( iterator.row = 0; iterator.row < maxRow; iterator.row++ )
+        for( iterator.y = 0; iterator.y < sizeDungeon.y; iterator.y++ )
         {
-            for( iterator.col = 0; iterator.col < maxCol * 2; iterator.col++ )
+            for( iterator.x = 0; iterator.x < sizeDungeon.x * 2; iterator.x++ )
             {
-                if( iterator.col < maxCol )
+                if( iterator.x < sizeDungeon.x )
                 {
                     outFile << dungeon.GetTile( iterator ).icon;
                 }
                 else
                 {
-                    outFile << dungeon.GetVision( { iterator.col % maxCol, iterator.row } );
+                    outFile << dungeon.GetVision( { iterator.x % sizeDungeon.x, iterator.y } );
                 }
             }
 
@@ -241,11 +235,12 @@ void Game::Save( )
 
         for( const auto& link : dungeon.links )
         {
+            outFile << link.active << '\t';
             outFile << link.indexDungeon << '\t';
-            outFile << link.exit.col << '\t';
-            outFile << link.exit.row << '\t';
-            outFile << link.entry.col << '\t';
-            outFile << link.entry.row << '\n';
+            outFile << link.exit.x << '\t';
+            outFile << link.exit.y << '\t';
+            outFile << link.entry.x << '\t';
+            outFile << link.entry.y << '\n';
         }
     }
 }
@@ -266,9 +261,9 @@ bool Game::Load( )
 
         std::getline( inFile, line );
         std::vector<int> configArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
-        _config.fixedDungeonSize        = configArgs[0] != 0;
-        _config.maxCol                  = configArgs[1];
-        _config.maxRow                  = configArgs[2];
+        _config.sizeDungeonFixed        = configArgs[0] != 0;
+        _config.sizeDungeon.x           = configArgs[1];
+        _config.sizeDungeon.y           = configArgs[2];
         _config.generateDoors           = configArgs[3] != 0;
         _config.generateOuterWalls      = configArgs[4] != 0;
         _config.generatePath            = configArgs[5] != 0;
@@ -290,54 +285,55 @@ bool Game::Load( )
 
         for( std::size_t index = 0; index < dungeonCount; index++ )
         {
+            Vector2<int> sizeDungeon;
+            Vector2<int> iterator;
+
             std::getline( inFile, line, '\t' );
-            const int maxCol = std::stoi( line );
+            sizeDungeon.x = std::stoi( line );
 
             std::getline( inFile, line );
-            const int maxRow = std::stoi( line );
+            sizeDungeon.y = std::stoi( line );
 
-            std::vector<char> iconMap( maxCol * maxRow );
-            std::vector<bool> visionMap( maxCol * maxRow );
+            std::vector<char> iconMap( sizeDungeon.x * sizeDungeon.y );
+            std::vector<bool> visionMap( sizeDungeon.x * sizeDungeon.y );
 
-            Vector2i iterator;
-
-            for( iterator.row = 0; iterator.row < maxRow; iterator.row++ )
+            for( iterator.y = 0; iterator.y < sizeDungeon.y; iterator.y++ )
             {
                 std::getline( inFile, line );
 
-                for( iterator.col = 0; iterator.col < maxCol * 2; iterator.col++ )
+                for( iterator.x = 0; iterator.x < sizeDungeon.x * 2; iterator.x++ )
                 {
-                    if( iterator.col < maxCol )
+                    if( iterator.x < sizeDungeon.x )
                     {
-                        switch( line[iterator.col] )
+                        switch( line[iterator.x] )
                         {
                             case Icon::Player:
                             {
-                                iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Player;
+                                iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = Icon::Player;
 
                                 break;
                             }
                             case Icon::Monster:
                             {
-                                iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Monster;
+                                iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = Icon::Monster;
 
                                 break;
                             }
                             case Icon::Door:
                             {
-                                iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Door;
+                                iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = Icon::Door;
 
                                 break;
                             }
                             case Icon::Wall:
                             {
-                                iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Wall;
+                                iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = Icon::Wall;
 
                                 break;
                             }
                             case Icon::Ground:
                             {
-                                iconMap[( iterator.row * maxCol ) + iterator.col] = Icon::Ground;
+                                iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = Icon::Ground;
 
                                 break;
                             }
@@ -349,19 +345,19 @@ bool Game::Load( )
                     }
                     else
                     {
-                        const Vector2i position = { iterator.col % maxCol, iterator.row };
+                        const Vector2<int> position = { iterator.x % sizeDungeon.x, iterator.y };
 
-                        switch( line[iterator.col] )
+                        switch( line[iterator.x] )
                         {
                             case '1':
                             {
-                                visionMap[( position.row * maxCol ) + position.col] = true;
+                                visionMap[( position.y * sizeDungeon.x ) + position.x] = true;
 
                                 break;
                             }
                             case '0':
                             {
-                                visionMap[( position.row * maxCol ) + position.col] = false;
+                                visionMap[( position.y * sizeDungeon.x ) + position.x] = false;
 
                                 break;
                             }
@@ -374,7 +370,7 @@ bool Game::Load( )
                 }
             }
 
-            _dungeons.emplace_back( maxCol, maxRow, visionMap, iconMap, _player );
+            _dungeons.emplace_back( sizeDungeon, visionMap, iconMap, _player );
 
             std::getline( inFile, line );
             const std::size_t linkCount = std::stoi( line );
@@ -383,7 +379,7 @@ bool Game::Load( )
             {
                 std::getline( inFile, line );
                 std::vector<int> linkArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
-                _dungeons.back( ).links.push_back( { static_cast<std::size_t>( linkArgs[0] ), { linkArgs[1], linkArgs[2] }, { linkArgs[3], linkArgs[4] } } );
+                _dungeons.back( ).links.push_back( { linkArgs[0] != 0, static_cast<std::size_t>( linkArgs[1] ), { linkArgs[2], linkArgs[3] }, { linkArgs[4], linkArgs[5] } } );
             }
         }
     }
@@ -443,7 +439,6 @@ void Game::PlayerTurn( Dungeon& dungeon )
         case 'E': case 'e':
         {
             _status = GameStatus::Menu;
-
             Save( );
 
             break;
@@ -476,15 +471,7 @@ void Game::CheckEventsPlayer( )
     if( _player.status == PlayerStatus::Combat )
     {
         _battleSystem.EngageRandomMonster( _player );
-
-        if( _player.health <= 0 )
-        {
-            _player.status = PlayerStatus::Dead;
-        }
-        else
-        {
-            _player.status = PlayerStatus::Wandering;
-        }
+        _player.status = ( _player.health <= 0 ? PlayerStatus::Dead : PlayerStatus::Wandering );
     }
 }
 void Game::SwitchDungeon( )
@@ -503,28 +490,29 @@ void Game::SwitchDungeon( )
 }
 void Game::FullLinkDungeon( std::size_t indexDungeon )
 {
-    const Vector2i notSet = { -1, -1 };
-
     for( std::size_t index = 0; index < _dungeons[indexDungeon].links.size( ); index++ )
     {
-        if( _dungeons[indexDungeon].links[index].exit == notSet )
+        if( !_dungeons[indexDungeon].links[index].active )
         {
             _dungeons.emplace_back( _config );
 
             const std::size_t indexDungeonNeighbor = _dungeons.size( ) - 1;
-            auto& linkNeighbor = _dungeons.back( ).links.back( );
+            auto& neighbor = _dungeons.back( ).links.back( );
+
+            _dungeons[indexDungeon].links[index].active = true;
+            neighbor.active = true;
 
             _dungeons[indexDungeon].links[index].indexDungeon = indexDungeonNeighbor;
-            linkNeighbor.indexDungeon = indexDungeon;
+            neighbor.indexDungeon = indexDungeon;
 
-            _dungeons[indexDungeon].links[index].exit = linkNeighbor.entry;
-            linkNeighbor.exit = _dungeons[indexDungeon].links[index].entry;
+            _dungeons[indexDungeon].links[index].exit = neighbor.entry;
+            neighbor.exit = _dungeons[indexDungeon].links[index].entry;
         }
     }
 }
 void Game::LinksRotateClockwise( std::size_t indexDungeon )
 {
-    const int maxCol = _dungeons[indexDungeon].GetSize( ).first;
+    Vector2<int> sizeDungeon = _dungeons[indexDungeon].GetSize( );
 
     for( const auto& linkCurrent : _dungeons[indexDungeon].links )
     {
@@ -532,7 +520,7 @@ void Game::LinksRotateClockwise( std::size_t indexDungeon )
         {
             if( link.indexDungeon == indexDungeon )
             {
-                link.exit = PositionRotateClockwise( link.exit, maxCol );
+                link.exit = PositionRotateClockwise( link.exit, sizeDungeon.x );
             }
         }
     }

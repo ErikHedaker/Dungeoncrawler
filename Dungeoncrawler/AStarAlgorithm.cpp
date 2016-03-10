@@ -1,40 +1,37 @@
 #include "AStarAlgorithm.h"
-#include <unordered_set>
 #include <unordered_map>
 #include <queue>
-#include <vector>
 
-Grid::Grid( int maxCol, int maxRow, const std::vector<Vector2i>& obstacles ) :
-    _maxCol( maxCol ),
-    _maxRow( maxRow ),
+Grid::Grid( const Vector2<int>& size, const std::vector<Vector2<int>>& obstacles ) :
+    _size( size ),
     _obstacles( obstacles.begin( ), obstacles.end( ) )
 { }
-bool Grid::InBounds( const Vector2i& position ) const
+bool Grid::InBounds( const Vector2<int>& position ) const
 {
     return
-        position.col >= 0 &&
-        position.row >= 0 &&
-        position.col < _maxCol &&
-        position.row < _maxRow;
+        position.x >= 0 &&
+        position.y >= 0 &&
+        position.x < _size.x &&
+        position.y < _size.y;
 }
-bool Grid::Passable( const Vector2i& position ) const
+bool Grid::Passable( const Vector2<int>& position ) const
 {
-    return !( _obstacles.count( position ) );
+    return !_obstacles.count( position );
 }
-std::vector<Vector2i> Grid::GetNeighbors( const Vector2i& position ) const
+std::vector<Vector2<int>> Grid::GetNeighbors( const Vector2<int>& position ) const
 {
-    const std::array<Vector2i, 4> directions =
+    const std::array<Vector2<int>, 4> directions =
     { {
         {  0, -1 },
         { -1,  0 },
         {  0,  1 },
         {  1,  0 }
     } };
-    std::vector<Vector2i> results;
+    std::vector<Vector2<int>> results;
 
     for( const auto& direction : directions )
     {
-        Vector2i neighbor = position + direction;
+        Vector2<int> neighbor = position + direction;
 
         if( InBounds( neighbor ) &&
             Passable( neighbor ) )
@@ -42,7 +39,7 @@ std::vector<Vector2i> Grid::GetNeighbors( const Vector2i& position ) const
             results.push_back( neighbor );
         }
 
-        if( ( position.col + position.row ) % 2 == 0 )
+        if( ( position.x + position.y ) % 2 == 0 )
         {
             /* Aesthetic improvement on square grids according to original author */
             std::reverse( results.begin( ), results.end( ) );
@@ -52,7 +49,7 @@ std::vector<Vector2i> Grid::GetNeighbors( const Vector2i& position ) const
     return results;
 }
 
-Node::Node( const Vector2i& position, int priority ) :
+Node::Node( const Vector2<int>& position, int priority ) :
     position( position ),
     priority( priority )
 { }
@@ -62,12 +59,12 @@ bool CompareNodes::operator()( const Node& lhs, const Node& rhs ) const
     return lhs.priority > rhs.priority;
 }
 
-int Heuristic( const Vector2i& from, const Vector2i& to )
+int Heuristic( const Vector2<int>& from, const Vector2<int>& to )
 {
-    return abs( from.col - to.col ) + abs( from.row - to.row );
+    return abs( from.x - to.x ) + abs( from.y - to.y );
 }
 
-std::vector<Vector2i> AStarAlgorithm( const Vector2i& start, const Vector2i& goal, int maxCol, int maxRow, const std::vector<Vector2i>& obstacles )
+std::vector<Vector2<int>> AStarAlgorithm( const Vector2<int>& start, const Vector2<int>& goal, const Vector2<int>& sizeDungeon, const std::vector<Vector2<int>>& obstacles )
 {
     /*
         http://www.redblobgames.com/pathfinding/a-star/implementation.html
@@ -75,9 +72,9 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& start, const Vector2i& goa
     */
 
     std::priority_queue<Node, std::vector<Node>, CompareNodes> activeNodes;
-    std::unordered_map<Vector2i, Vector2i, Vector2iHasher> positionCameFrom;
-    std::unordered_map<Vector2i, int, Vector2iHasher> positionCost;
-    const Grid grid( maxCol, maxRow, obstacles );
+    std::unordered_map<Vector2<int>, Vector2<int>, HasherVector2<int>> positionCameFrom;
+    std::unordered_map<Vector2<int>, int, HasherVector2<int>> positionCost;
+    const Grid grid( sizeDungeon, obstacles );
 
     activeNodes.emplace( start, 0 );
     positionCameFrom[start] = start;
@@ -96,7 +93,7 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& start, const Vector2i& goa
 
         for( const auto& neighbor : grid.GetNeighbors( current.position ) )
         {
-            const int newCost = positionCost[current.position] + 1; /* Position-in-grid cost goes here for weighted grid. */
+            const int newCost = positionCost[current.position] + 1;
 
             if( !positionCost.count( neighbor ) ||
                 newCost < positionCost[neighbor] )
@@ -111,17 +108,22 @@ std::vector<Vector2i> AStarAlgorithm( const Vector2i& start, const Vector2i& goa
     }
 
     /* Reconstruct path */
-    const Vector2i notSet = { -1, -1 };
-    Vector2i current = goal;
-    std::vector<Vector2i> path;
+    Vector2<int> current = goal;
+    std::vector<Vector2<int>> path;
 
     path.push_back( current );
 
-    while( current != start &&
-           positionCameFrom.at( current ) != notSet )
+    while( current != start )
     {
-        current = positionCameFrom.at( current );
-        path.push_back( current );
+        try
+        {
+            current = positionCameFrom.at( current );
+            path.push_back( current );
+        }
+        catch( ... )
+        {
+            break;
+        }
     }
 
     std::reverse( path.begin( ), path.end( ) );

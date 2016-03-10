@@ -31,10 +31,13 @@ void Components::Delete( std::size_t index )
 }
 
 Dungeon::Dungeon( const DungeonConfiguration& config ) :
-    _maxCol( config.fixedDungeonSize ? config.maxCol : RandomNumberGenerator( 50, 60 ) ),
-    _maxRow( config.fixedDungeonSize ? config.maxRow : RandomNumberGenerator( 50, 60 ) ),
-    _tileMap( _maxCol * _maxRow ),
-    _visionMap( _maxCol * _maxRow, false )
+    _size
+    ( {
+        config.sizeDungeonFixed ? config.sizeDungeon.x : RandomNumberGenerator( 50, 60 ),
+        config.sizeDungeonFixed ? config.sizeDungeon.y : RandomNumberGenerator( 50, 60 )
+    } ),
+    _tileMap( _size.x * _size.y ),
+    _visionMap( _size.x * _size.y, false )
 
 {
     GenerateDoors( config.generateDoors, config.amountDoors );
@@ -45,19 +48,18 @@ Dungeon::Dungeon( const DungeonConfiguration& config ) :
     GenerateFillerWalls( config.generateFillerWalls, config.amountFillerWallsCycles );
     GenerateMonsters( config.generateMonsters, config.amountMonsters );
 }
-Dungeon::Dungeon( int maxCol, int maxRow, const std::vector<bool>& visionMap, const std::vector<char>& iconMap, Player& player ) :
-    _maxCol( maxCol ),
-    _maxRow( maxRow ),
-    _tileMap( maxCol * maxRow ),
+Dungeon::Dungeon( const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap, Player& player ) :
+    _size( size ),
+    _tileMap( size.x * size.y ),
     _visionMap( visionMap )
 {
-    Vector2i iterator;
+    Vector2<int> iterator;
 
-    for( iterator.row = 0; iterator.row < _maxRow; iterator.row++ )
+    for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
     {
-        for( iterator.col = 0; iterator.col < _maxCol; iterator.col++ )
+        for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
         {
-            switch( iconMap[( iterator.row * _maxCol ) + iterator.col] )
+            switch( iconMap[( iterator.y * _size.x ) + iterator.x] )
             {
                 case Icon::Player:
                 {
@@ -88,11 +90,11 @@ Dungeon::Dungeon( int maxCol, int maxRow, const std::vector<bool>& visionMap, co
     }
 }
 
-void Dungeon::CreatePlayerLocal( const Vector2i& position, Player& player )
+void Dungeon::CreatePlayerLocal( const Vector2<int>& position, Player& player )
 {
     _indexPlayerLocal = _components.Add( );
-    _components.position[_indexPlayerLocal] = { _maxCol / 2, _maxRow / 2 };
-    _components.positionPrevious[_indexPlayerLocal] = { _maxCol / 2, _maxRow / 2 };
+    _components.position[_indexPlayerLocal] = _size / 2;
+    _components.positionPrevious[_indexPlayerLocal] = _size / 2;
     _components.attributes[_indexPlayerLocal] = Attributes::PassableOthers | Attributes::PassablePlayer;
     _components.icon[_indexPlayerLocal] = Icon::Player;
 
@@ -103,7 +105,7 @@ void Dungeon::CreatePlayerLocal( const Vector2i& position, Player& player )
     }
     else
     {
-        const std::array<Vector2i, 4> directions =
+        const std::array<Vector2<int>, 4> directions =
         { {
             {  0, -1 },
             { -1,  0 },
@@ -113,7 +115,7 @@ void Dungeon::CreatePlayerLocal( const Vector2i& position, Player& player )
 
         for( const auto& direction : directions )
         {
-            Vector2i nearby = position + direction;
+            const Vector2<int> nearby = position + direction;
 
             if( InBounds( nearby ) &&
                 CheckTile( nearby, Attributes::PassablePlayer ) )
@@ -134,25 +136,25 @@ void Dungeon::RotateClockwise( )
 {
     auto tileRotated = _tileMap;
     auto visionRotated = _visionMap;
-    Vector2i iterator;
+    Vector2<int> iterator;
 
-    std::swap( _maxCol, _maxRow );
+    std::swap( _size.x, _size.y );
 
-    for( iterator.row = 0; iterator.row < _maxRow; iterator.row++ )
+    for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
     {
-        for( iterator.col = 0; iterator.col < _maxCol; iterator.col++ )
+        for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
         {
-            tileRotated[( iterator.row * _maxCol ) + iterator.col] = _tileMap[( iterator.col * _maxRow ) + iterator.row];
-            visionRotated[( iterator.row * _maxCol ) + iterator.col] = _visionMap[( iterator.col * _maxRow ) + iterator.row];
+            tileRotated[( iterator.y * _size.x ) + iterator.x] = _tileMap[( iterator.x * _size.y ) + iterator.y];
+            visionRotated[( iterator.y * _size.x ) + iterator.x] = _visionMap[( iterator.x * _size.y ) + iterator.y];
         }
 
-        auto& tileColoumBegin   = tileRotated.begin( )   + iterator.row * _maxCol;
-        auto& tileColoumEnd     = tileRotated.begin( )   + iterator.row * _maxCol + _maxCol;
-        auto& visionColoumBegin = visionRotated.begin( ) + iterator.row * _maxCol;
-        auto& visionColoumEnd   = visionRotated.begin( ) + iterator.row * _maxCol + _maxCol;
+        auto& tilexoumBegin   = tileRotated.begin( )   + iterator.y * _size.x;
+        auto& tilexoumEnd     = tileRotated.begin( )   + iterator.y * _size.x + _size.x;
+        auto& visionxoumBegin = visionRotated.begin( ) + iterator.y * _size.x;
+        auto& visionxoumEnd   = visionRotated.begin( ) + iterator.y * _size.x + _size.x;
 
-        std::reverse( tileColoumBegin, tileColoumEnd );
-        std::reverse( visionColoumBegin, visionColoumEnd );
+        std::reverse( tilexoumBegin, tilexoumEnd );
+        std::reverse( visionxoumBegin, visionxoumEnd );
     }
 
     _tileMap = tileRotated;
@@ -160,27 +162,27 @@ void Dungeon::RotateClockwise( )
 
     for( std::size_t index = 0; index < _components.indexCount; index++ )
     {
-        _components.position[index] = PositionRotateClockwise( _components.position[index], _maxCol );
-        _components.positionPrevious[index] = PositionRotateClockwise( _components.position[index], _maxCol );
+        _components.position[index] = PositionRotateClockwise( _components.position[index], _size.x );
+        _components.positionPrevious[index] = PositionRotateClockwise( _components.position[index], _size.x );
     }
 
     for( auto& link : links )
     {
-        link.entry = PositionRotateClockwise( link.entry, _maxCol );
+        link.entry = PositionRotateClockwise( link.entry, _size.x );
     }
 }
 
-const Tile& Dungeon::GetTile( const Vector2i& position ) const
+const Vector2<int>& Dungeon::GetSize( ) const
 {
-    return _tileMap[( position.row * _maxCol ) + position.col];
+    return _size;
 }
-bool Dungeon::GetVision( const Vector2i& position ) const
+const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
 {
-    return _visionMap[( position.row * _maxCol ) + position.col];
+    return _tileMap[( position.y * _size.x ) + position.x];
 }
-std::pair<int, int> Dungeon::GetSize( ) const
+bool Dungeon::GetVision( const Vector2<int>& position ) const
 {
-    return std::make_pair( _maxCol, _maxRow );
+    return _visionMap[( position.y * _size.x ) + position.x];
 }
 
 void Dungeon::PlayerMovement( const Orientation& orientation )
@@ -230,8 +232,8 @@ void Dungeon::CheckEvents( Player& player )
     player.position = _components.position[_indexPlayerLocal];
     UpdateVision( player.position, player.visionReach );
     
-    /* Fight aggressive entities on player's position */
-    for( auto index : _tileMap[( _components.position[_indexPlayerLocal].row * _maxCol ) + _components.position[_indexPlayerLocal].col].indexOccupants )
+    /* Engage aggressive entity on player's position */
+    for( auto index : _tileMap[( _components.position[_indexPlayerLocal].y * _size.x ) + _components.position[_indexPlayerLocal].x].indexOccupants )
     {
         if( _components.attributes[index] & Attributes::Monster )
         {
@@ -256,14 +258,14 @@ void Dungeon::CheckEvents( Player& player )
     }
 }
 
-bool Dungeon::CheckTile( const Vector2i& position, int bit ) const
+bool Dungeon::CheckTile( const Vector2<int>& position, int bitmask ) const
 {
     const auto& indexes = GetTile( position ).indexOccupants;
     int count = 0;
 
     for( auto index : indexes )
     {
-        if( _components.attributes[index] & bit )
+        if( _components.attributes[index] & bitmask )
         {
             count++;
         }
@@ -271,27 +273,27 @@ bool Dungeon::CheckTile( const Vector2i& position, int bit ) const
 
     return count == indexes.size( );
 }
-bool Dungeon::InBounds( const Vector2i& position ) const
+bool Dungeon::InBounds( const Vector2<int>& position ) const
 {
     return
-        position.col >= 0 &&
-        position.row >= 0 &&
-        position.col < _maxCol &&
-        position.row < _maxRow;
+        position.x >= 0 &&
+        position.y >= 0 &&
+        position.x < _size.x &&
+        position.y < _size.y;
 }
-bool Dungeon::IsCorner( const Vector2i& position ) const
+bool Dungeon::IsCorner( const Vector2<int>& position ) const
 {
     return
-        ( position.col == 0 || position.col == _maxCol - 1 ) &&
-        ( position.row == 0 || position.row == _maxRow - 1 );
+        ( position.x == 0 || position.x == _size.x - 1 ) &&
+        ( position.y == 0 || position.y == _size.y - 1 );
 }
-bool Dungeon::Unoccupied( const Vector2i& position ) const
+bool Dungeon::Unoccupied( const Vector2<int>& position ) const
 {
-    return _tileMap[( position.row * _maxCol ) + position.col].indexOccupants.empty( );
+    return _tileMap[( position.y * _size.x ) + position.x].indexOccupants.empty( );
 }
-bool Dungeon::Surrounded( const Vector2i& position, int threshold ) const
+bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 {
-    static const std::array<Vector2i, 8> directions =
+    static const std::array<Vector2<int>, 8> directions =
     { {
         {  0, -1 },
         { -1, -1 },
@@ -306,7 +308,7 @@ bool Dungeon::Surrounded( const Vector2i& position, int threshold ) const
 
     for( const auto& direction : directions )
     {
-        Vector2i neighbor = position + direction;
+        const Vector2<int> neighbor = position + direction;
 
         if( !CheckTile( neighbor, Attributes::PassablePlayer ) )
         {
@@ -317,26 +319,26 @@ bool Dungeon::Surrounded( const Vector2i& position, int threshold ) const
     return surroundingEntity >= threshold;
 }
 
-void Dungeon::UpdateVision( const Vector2i& position, int visionReach )
+void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
 {
-    const Vector2i iteratorBegin = position - visionReach;
-    const Vector2i iteratorEnd   = position + visionReach;
-    Vector2i iterator;
+    const Vector2<int> iteratorBegin = position - visionReach;
+    const Vector2<int> iteratorEnd   = position + visionReach;
+    Vector2<int> iterator;
 
-    for( iterator.row = iteratorBegin.row; iterator.row <= iteratorEnd.row; iterator.row++ )
+    for( iterator.y = iteratorBegin.y; iterator.y <= iteratorEnd.y; iterator.y++ )
     {
-        for( iterator.col = iteratorBegin.col; iterator.col <= iteratorEnd.col; iterator.col++ )
+        for( iterator.x = iteratorBegin.x; iterator.x <= iteratorEnd.x; iterator.x++ )
         {
             if( InBounds( iterator ) )
             {
-                _visionMap[( iterator.row * _maxCol ) + iterator.col] = true;
+                _visionMap[( iterator.y * _size.x ) + iterator.x] = true;
             }
         }
     }
 }
-void Dungeon::UpdateTile( const Vector2i& position )
+void Dungeon::UpdateTile( const Vector2<int>& position )
 {
-    auto& tile = _tileMap[( position.row * _maxCol ) + position.col];
+    auto& tile = _tileMap[( position.y * _size.x ) + position.x];
 
     tile.icon = Icon::Ground;
 
@@ -347,16 +349,16 @@ void Dungeon::UpdateTile( const Vector2i& position )
 }
 void Dungeon::OccupantAdd( std::size_t index )
 {
-    const Vector2i position = _components.position[index];
-    auto& indexes = _tileMap[( position.row * _maxCol ) + position.col].indexOccupants;
+    const Vector2<int> position = _components.position[index];
+    auto& indexes = _tileMap[( position.y * _size.x ) + position.x].indexOccupants;
 
     indexes.push_back( index );
     UpdateTile( position );
 }
 void Dungeon::OccupantRemove( std::size_t index )
 {
-    const Vector2i position = _components.position[index];
-    auto& indexes = _tileMap[( position.row * _maxCol ) + position.col].indexOccupants;
+    const Vector2<int> position = _components.position[index];
+    auto& indexes = _tileMap[( position.y * _size.x ) + position.x].indexOccupants;
 
     indexes.erase( std::remove( indexes.begin( ), indexes.end( ), index ), indexes.end( ) );
     UpdateTile( position );
@@ -380,7 +382,7 @@ void Dungeon::DeleteEntity( std::size_t index )
     }
 }
 
-void Dungeon::DoorAdd( const Vector2i& position )
+void Dungeon::DoorAdd( const Vector2<int>& position )
 {
     const std::size_t index = _components.Add( );
 
@@ -390,7 +392,7 @@ void Dungeon::DoorAdd( const Vector2i& position )
     _components.attributes[index] = Attributes::PassablePlayer;
     OccupantAdd( index );
 }
-void Dungeon::WallAdd( const Vector2i& position )
+void Dungeon::WallAdd( const Vector2<int>& position )
 {
     const std::size_t index = _components.Add( );
 
@@ -400,10 +402,10 @@ void Dungeon::WallAdd( const Vector2i& position )
     _components.attributes[index] = 0;
     OccupantAdd( index );
 }
-void Dungeon::StepAdd( const Vector2i& position )
+void Dungeon::StepAdd( const Vector2<int>& position )
 {
     const std::size_t index = _components.Add( );
-
+    
     _components.icon[index] = Icon::Ground;
     _components.position[index] = position;
     _components.positionPrevious[index] = position;
@@ -411,7 +413,7 @@ void Dungeon::StepAdd( const Vector2i& position )
                                     Attributes::PassableOthers;
     OccupantAdd( index );
 }
-void Dungeon::MonsterAdd( const Vector2i& position )
+void Dungeon::MonsterAdd( const Vector2<int>& position )
 {
     const std::size_t index = _components.Add( );
 
@@ -430,17 +432,17 @@ void Dungeon::GenerateDoors( bool generate, int amount )
     if( generate )
     {
         const int amountDoors = amount ? amount : 3;
-        std::vector<Vector2i> valid;
-        Vector2i iterator;
+        std::vector<Vector2<int>> valid;
+        Vector2<int> iterator;
 
-        for( iterator.row = 0; iterator.row < _maxRow; iterator.row++ )
+        for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
         {
-            for( iterator.col = 0; iterator.col < _maxCol; iterator.col++ )
+            for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
             {
-                if( iterator.col == 0 ||
-                    iterator.row == 0 ||
-                    iterator.col == _maxCol - 1 ||
-                    iterator.row == _maxRow - 1 )
+                if( iterator.x == 0 ||
+                    iterator.y == 0 ||
+                    iterator.x == _size.x - 1 ||
+                    iterator.y == _size.y - 1 )
                 {
                     if( !IsCorner( iterator ) )
                     {
@@ -455,7 +457,7 @@ void Dungeon::GenerateDoors( bool generate, int amount )
             const int index = RandomNumberGenerator( 0, valid.size( ) - 1 );
 
             DoorAdd( valid[index] );
-            links.push_back( { 0, { -1, -1 }, valid[index] } );
+            links.push_back( { false, 0, { -1, -1 }, valid[index] } );
             valid.erase( valid.begin( ) + index );
         }
     }
@@ -464,18 +466,18 @@ void Dungeon::GenerateOuterWalls( bool generate )
 {
     if( generate )
     {
-        Vector2i iterator;
+        Vector2<int> iterator;
 
-        for( iterator.row = 0; iterator.row < _maxRow; iterator.row++ )
+        for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
         {
-            for( iterator.col = 0; iterator.col < _maxCol; iterator.col++ )
+            for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
             {
                 if( Unoccupied( iterator ) )
                 {
-                    if( iterator.col == 0 ||
-                        iterator.row == 0 ||
-                        iterator.col == _maxCol - 1 ||
-                        iterator.row == _maxRow - 1 )
+                    if( iterator.x == 0 ||
+                        iterator.y == 0 ||
+                        iterator.x == _size.x - 1 ||
+                        iterator.y == _size.y - 1 )
                     {
                         WallAdd( iterator );
                     }
@@ -488,8 +490,8 @@ void Dungeon::GeneratePath( bool generate )
 {
     if( generate )
     {
-        const Vector2i center = { _maxCol / 2, _maxRow / 2 };
-        std::vector<Vector2i> obstacles;
+        const Vector2<int> center = _size / 2;
+        std::vector<Vector2<int>> obstacles;
 
         for( std::size_t index = 0; index < _components.indexCount; index++ )
         {
@@ -501,7 +503,7 @@ void Dungeon::GeneratePath( bool generate )
 
         for( const auto& link : links )
         {
-            std::vector<Vector2i> path = AStarAlgorithm( link.entry, center, _maxCol, _maxRow, obstacles );
+            std::vector<Vector2<int>> path = AStarAlgorithm( link.entry, center, _size, obstacles );
 
             for( const auto& position : path )
             {
@@ -517,15 +519,15 @@ void Dungeon::GenerateSourceWalls( bool generate, int amount )
 {
     if( generate )
     {
-        const Vector2i center = { _maxCol / 2, _maxRow / 2 };
-        int sourceWallsLeft = amount ? amount : ( _maxCol * _maxRow ) / 20;
+        const Vector2<int> center = _size / 2;
+        int sourceWallsLeft = amount ? amount : ( _size.x * _size.y ) / 20;
 
         while( sourceWallsLeft > 0 )
         {
-            Vector2i position;
+            Vector2<int> position;
 
-            position.col = RandomNumberGenerator( 1, _maxCol - 2 );
-            position.row = RandomNumberGenerator( 1, _maxRow - 2 );
+            position.x = RandomNumberGenerator( 1, _size.x - 2 );
+            position.y = RandomNumberGenerator( 1, _size.y - 2 );
 
             if( Unoccupied( position ) &&
                 position != center )
@@ -540,15 +542,15 @@ void Dungeon::GenerateExtensionWalls( bool generate, int amount )
 {
     if( generate )
     {
-        const Vector2i center = { _maxCol / 2, _maxRow / 2 };
-        const std::array<Vector2i, 4> directions =
+        const Vector2<int> center = _size / 2;
+        const std::array<Vector2<int>, 4> directions =
         { {
             {  0, -1 },
             { -1,  0 },
             {  0,  1 },
             {  1,  0 }
         } };
-        int extensionWallsLeft = amount ? amount : ( _maxCol * _maxRow ) / 5;
+        int extensionWallsLeft = amount ? amount : ( _size.x * _size.y ) / 5;
 
         while( extensionWallsLeft > 0 )
         {
@@ -558,7 +560,7 @@ void Dungeon::GenerateExtensionWalls( bool generate, int amount )
                     !( _components.attributes[index] & Attributes::PassableOthers ) )
                 {
                     const int indexDirection = RandomNumberGenerator( 0, 3 );
-                    const Vector2i position = _components.position[index] + directions[indexDirection];
+                    const Vector2<int> position = _components.position[index] + directions[indexDirection];
 
                     if( InBounds( position ) &&
                         Unoccupied( position ) &&
@@ -576,15 +578,15 @@ void Dungeon::GenerateFillerWalls( bool generate, int amount )
 {
     if( generate )
     {
-        const Vector2i center = { _maxCol / 2, _maxRow / 2 };
+        const Vector2<int> center = _size / 2;
         const int amountWalls = amount ? amount : 5;
-        Vector2i iterator;
+        Vector2<int> iterator;
 
         for( int i = 0; i < amountWalls; i++ )
         {
-            for( iterator.row = 1; iterator.row < _maxRow - 1; iterator.row++ )
+            for( iterator.y = 1; iterator.y < _size.y - 1; iterator.y++ )
             {
-                for( iterator.col = 1; iterator.col < _maxCol - 1; iterator.col++ )
+                for( iterator.x = 1; iterator.x < _size.x - 1; iterator.x++ )
                 {
                     if( Unoccupied( iterator ) &&
                         Surrounded( iterator, 5 ) &&
@@ -601,19 +603,19 @@ void Dungeon::GenerateMonsters( bool generate, int amount )
 {
     if( generate )
     {
-        const Vector2i center = { _maxCol / 2, _maxRow / 2 };
-        const int min = static_cast<int>( sqrt( _maxCol * _maxRow ) / 3.0 );
-        const int max = static_cast<int>( sqrt( _maxCol * _maxRow ) / 1.5 );
+        const Vector2<int> center = _size / 2;
+        const int min = static_cast<int>( sqrt( _size.x * _size.y ) / 3.0 );
+        const int max = static_cast<int>( sqrt( _size.x * _size.y ) / 1.5 );
         const int amountMonsters = amount ? amount : RandomNumberGenerator( min, max );
 
         for( int i = 0; i < amountMonsters; i++ )
         {
             while( true )
             {
-                Vector2i position;
+                Vector2<int> position;
 
-                position.col = RandomNumberGenerator( 1, _maxCol - 2 );
-                position.row = RandomNumberGenerator( 1, _maxRow - 2 );
+                position.x = RandomNumberGenerator( 1, _size.x - 2 );
+                position.y = RandomNumberGenerator( 1, _size.y - 2 );
 
                 if( Unoccupied( position ) &&
                     position != center )

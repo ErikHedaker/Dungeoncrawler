@@ -1,5 +1,4 @@
 #include "Functions.h"
-#include "Vector2i.h"
 #include "Enums.h"
 #include <iostream>
 #include <string>
@@ -56,27 +55,27 @@ void GetEnter( )
     std::cin.get( );
     std::cin.get( );
 }
-void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2i& center, const Vector2i& screenSize )
+void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& screenSize )
 {
-    const Vector2i cameraOrigo = center - screenSize / 2;
-    const Vector2i iteratorBegin = cameraOrigo - 1;
-    const Vector2i iteratorEnd = cameraOrigo + screenSize + 1;
-    auto InsideVisionReach = [visionReach, center] ( const Vector2i& iterator ) -> bool
+    const Vector2<int> cameraOrigo = center - screenSize / 2;
+    const Vector2<int> iteratorBegin = cameraOrigo - 1;
+    const Vector2<int> iteratorEnd = cameraOrigo + screenSize + 1;
+    auto InsideVisionReach = [visionReach, center] ( const Vector2<int>& iterator ) -> bool
     {
         return
             iterator >= center - visionReach &&
             iterator <= center + visionReach;
     };
-    Vector2i iterator;
+    Vector2<int> iterator;
 
-    for( iterator.row = iteratorBegin.row; iterator.row <= iteratorEnd.row; iterator.row++ )
+    for( iterator.y = iteratorBegin.y; iterator.y <= iteratorEnd.y; iterator.y++ )
     {
-        for( iterator.col = iteratorBegin.col; iterator.col <= iteratorEnd.col; iterator.col++ )
+        for( iterator.x = iteratorBegin.x; iterator.x <= iteratorEnd.x; iterator.x++ )
         {
-            if( iterator.col == iteratorBegin.col ||
-                iterator.row == iteratorBegin.row ||
-                iterator.col == iteratorEnd.col ||
-                iterator.row == iteratorEnd.row )
+            if( iterator.x == iteratorBegin.x ||
+                iterator.y == iteratorBegin.y ||
+                iterator.x == iteratorEnd.x ||
+                iterator.y == iteratorEnd.y )
             {
                 std::cout << '\\';
             }
@@ -113,13 +112,13 @@ void PrintCombatantInformation( const Combatant& combatant )
     std::cout << combatant.healthRegeneration << ")\n";
     std::cout << combatant.name << " spells owned: " << __popcnt( combatant.spells ) << "\n";
 }
-Vector2i PositionRotateClockwise( const Vector2i& position, int maxCol )
+Vector2<int> PositionRotateClockwise( const Vector2<int>& position, int maxx )
 {
-    return { maxCol - position.row - 1, position.col };
+    return { maxx - position.y - 1, position.x };
 }
-Vector2i PositionMove( const Vector2i& position, const Orientation& orientation )
+Vector2<int> PositionMove( const Vector2<int>& position, const Orientation& orientation )
 {
-    static const std::map<Orientation, Vector2i> directions =
+    static const std::map<Orientation, Vector2<int>> directions =
     {
         { Orientation::North, {  0, -1 } },
         { Orientation::West,  { -1,  0 } },
@@ -129,7 +128,7 @@ Vector2i PositionMove( const Vector2i& position, const Orientation& orientation 
 
     return position + directions.at( orientation );
 }
-Vector2i PositionMoveProbability( const Vector2i& position, int north, int west, int south, int east, int still )
+Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, int west, int south, int east, int still )
 {
     const int random = RandomNumberGenerator( 0, north + west + south + east + still - 1 );
 
