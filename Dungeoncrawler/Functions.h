@@ -8,6 +8,7 @@
 #include <string>
 #include <iostream>
 
+double RandomNumberGenerator( double min, double max );
 int RandomNumberGenerator( int min, int max );
 int GetPositiveInteger( const std::string& context );
 char GetValidChar( const std::string& context, const std::vector<char>& validChoices );

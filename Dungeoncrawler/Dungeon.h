@@ -63,16 +63,14 @@ class Dungeon
         void CreatePlayerLocal( const Vector2<int>& position, Player& player );
         void RotateClockwise( );
 
-        const Vector2<int>& GetSize( ) const;
-        const Tile& GetTile( const Vector2<int>& position ) const;
-        bool GetVision( const Vector2<int>& position ) const;
-
-        /* Game loop */
         void PlayerMovement( const Orientation& orientation );
         void RandomMovement( );
         void CheckEvents( Player& player );
 
-        /* Helper functions */
+        const Vector2<int>& GetSize( ) const;
+        const Tile& GetTile( const Vector2<int>& position ) const;
+        bool GetVision( const Vector2<int>& position ) const;
+
         bool CheckTile( const Vector2<int>& position, int bitmask ) const;
         bool InBounds( const Vector2<int>& position ) const;
         bool IsCorner( const Vector2<int>& position ) const;
@@ -94,7 +92,6 @@ class Dungeon
         void OccupantRemove( std::size_t index );
         void DeleteEntity( std::size_t index );
 
-        /* Preset entities */
         void DoorAdd( const Vector2<int>& position );
         void WallAdd( const Vector2<int>& position );
         void StepAdd( const Vector2<int>& position );

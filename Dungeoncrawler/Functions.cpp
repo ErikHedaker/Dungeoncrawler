@@ -6,6 +6,14 @@
 #include <random>
 #include <map>
 
+double RandomNumberGenerator( double min, double max )
+{
+    static std::random_device rd;
+    static std::mt19937 generator( rd( ) );
+    std::uniform_real_distribution<double> randomNumber( min, max );
+
+    return randomNumber( generator );
+}
 int RandomNumberGenerator( int min, int max )
 {
     static std::random_device rd;

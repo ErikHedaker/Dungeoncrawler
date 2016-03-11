@@ -36,7 +36,7 @@ BattleSystem::BattleSystem( ) :
     } ),
     _librarySpells
     ( {
-        { Spells::TouchOfDeath, { "Touch of Death", 100.0 } },
+        { Spells::TouchOfDeath, { "Touch of Death", 100.0  } },
         { Spells::Iceblast,     { "Iceblast",       1.2    } },
         { Spells::Fireball,     { "Fireball",       1.5    } }
     } )
@@ -76,17 +76,16 @@ Combatant BattleSystem::GetRandomMonster( )
 {
     return _libraryMonsters[RandomNumberGenerator( 0, _libraryMonsters.size( ) - 1 )];
 }
-Spell BattleSystem::GetSpell( Combatant& player )
+Spell BattleSystem::GetSpell( const Combatant& player )
 {
-    const int bitMax = _librarySpells.size( ) - 1;
+    const int amount = _librarySpells.size( ) - 1;
     std::map<char, Spell> idSpell;
     std::vector<char> choices;
     char id = '1';
-    char choice;
 
     std::cout << "\nChoose a spell:\n\n";
 
-    for( int bit = 1; bit <= 1 << bitMax; bit <<= 1 )
+    for( int bit = 1; bit <= 1 << amount; bit <<= 1 )
     {
         if( player.spells & bit )
         {
@@ -97,25 +96,21 @@ Spell BattleSystem::GetSpell( Combatant& player )
         }
     }
 
-    choice = GetValidChar( "\nEnter choice: ", choices );
-    
-    return idSpell.at( choice );
+    return idSpell.at( GetValidChar( "\nEnter choice: ", choices ) );
 }
 void BattleSystem::CastSpell( const Spell& spell, Combatant& caster, Combatant& target )
 {
-    const double random = RandomNumberGenerator( 90, 110 ) / 100.0;
     const int healthOld = target.health;
 
-    target.health -= static_cast<int>( caster.damage * spell.damageMultiplier * random );
+    target.health -= static_cast<int>( caster.damage * spell.damageMultiplier * RandomNumberGenerator( 0.9, 1.1 ) );
 
     std::cout << caster.name << " casts " << spell.name << " on " << target.name << ", which dealt " << healthOld - target.health << " damage!\n";
 }
 void BattleSystem::WeaponAttack( Combatant& attacker, Combatant& target )
 {
-    const double random = RandomNumberGenerator( 90, 110 ) / 100.0;
     const int healthOld = target.health;
 
-    target.health -= static_cast<int>( attacker.damage * random );
+    target.health -= static_cast<int>( attacker.damage * RandomNumberGenerator( 0.9, 1.1 ) );
 
     std::cout << attacker.name << " attacks " << target.name << " with a weapon, which dealt " << healthOld - target.health << " damage!\n";
 }
@@ -131,7 +126,6 @@ void BattleSystem::PlayerTurn( Combatant& player, Combatant& monster )
         '2'
     };
     const char choice = GetValidChar( "Enter choice: ", choices );
-
 
     switch( choice )
     {
@@ -157,13 +151,13 @@ void BattleSystem::PlayerTurn( Combatant& player, Combatant& monster )
 }
 void BattleSystem::MonsterTurn( Combatant& player, Combatant& monster )
 {
-    const int bitMax = _librarySpells.size( ) - 1;
-    const int actionsMax = __popcnt( monster.spells ) + 1;
+    const int amount = _librarySpells.size( ) - 1;
+    const int choices = __popcnt( monster.spells ) + 1;
 
-    for( int bit = 1; bit <= 1 << bitMax; bit <<= 1 )
+    for( int bit = 1; bit <= 1 << amount; bit <<= 1 )
     {
         if( monster.spells & bit &&
-            RandomNumberGenerator( 1, actionsMax ) == actionsMax )
+            RandomNumberGenerator( 1, choices ) == choices )
         {
             CastSpell( _librarySpells.at( bit ), monster, player );
 

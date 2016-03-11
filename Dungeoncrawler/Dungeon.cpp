@@ -118,7 +118,7 @@ void Dungeon::CreatePlayerLocal( const Vector2<int>& position, Player& player )
             const Vector2<int> nearby = position + direction;
 
             if( InBounds( nearby ) &&
-                CheckTile( nearby, Attributes::PassablePlayer ) )
+                CheckTile( nearby, Attributes::PassableOthers ) )
             {
                 _components.position[_indexPlayerLocal] = nearby;
                 _components.positionPrevious[_indexPlayerLocal] = nearby;
@@ -148,13 +148,13 @@ void Dungeon::RotateClockwise( )
             visionRotated[( iterator.y * _size.x ) + iterator.x] = _visionMap[( iterator.x * _size.y ) + iterator.y];
         }
 
-        auto& tilexoumBegin   = tileRotated.begin( )   + iterator.y * _size.x;
-        auto& tilexoumEnd     = tileRotated.begin( )   + iterator.y * _size.x + _size.x;
-        auto& visionxoumBegin = visionRotated.begin( ) + iterator.y * _size.x;
-        auto& visionxoumEnd   = visionRotated.begin( ) + iterator.y * _size.x + _size.x;
+        auto& tileColoumBegin   = tileRotated.begin( )   + iterator.y * _size.x;
+        auto& tileColoumEnd     = tileRotated.begin( )   + iterator.y * _size.x + _size.x;
+        auto& visionColoumBegin = visionRotated.begin( ) + iterator.y * _size.x;
+        auto& visionColoumEnd   = visionRotated.begin( ) + iterator.y * _size.x + _size.x;
 
-        std::reverse( tilexoumBegin, tilexoumEnd );
-        std::reverse( visionxoumBegin, visionxoumEnd );
+        std::reverse( tileColoumBegin, tileColoumEnd );
+        std::reverse( visionColoumBegin, visionColoumEnd );
     }
 
     _tileMap = tileRotated;
@@ -165,24 +165,6 @@ void Dungeon::RotateClockwise( )
         _components.position[index] = PositionRotateClockwise( _components.position[index], _size.x );
         _components.positionPrevious[index] = PositionRotateClockwise( _components.position[index], _size.x );
     }
-
-    for( auto& link : links )
-    {
-        link.entry = PositionRotateClockwise( link.entry, _size.x );
-    }
-}
-
-const Vector2<int>& Dungeon::GetSize( ) const
-{
-    return _size;
-}
-const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
-{
-    return _tileMap[( position.y * _size.x ) + position.x];
-}
-bool Dungeon::GetVision( const Vector2<int>& position ) const
-{
-    return _visionMap[( position.y * _size.x ) + position.x];
 }
 
 void Dungeon::PlayerMovement( const Orientation& orientation )
@@ -258,6 +240,18 @@ void Dungeon::CheckEvents( Player& player )
     }
 }
 
+const Vector2<int>& Dungeon::GetSize( ) const
+{
+    return _size;
+}
+const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
+{
+    return _tileMap[( position.y * _size.x ) + position.x];
+}
+bool Dungeon::GetVision( const Vector2<int>& position ) const
+{
+    return _visionMap[( position.y * _size.x ) + position.x];
+}
 bool Dungeon::CheckTile( const Vector2<int>& position, int bitmask ) const
 {
     const auto& indexes = GetTile( position ).indexOccupants;
@@ -495,7 +489,7 @@ void Dungeon::GeneratePath( bool generate )
 
         for( std::size_t index = 0; index < _components.indexCount; index++ )
         {
-            if( !( _components.attributes[index] & Attributes::PassableOthers ) )
+            if( !( _components.attributes[index] & Attributes::PassablePlayer ) )
             {
                 obstacles.push_back( _components.position[index] );
             }

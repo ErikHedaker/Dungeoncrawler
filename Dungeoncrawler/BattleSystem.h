@@ -39,7 +39,7 @@ class BattleSystem
         const std::map<int, const Spell> _librarySpells;
 
         Combatant GetRandomMonster( );
-        Spell GetSpell( Combatant& player );
+        Spell GetSpell( const Combatant& player );
         void CastSpell( const Spell& spell, Combatant& caster, Combatant& target );
         void WeaponAttack( Combatant& attacker, Combatant& target );
         void PlayerTurn( Combatant& player, Combatant& monster );

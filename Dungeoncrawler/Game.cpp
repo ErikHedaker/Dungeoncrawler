@@ -31,9 +31,9 @@ void Game::Menu( )
         std::cout << "[4] Build new game (Configuration)\n";
         std::cout << "[5] Exit\n\n";
 
-        _status = GameStatus::Neutral;
-
         const char choice = GetValidChar( "Enter choice: ", choices );
+
+        _status = GameStatus::Neutral;
 
         switch( choice )
         {
@@ -121,7 +121,7 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 
             std::cout << "\n";
 
-            _config.sizeDungeonFixed = GetBool( GetValidChar( "Fixed dungeon size, [Y/N]: ",        choices ) );
+            _config.sizeDungeonFixed       = GetBool( GetValidChar( "Fixed dungeon size, [Y/N]: ",        choices ) );
             _config.generateDoors          = GetBool( GetValidChar( "Generate doors, [Y/N]: ",            choices ) );
             _config.generateOuterWalls     = GetBool( GetValidChar( "Generate outer obstacles, [Y/N]: ",  choices ) );
             _config.generatePath           = GetBool( GetValidChar( "Generate path, [Y/N]: ",             choices ) );
@@ -134,8 +134,8 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 
             if( _config.sizeDungeonFixed )
             {
-                _config.sizeDungeon.x = GetPositiveInteger( "Enter dungeon width: " );
-                _config.sizeDungeon.y = GetPositiveInteger( "Enter dungeon height: " );
+                _config.sizeDungeon.x           = GetPositiveInteger( "Enter dungeon width: " );
+                _config.sizeDungeon.y           = GetPositiveInteger( "Enter dungeon height: " );
             }
             if( _config.generateDoors )
                 _config.amountDoors             = GetPositiveInteger( "Enter amount of doors: " );
@@ -167,9 +167,6 @@ void Game::Loop( )
     while( _status == GameStatus::Neutral &&
            _player.status != PlayerStatus::Dead )
     {
-        system( "CLS" );
-        PrintDungeonCentered( _dungeons[_indexCurrent], _player.visionReach, _player.position );
-        PrintCombatantInformation( _player );
         PlayerTurn( _dungeons[_indexCurrent] );
         _dungeons[_indexCurrent].RandomMovement( );
         _dungeons[_indexCurrent].CheckEvents( _player );
@@ -397,15 +394,6 @@ bool Game::Load( )
 
 void Game::PlayerTurn( Dungeon& dungeon )
 {
-    std::cout << "\n";
-    std::cout << "[W] Go North\n";
-    std::cout << "[A] Go West\n";
-    std::cout << "[S] Go South\n";
-    std::cout << "[D] Go East\n";
-    std::cout << "[E] Save and exit to meny\n";
-    std::cout << "[R] Exit to meny\n";
-    std::cout << "[F] Rotate dungeon 90 degrees clockwise\n\n";
-
     static const std::vector<char> choices =
     {
         'W', 'w',
@@ -423,38 +411,59 @@ void Game::PlayerTurn( Dungeon& dungeon )
         { 'S', Orientation::South }, { 's', Orientation::South },
         { 'D', Orientation::East  }, { 'd', Orientation::East  }
     };
-    const char choice = GetValidChar( "Enter choice: ", choices );
+    char choice;
+    bool done = false;
 
-    switch( choice )
+    while( !done )
     {
-        case 'W': case 'w':
-        case 'A': case 'a':
-        case 'S': case 's':
-        case 'D': case 'd':
-        {
-            dungeon.PlayerMovement( direction.at( choice ) );
+        system( "CLS" );
+        PrintDungeonCentered( dungeon, _player.visionReach, _player.position );
+        PrintCombatantInformation( _player );
+        std::cout << "\n";
+        std::cout << "[W] Go North\n";
+        std::cout << "[A] Go West\n";
+        std::cout << "[S] Go South\n";
+        std::cout << "[D] Go East\n";
+        std::cout << "[E] Save and exit to meny\n";
+        std::cout << "[R] Exit to meny\n";
+        std::cout << "[F] Rotate dungeon 90 degrees clockwise\n\n";
+        choice = GetValidChar( "Enter choice: ", choices );
 
-            break;
-        }
-        case 'E': case 'e':
+        switch( choice )
         {
-            _status = GameStatus::Menu;
-            Save( );
+            case 'W': case 'w':
+            case 'A': case 'a':
+            case 'S': case 's':
+            case 'D': case 'd':
+            {
+                done = true;
+                dungeon.PlayerMovement( direction.at( choice ) );
 
-            break;
-        }
-        case 'R': case 'r':
-        {
-            _status = GameStatus::Menu;
+                break;
+            }
+            case 'E': case 'e':
+            {
+                done = true;
+                _status = GameStatus::Menu;
+                Save( );
 
-            break;
-        }
-        case 'F': case 'f':
-        {
-            dungeon.RotateClockwise( );
-            LinksRotateClockwise( _indexCurrent );
+                break;
+            }
+            case 'R': case 'r':
+            {
+                done = true;
+                _status = GameStatus::Menu;
 
-            break;
+                break;
+            }
+            case 'F': case 'f':
+            {
+                dungeon.RotateClockwise( );
+                LinksRotateClockwise( _indexCurrent );
+                _player.position = PositionRotateClockwise( _player.position, dungeon.GetSize( ).x );
+
+                break;
+            }
         }
     }
 }
@@ -497,16 +506,17 @@ void Game::FullLinkDungeon( std::size_t indexDungeon )
             _dungeons.emplace_back( _config );
 
             const std::size_t indexDungeonNeighbor = _dungeons.size( ) - 1;
+            auto& current = _dungeons[indexDungeon].links[index];
             auto& neighbor = _dungeons.back( ).links.back( );
 
-            _dungeons[indexDungeon].links[index].active = true;
+            current.active = true;
             neighbor.active = true;
 
-            _dungeons[indexDungeon].links[index].indexDungeon = indexDungeonNeighbor;
+            current.indexDungeon = indexDungeonNeighbor;
             neighbor.indexDungeon = indexDungeon;
 
-            _dungeons[indexDungeon].links[index].exit = neighbor.entry;
-            neighbor.exit = _dungeons[indexDungeon].links[index].entry;
+            current.exit = neighbor.entry;
+            neighbor.exit = current.entry;
         }
     }
 }
@@ -514,13 +524,15 @@ void Game::LinksRotateClockwise( std::size_t indexDungeon )
 {
     Vector2<int> sizeDungeon = _dungeons[indexDungeon].GetSize( );
 
-    for( const auto& linkCurrent : _dungeons[indexDungeon].links )
+    for( auto& link : _dungeons[indexDungeon].links )
     {
-        for( auto& link : _dungeons[linkCurrent.indexDungeon].links )
+        link.entry = PositionRotateClockwise( link.entry, sizeDungeon.x );
+
+        for( auto& neighbor : _dungeons[link.indexDungeon].links )
         {
-            if( link.indexDungeon == indexDungeon )
+            if( neighbor.indexDungeon == indexDungeon )
             {
-                link.exit = PositionRotateClockwise( link.exit, sizeDungeon.x );
+                neighbor.exit = PositionRotateClockwise( neighbor.exit, sizeDungeon.x );
             }
         }
     }
