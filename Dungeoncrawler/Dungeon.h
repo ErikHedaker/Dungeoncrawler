@@ -28,27 +28,27 @@ struct DungeonConfiguration
 
 struct Link
 {
-    bool active;
-    std::size_t indexDungeon;
+    int indexDungeon;
+    int indexLink;
     Vector2<int> exit;
     Vector2<int> entry;
 };
 
 struct Components
 {
-    std::size_t indexCount = 0;
+    int indexCount = 0;
     std::vector<char> icon;
     std::vector<Vector2<int>> position;
     std::vector<Vector2<int>> positionPrevious;
     std::vector<int> attributes;
 
-    std::size_t Add( );
-    void Delete( std::size_t index );
+    int Add( );
+    void Delete( int index );
 };
 
 struct Tile
 {
-    std::vector<std::size_t> indexOccupants;
+    std::vector<int> indexOccupants;
     char icon = Icon::Ground;
 };
 
@@ -63,8 +63,8 @@ class Dungeon
         void CreatePlayerLocal( const Vector2<int>& position, Player& player );
         void RotateClockwise( );
 
-        void PlayerMovement( const Orientation& orientation );
-        void RandomMovement( );
+        void MovementPlayer( const Orientation& orientation );
+        void MovementRandom( );
         void CheckEvents( Player& player );
 
         const Vector2<int>& GetSize( ) const;
@@ -88,9 +88,9 @@ class Dungeon
 
         void UpdateVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
-        void OccupantAdd( std::size_t index );
-        void OccupantRemove( std::size_t index );
-        void DeleteEntity( std::size_t index );
+        void OccupantAdd( int index );
+        void OccupantRemove( int index );
+        void DeleteEntity( int index );
 
         void DoorAdd( const Vector2<int>& position );
         void WallAdd( const Vector2<int>& position );

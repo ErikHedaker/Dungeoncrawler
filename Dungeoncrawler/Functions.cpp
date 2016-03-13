@@ -120,9 +120,9 @@ void PrintCombatantInformation( const Combatant& combatant )
     std::cout << combatant.healthRegeneration << ")\n";
     std::cout << combatant.name << " spells owned: " << __popcnt( combatant.spells ) << "\n";
 }
-Vector2<int> PositionRotateClockwise( const Vector2<int>& position, int maxx )
+Vector2<int> PositionRotateClockwise( const Vector2<int>& position, int width )
 {
-    return { maxx - position.y - 1, position.x };
+    return { width - position.y - 1, position.x };
 }
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation& orientation )
 {

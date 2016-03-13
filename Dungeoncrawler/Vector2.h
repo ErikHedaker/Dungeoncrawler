@@ -78,8 +78,7 @@ template<class T> const Vector2<T> operator/( const Vector2<T>& lhs, T rhs )
     return { lhs.x / rhs, lhs.y / rhs };
 }
 
-template<class T>
-struct HasherVector2
+template<class T> struct HasherVector2
 {
     static void HashCombine( std::size_t& seed, T value )
     {

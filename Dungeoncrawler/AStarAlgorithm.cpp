@@ -54,7 +54,7 @@ Node::Node( const Vector2<int>& position, int priority ) :
     priority( priority )
 { }
 
-bool CompareNodes::operator()( const Node& lhs, const Node& rhs ) const
+bool NodeCompare::operator()( const Node& lhs, const Node& rhs ) const
 {
     return lhs.priority > rhs.priority;
 }
@@ -71,7 +71,7 @@ std::vector<Vector2<int>> AStarAlgorithm( const Vector2<int>& start, const Vecto
         My implementation of the A* algorithm is based on this article
     */
 
-    std::priority_queue<Node, std::vector<Node>, CompareNodes> activeNodes;
+    std::priority_queue<Node, std::vector<Node>, NodeCompare> activeNodes;
     std::unordered_map<Vector2<int>, Vector2<int>, HasherVector2<int>> positionCameFrom;
     std::unordered_map<Vector2<int>, int, HasherVector2<int>> positionCost;
     const Grid grid( sizeDungeon, obstacles );

@@ -21,12 +21,12 @@ class Game
         BattleSystem _battleSystem;
         DungeonConfiguration _config;
         std::vector<Dungeon> _dungeons;
-        std::size_t _indexCurrent;
+        int _indexCurrent;
 
         /* Called in Menu */
         void SetDungeonConfiguration( const GameConfig& type );
         void Reset( );
-        void Loop( );
+        void Start( );
 
         /* File IO */
         void Save( );
@@ -36,6 +36,6 @@ class Game
         void PlayerTurn( Dungeon& dungeon );
         void CheckEventsPlayer( );
         void SwitchDungeon( );
-        void FullLinkDungeon( std::size_t indexDungeon );
-        void LinksRotateClockwise( std::size_t indexDungeon );
+        void FullLinkDungeon( int indexDungeonCurrent );
+        void LinksRotateClockwise( int indexDungeon );
 };

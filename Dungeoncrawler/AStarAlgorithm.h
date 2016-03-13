@@ -27,7 +27,7 @@ struct Node
     int priority;
 };
 
-struct CompareNodes
+struct NodeCompare
 {
     bool operator()( const Node& lhs, const Node& rhs ) const;
 };

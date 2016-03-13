@@ -41,7 +41,7 @@ void Game::Menu( )
             {
                 if( Exist( ) )
                 {
-                    Loop( );
+                    Start( );
                 }
 
                 break;
@@ -53,7 +53,7 @@ void Game::Menu( )
 
                 if( Load( ) )
                 {
-                    Loop( );
+                    Start( );
                 }
 
                 break;
@@ -66,7 +66,7 @@ void Game::Menu( )
                 std::cout << "Loading, please wait.";
 
                 Reset( );
-                Loop( );
+                Start( );
 
                 break;
             }
@@ -78,7 +78,7 @@ void Game::Menu( )
                 std::cout << "Loading, please wait.";
 
                 Reset( );
-                Loop( );
+                Start( );
 
                 break;
             }
@@ -162,13 +162,13 @@ void Game::Reset( )
     FullLinkDungeon( _indexCurrent );
     _dungeons[_indexCurrent].CreatePlayerLocal( _dungeons[_indexCurrent].GetSize( ) / 2, _player );
 }
-void Game::Loop( )
+void Game::Start( )
 {
     while( _status == GameStatus::Neutral &&
            _player.status != PlayerStatus::Dead )
     {
         PlayerTurn( _dungeons[_indexCurrent] );
-        _dungeons[_indexCurrent].RandomMovement( );
+        _dungeons[_indexCurrent].MovementRandom( );
         _dungeons[_indexCurrent].CheckEvents( _player );
         CheckEventsPlayer( );
     }
@@ -232,8 +232,8 @@ void Game::Save( )
 
         for( const auto& link : dungeon.links )
         {
-            outFile << link.active << '\t';
             outFile << link.indexDungeon << '\t';
+            outFile << link.indexLink << '\t';
             outFile << link.exit.x << '\t';
             outFile << link.exit.y << '\t';
             outFile << link.entry.x << '\t';
@@ -278,9 +278,9 @@ bool Game::Load( )
         _indexCurrent = std::stoi( line );
 
         std::getline( inFile, line );
-        const std::size_t dungeonCount = std::stoi( line );
+        const int dungeonCount = std::stoi( line );
 
-        for( std::size_t index = 0; index < dungeonCount; index++ )
+        for( int index = 0; index < dungeonCount; index++ )
         {
             Vector2<int> sizeDungeon;
             Vector2<int> iterator;
@@ -370,13 +370,13 @@ bool Game::Load( )
             _dungeons.emplace_back( sizeDungeon, visionMap, iconMap, _player );
 
             std::getline( inFile, line );
-            const std::size_t linkCount = std::stoi( line );
+            const int linkCount = std::stoi( line );
 
-            for( std::size_t indexLink = 0; indexLink < linkCount; indexLink++ )
+            for( int indexLink = 0; indexLink < linkCount; indexLink++ )
             {
                 std::getline( inFile, line );
                 std::vector<int> linkArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
-                _dungeons.back( ).links.push_back( { linkArgs[0] != 0, static_cast<std::size_t>( linkArgs[1] ), { linkArgs[2], linkArgs[3] }, { linkArgs[4], linkArgs[5] } } );
+                _dungeons.back( ).links.push_back( { linkArgs[0], linkArgs[1], { linkArgs[2], linkArgs[3] }, { linkArgs[4], linkArgs[5] } } );
             }
         }
     }
@@ -437,7 +437,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
             case 'D': case 'd':
             {
                 done = true;
-                dungeon.PlayerMovement( direction.at( choice ) );
+                dungeon.MovementPlayer( direction.at( choice ) );
 
                 break;
             }
@@ -497,43 +497,39 @@ void Game::SwitchDungeon( )
         }
     }
 }
-void Game::FullLinkDungeon( std::size_t indexDungeon )
+void Game::FullLinkDungeon( int indexDungeonCurrent )
 {
-    for( std::size_t index = 0; index < _dungeons[indexDungeon].links.size( ); index++ )
+    for( unsigned int indexLinkCurrent = 0; indexLinkCurrent < _dungeons[indexDungeonCurrent].links.size( ); indexLinkCurrent++ )
     {
-        if( !_dungeons[indexDungeon].links[index].active )
+        if( _dungeons[indexDungeonCurrent].links[indexLinkCurrent].indexLink < 0 )
         {
             _dungeons.emplace_back( _config );
 
-            const std::size_t indexDungeonNeighbor = _dungeons.size( ) - 1;
-            auto& current = _dungeons[indexDungeon].links[index];
-            auto& neighbor = _dungeons.back( ).links.back( );
+            const int indexDungeonPartner = _dungeons.size( ) - 1;
+            const int indexLinkPartner = 0;
+            auto& current = _dungeons[indexDungeonCurrent].links[indexLinkCurrent];
+            auto& partner = _dungeons[indexDungeonPartner].links[indexLinkPartner];
 
-            current.active = true;
-            neighbor.active = true;
+            current.indexLink = indexLinkPartner;
+            partner.indexLink = indexLinkCurrent;
 
-            current.indexDungeon = indexDungeonNeighbor;
-            neighbor.indexDungeon = indexDungeon;
+            current.indexDungeon = indexDungeonPartner;
+            partner.indexDungeon = indexDungeonCurrent;
 
-            current.exit = neighbor.entry;
-            neighbor.exit = current.entry;
+            current.exit = partner.entry;
+            partner.exit = current.entry;
         }
     }
 }
-void Game::LinksRotateClockwise( std::size_t indexDungeon )
+void Game::LinksRotateClockwise( int indexDungeon )
 {
     Vector2<int> sizeDungeon = _dungeons[indexDungeon].GetSize( );
 
-    for( auto& link : _dungeons[indexDungeon].links )
+    for( auto& current : _dungeons[indexDungeon].links )
     {
-        link.entry = PositionRotateClockwise( link.entry, sizeDungeon.x );
+        auto& partner = _dungeons[current.indexDungeon].links[current.indexLink];
 
-        for( auto& neighbor : _dungeons[link.indexDungeon].links )
-        {
-            if( neighbor.indexDungeon == indexDungeon )
-            {
-                neighbor.exit = PositionRotateClockwise( neighbor.exit, sizeDungeon.x );
-            }
-        }
+        current.entry = PositionRotateClockwise( current.entry, sizeDungeon.x );
+        partner.exit  = PositionRotateClockwise( partner.exit,  sizeDungeon.x );
     }
 }
