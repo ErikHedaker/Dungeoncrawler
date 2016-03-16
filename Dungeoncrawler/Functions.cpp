@@ -63,11 +63,11 @@ void GetEnter( )
     std::cin.get( );
     std::cin.get( );
 }
-void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& screenSize )
+void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen )
 {
-    const Vector2<int> cameraOrigo = center - screenSize / 2;
-    const Vector2<int> iteratorBegin = cameraOrigo - 1;
-    const Vector2<int> iteratorEnd = cameraOrigo + screenSize + 1;
+    const Vector2<int> origoCamera = center - sizeScreen / 2;
+    const Vector2<int> iteratorBegin = origoCamera - 1;
+    const Vector2<int> iteratorEnd   = origoCamera + 1 + sizeScreen;
     auto InsideVisionReach = [visionReach, center] ( const Vector2<int>& iterator ) -> bool
     {
         return
@@ -120,10 +120,6 @@ void PrintCombatantInformation( const Combatant& combatant )
     std::cout << combatant.healthRegeneration << ")\n";
     std::cout << combatant.name << " spells owned: " << __popcnt( combatant.spells ) << "\n";
 }
-Vector2<int> PositionRotateClockwise( const Vector2<int>& position, int width )
-{
-    return { width - position.y - 1, position.x };
-}
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation& orientation )
 {
     static const std::map<Orientation, Vector2<int>> directions =
@@ -161,4 +157,8 @@ Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, i
     }
 
     return position;
+}
+Vector2<int> PositionRotateClockwise( const Vector2<int>& position, const Vector2<int>& sizeGrid )
+{
+    return { sizeGrid.x - position.y - 1, position.x };
 }

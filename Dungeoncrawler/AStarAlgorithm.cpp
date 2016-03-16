@@ -73,7 +73,7 @@ std::vector<Vector2<int>> AStarAlgorithm( const Vector2<int>& start, const Vecto
 
     std::priority_queue<Node, std::vector<Node>, NodeCompare> activeNodes;
     std::unordered_map<Vector2<int>, Vector2<int>, HasherVector2<int>> positionCameFrom;
-    std::unordered_map<Vector2<int>, int, HasherVector2<int>> positionCost;
+    std::unordered_map<Vector2<int>, int,          HasherVector2<int>> positionCost;
     const Grid grid( sizeDungeon, obstacles );
 
     activeNodes.emplace( start, 0 );

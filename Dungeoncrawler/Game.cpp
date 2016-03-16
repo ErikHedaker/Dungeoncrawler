@@ -176,7 +176,7 @@ void Game::Start( )
 
 void Game::Save( )
 {
-    const std::string fileName = "2D-cmd-dungeoncrawler-save.txt";
+    const std::string fileName = "DungeoncrawlerSave.txt";
     std::ofstream outFile( fileName, std::ios::out | std::ios::trunc );
 
     if( !outFile.is_open( ) )
@@ -245,7 +245,7 @@ bool Game::Load( )
 {
     try
     {
-        const std::string fileName = "2D-cmd-dungeoncrawler-save.txt";
+        const std::string fileName = "DungeoncrawlerSave.txt";
         std::ifstream inFile( fileName, std::ios::in );
         std::string line;
 
@@ -258,6 +258,7 @@ bool Game::Load( )
 
         std::getline( inFile, line );
         std::vector<int> configArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
+
         _config.sizeDungeonFixed        = configArgs[0] != 0;
         _config.sizeDungeon.x           = configArgs[1];
         _config.sizeDungeon.y           = configArgs[2];
@@ -382,7 +383,7 @@ bool Game::Load( )
     }
     catch( const std::exception& e )
     {
-        std::cout << "\nException: " << e.what( );
+        std::cout << "\n\nException: " << e.what( );
         std::cout << "\n\nPress enter to continue: ";
         GetEnter( );
 
@@ -460,7 +461,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
             {
                 dungeon.RotateClockwise( );
                 LinksRotateClockwise( _indexCurrent );
-                _player.position = PositionRotateClockwise( _player.position, dungeon.GetSize( ).x );
+                _player.position = PositionRotateClockwise( _player.position, dungeon.GetSize( ) );
 
                 break;
             }
@@ -497,39 +498,33 @@ void Game::SwitchDungeon( )
         }
     }
 }
-void Game::FullLinkDungeon( int indexDungeonCurrent )
+void Game::FullLinkDungeon( int indexCurrentDungeon )
 {
-    for( unsigned int indexLinkCurrent = 0; indexLinkCurrent < _dungeons[indexDungeonCurrent].links.size( ); indexLinkCurrent++ )
+    const int amountLinks = _dungeons[indexCurrentDungeon].links.size( );
+
+    for( int indexCurrentLink = 0; indexCurrentLink < amountLinks; indexCurrentLink++ )
     {
-        if( _dungeons[indexDungeonCurrent].links[indexLinkCurrent].indexLink < 0 )
+        if( _dungeons[indexCurrentDungeon].links[indexCurrentLink].indexLink < 0 )
         {
             _dungeons.emplace_back( _config );
 
-            const int indexDungeonPartner = _dungeons.size( ) - 1;
-            const int indexLinkPartner = 0;
-            auto& current = _dungeons[indexDungeonCurrent].links[indexLinkCurrent];
-            auto& partner = _dungeons[indexDungeonPartner].links[indexLinkPartner];
+            const int indexPartnerDungeon = _dungeons.size( ) - 1;
+            const int indexPartnerLink = 0;
+            auto& current = _dungeons[indexCurrentDungeon].links[indexCurrentLink];
+            auto& partner = _dungeons[indexPartnerDungeon].links[indexPartnerLink];
 
-            current.indexLink = indexLinkPartner;
-            partner.indexLink = indexLinkCurrent;
-
-            current.indexDungeon = indexDungeonPartner;
-            partner.indexDungeon = indexDungeonCurrent;
-
-            current.exit = partner.entry;
-            partner.exit = current.entry;
+            current = { indexPartnerDungeon, indexPartnerLink, partner.entry, current.entry };
+            partner = { indexCurrentDungeon, indexCurrentLink, current.entry, partner.entry };
         }
     }
 }
 void Game::LinksRotateClockwise( int indexDungeon )
 {
-    Vector2<int> sizeDungeon = _dungeons[indexDungeon].GetSize( );
-
     for( auto& current : _dungeons[indexDungeon].links )
     {
         auto& partner = _dungeons[current.indexDungeon].links[current.indexLink];
 
-        current.entry = PositionRotateClockwise( current.entry, sizeDungeon.x );
-        partner.exit  = PositionRotateClockwise( partner.exit,  sizeDungeon.x );
+        current.entry = PositionRotateClockwise( current.entry, _dungeons[indexDungeon].GetSize( ) );
+        partner.exit  = PositionRotateClockwise( partner.exit,  _dungeons[indexDungeon].GetSize( ) );
     }
 }

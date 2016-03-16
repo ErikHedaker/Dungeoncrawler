@@ -50,7 +50,7 @@ Dungeon::Dungeon( const DungeonConfiguration& config ) :
 }
 Dungeon::Dungeon( const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap, Player& player ) :
     _size( size ),
-    _tileMap( size.x * size.y ),
+    _tileMap( _size.x * _size.y ),
     _visionMap( visionMap )
 {
     Vector2<int> iterator;
@@ -93,10 +93,11 @@ Dungeon::Dungeon( const Vector2<int>& size, const std::vector<bool>& visionMap, 
 void Dungeon::CreatePlayerLocal( const Vector2<int>& position, Player& player )
 {
     _indexPlayerLocal = _components.Add( );
+    _components.icon[_indexPlayerLocal] = Icon::Player;
     _components.position[_indexPlayerLocal] = _size / 2;
     _components.positionPrevious[_indexPlayerLocal] = _size / 2;
-    _components.attributes[_indexPlayerLocal] = Attributes::PassableOthers | Attributes::PassablePlayer;
-    _components.icon[_indexPlayerLocal] = Icon::Player;
+    _components.attributes[_indexPlayerLocal] = Attributes::PassableOthers |
+                                                Attributes::PassablePlayer;
 
     if( CheckTile( position, Attributes::PassableOthers ) )
     {
@@ -157,13 +158,13 @@ void Dungeon::RotateClockwise( )
         std::reverse( visionColoumBegin, visionColoumEnd );
     }
 
-    _tileMap = tileMapRotated;
+    _tileMap   = tileMapRotated;
     _visionMap = visionMapRotated;
 
     for( int index = 0; index < _components.indexCount; index++ )
     {
-        _components.position[index] = PositionRotateClockwise( _components.position[index], _size.x );
-        _components.positionPrevious[index] = PositionRotateClockwise( _components.positionPrevious[index], _size.x );
+        _components.position[index] = PositionRotateClockwise( _components.position[index], _size );
+        _components.positionPrevious[index] = PositionRotateClockwise( _components.positionPrevious[index], _size );
     }
 }
 
@@ -298,7 +299,7 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
         {  1,  0 },
         {  1, -1 }
     } };
-    int surroundingEntity = 0;
+    int entities = 0;
 
     for( const auto& direction : directions )
     {
@@ -306,11 +307,11 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 
         if( !CheckTile( neighbor, Attributes::PassablePlayer ) )
         {
-            surroundingEntity++;
+            entities++;
         }
     }
 
-    return surroundingEntity >= threshold;
+    return entities >= threshold;
 }
 
 void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
