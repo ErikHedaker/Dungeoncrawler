@@ -41,7 +41,7 @@ std::vector<Vector2<int>> Grid::GetNeighbors( const Vector2<int>& position ) con
 
         if( ( position.x + position.y ) % 2 == 0 )
         {
-            /* Aesthetic improvement on square grids according to original author */
+            /* Aesthetic improvement on square grids according to article author */
             std::reverse( results.begin( ), results.end( ) );
         }
     }
@@ -71,10 +71,10 @@ std::vector<Vector2<int>> AStarAlgorithm( const Vector2<int>& start, const Vecto
         My implementation of the A* algorithm is based on this article
     */
 
+    const Grid grid( sizeDungeon, obstacles );
     std::priority_queue<Node, std::vector<Node>, NodeCompare> activeNodes;
     std::unordered_map<Vector2<int>, Vector2<int>, HasherVector2<int>> positionCameFrom;
     std::unordered_map<Vector2<int>, int,          HasherVector2<int>> positionCost;
-    const Grid grid( sizeDungeon, obstacles );
 
     activeNodes.emplace( start, 0 );
     positionCameFrom[start] = start;

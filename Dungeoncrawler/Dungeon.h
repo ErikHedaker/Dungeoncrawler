@@ -13,7 +13,7 @@ struct DungeonConfiguration
 
     bool generateDoors = true;
     bool generateOuterWalls = true;
-    bool generatePath = true;
+    bool generateHiddenPath = true;
     bool generateSourceWalls = true;
     bool generateExtensionWalls = true;
     bool generateFillerWalls = true;
@@ -92,6 +92,7 @@ class Dungeon
         void OccupantRemove( int index );
         void DeleteEntity( int index );
 
+        /* Preset entities */
         void DoorAdd( const Vector2<int>& position );
         void WallAdd( const Vector2<int>& position );
         void StepAdd( const Vector2<int>& position );
@@ -100,7 +101,7 @@ class Dungeon
         /* Called in constructor */
         void GenerateDoors( bool generate, int amount );
         void GenerateOuterWalls( bool generate );
-        void GeneratePath( bool generate );
+        void GenerateHiddenPath( bool generate );
         void GenerateSourceWalls( bool generate, int amount );
         void GenerateExtensionWalls( bool generate, int amount );
         void GenerateFillerWalls( bool generate, int amount );

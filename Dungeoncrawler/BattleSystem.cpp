@@ -4,22 +4,23 @@
 #include <utility>
 #include <iostream>
 
-Spell::Spell( const std::string& name, double damageMultiplier ) :
+Spell::Spell( const std::string& name, double multiplier ) :
     name( name ),
-    damageMultiplier( damageMultiplier )
+    multiplier( multiplier )
 { }
 
-Combatant::Combatant( const std::string& name, int health, int healthMax, int healthRegeneration, int damage, int spells ) :
+Combatant::Combatant( const std::string& name, int health, int healthMax, int healthRegen, int damage, int spells ) :
     name( name ),
     health( health ),
     healthMax( healthMax ),
-    healthRegeneration( healthRegeneration ),
+    healthRegen( healthRegen ),
     damage( damage ),
     spells( spells )
 { }
+
 void Combatant::Update( )
 {
-    health += healthRegeneration;
+    health += healthRegen;
 
     if( health > healthMax )
     {
@@ -102,7 +103,7 @@ void BattleSystem::CastSpell( const Spell& spell, Combatant& caster, Combatant& 
 {
     const int healthOld = target.health;
 
-    target.health -= static_cast<int>( caster.damage * spell.damageMultiplier * RandomNumberGenerator( 0.9, 1.1 ) );
+    target.health -= static_cast<int>( caster.damage * spell.multiplier * RandomNumberGenerator( 0.9, 1.1 ) );
 
     std::cout << caster.name << " casts " << spell.name << " on " << target.name << ", which dealt " << healthOld - target.health << " damage!\n";
 }

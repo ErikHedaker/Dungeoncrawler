@@ -7,20 +7,20 @@
 
 struct Spell
 {
-    Spell( const std::string& name, double damageMultiplier );
+    Spell( const std::string& name, double multiplier );
 
     const std::string name;
-    const double damageMultiplier;
+    const double multiplier;
 };
 
 struct Combatant
 {
-    Combatant( const std::string& name, int health, int healthMax, int healthRegeneration, int damage, int spells = 0 );
+    Combatant( const std::string& name, int health, int healthMax, int healthRegen, int damage, int spells = 0 );
 
     const std::string name;
     int health;
     int healthMax;
-    int healthRegeneration;
+    int healthRegen;
     int damage;
     int spells;
 

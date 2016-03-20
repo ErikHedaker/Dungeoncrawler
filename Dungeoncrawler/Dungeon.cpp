@@ -33,8 +33,8 @@ void Components::Delete( int index )
 Dungeon::Dungeon( const DungeonConfiguration& config ) :
     _size
     ( {
-        config.sizeDungeonFixed ? config.sizeDungeon.x : RandomNumberGenerator( 50, 60 ),
-        config.sizeDungeonFixed ? config.sizeDungeon.y : RandomNumberGenerator( 50, 60 )
+        config.sizeDungeonFixed ? config.sizeDungeon.x : RandomNumberGenerator( 30, 50 ),
+        config.sizeDungeonFixed ? config.sizeDungeon.y : RandomNumberGenerator( 30, 50 )
     } ),
     _tileMap( _size.x * _size.y ),
     _visionMap( _size.x * _size.y, false )
@@ -42,7 +42,7 @@ Dungeon::Dungeon( const DungeonConfiguration& config ) :
 {
     GenerateDoors( config.generateDoors, config.amountDoors );
     GenerateOuterWalls( config.generateOuterWalls );
-    GeneratePath( config.generatePath );
+    GenerateHiddenPath( config.generateHiddenPath );
     GenerateSourceWalls( config.generateSourceWalls, config.amountSourceWalls );
     GenerateExtensionWalls( config.generateExtensionWalls, config.amountExtensionWalls );
     GenerateFillerWalls( config.generateFillerWalls, config.amountFillerWallsCycles );
@@ -481,7 +481,7 @@ void Dungeon::GenerateOuterWalls( bool generate )
         }
     }
 }
-void Dungeon::GeneratePath( bool generate )
+void Dungeon::GenerateHiddenPath( bool generate )
 {
     if( generate )
     {
@@ -515,9 +515,9 @@ void Dungeon::GenerateSourceWalls( bool generate, int amount )
     if( generate )
     {
         const Vector2<int> center = _size / 2;
-        int sourceWallsLeft = amount ? amount : ( _size.x * _size.y ) / 20;
+        int remaining = amount ? amount : ( _size.x * _size.y ) / 20;
 
-        while( sourceWallsLeft > 0 )
+        while( remaining > 0 )
         {
             Vector2<int> position;
 
@@ -528,7 +528,7 @@ void Dungeon::GenerateSourceWalls( bool generate, int amount )
                 position != center )
             {
                 WallAdd( position );
-                sourceWallsLeft--;
+                remaining--;
             }
         }
     }
@@ -545,9 +545,9 @@ void Dungeon::GenerateExtensionWalls( bool generate, int amount )
             {  0,  1 },
             {  1,  0 }
         } };
-        int extensionWallsLeft = amount ? amount : ( _size.x * _size.y ) / 5;
+        int remaining = amount ? amount : ( _size.x * _size.y ) / 5;
 
-        while( extensionWallsLeft > 0 )
+        while( remaining > 0 )
         {
             for( int index = 0; index < _components.indexCount; index++ )
             {
@@ -562,7 +562,7 @@ void Dungeon::GenerateExtensionWalls( bool generate, int amount )
                         position != center )
                     {
                         WallAdd( position );
-                        extensionWallsLeft--;
+                        remaining--;
                     }
                 }
             }

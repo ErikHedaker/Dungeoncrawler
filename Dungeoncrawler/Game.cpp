@@ -21,19 +21,19 @@ void Game::Menu( )
         '4',
         '5'
     };
+    char choice;
 
     while( true )
     {
+        _status = GameStatus::Neutral;
+
         system( "CLS" );
         std::cout << "[1] Continue current game\n";
         std::cout << "[2] Load game from file\n";
         std::cout << "[3] Build new game (Randomization)\n";
         std::cout << "[4] Build new game (Configuration)\n";
         std::cout << "[5] Exit\n\n";
-
-        const char choice = GetValidChar( "Enter choice: ", choices );
-
-        _status = GameStatus::Neutral;
+        choice = GetValidChar( "Enter choice: ", choices );
 
         switch( choice )
         {
@@ -121,14 +121,14 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 
             std::cout << "\n";
 
-            _config.sizeDungeonFixed       = GetBool( GetValidChar( "Fixed dungeon size, [Y/N]: ",        choices ) );
-            _config.generateDoors          = GetBool( GetValidChar( "Generate doors, [Y/N]: ",            choices ) );
-            _config.generateOuterWalls     = GetBool( GetValidChar( "Generate outer obstacles, [Y/N]: ",  choices ) );
-            _config.generatePath           = GetBool( GetValidChar( "Generate path, [Y/N]: ",             choices ) );
-            _config.generateSourceWalls    = GetBool( GetValidChar( "Generate source obstacles, [Y/N]: ", choices ) );
-            _config.generateExtensionWalls = GetBool( GetValidChar( "Generate extension, [Y/N]: ",        choices ) );
-            _config.generateFillerWalls    = GetBool( GetValidChar( "Generate filler obstacles, [Y/N]: ", choices ) );
-            _config.generateMonsters       = GetBool( GetValidChar( "Generate monsters, [Y/N]: ",         choices ) );
+            _config.sizeDungeonFixed       = GetBool( GetValidChar( "Fixed dungeon size, [Y/N]: ",       choices ) );
+            _config.generateDoors          = GetBool( GetValidChar( "Generate doors, [Y/N]: ",           choices ) );
+            _config.generateOuterWalls     = GetBool( GetValidChar( "Generate outer walls, [Y/N]: ",     choices ) );
+            _config.generateHiddenPath     = GetBool( GetValidChar( "Generate hidden path, [Y/N]: ",     choices ) );
+            _config.generateSourceWalls    = GetBool( GetValidChar( "Generate source walls, [Y/N]: ",    choices ) );
+            _config.generateExtensionWalls = GetBool( GetValidChar( "Generate extension walls, [Y/N]: ", choices ) );
+            _config.generateFillerWalls    = GetBool( GetValidChar( "Generate filler walls, [Y/N]: ",    choices ) );
+            _config.generateMonsters       = GetBool( GetValidChar( "Generate monsters, [Y/N]: ",        choices ) );
 
             std::cout << "\n";
 
@@ -140,11 +140,11 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
             if( _config.generateDoors )
                 _config.amountDoors             = GetPositiveInteger( "Enter amount of doors: " );
             if( _config.generateSourceWalls )
-                _config.amountSourceWalls       = GetPositiveInteger( "Enter amount of source obstacles: " );
+                _config.amountSourceWalls       = GetPositiveInteger( "Enter amount of source walls: " );
             if( _config.generateExtensionWalls )
-                _config.amountExtensionWalls    = GetPositiveInteger( "Enter amount of extension obstacles: " );
+                _config.amountExtensionWalls    = GetPositiveInteger( "Enter amount of extension walls: " );
             if( _config.generateFillerWalls )
-                _config.amountFillerWallsCycles = GetPositiveInteger( "Enter amount of filler obstacle cycles: " );
+                _config.amountFillerWallsCycles = GetPositiveInteger( "Enter amount of filler wall cycles: " );
             if( _config.generateMonsters )
                 _config.amountMonsters          = GetPositiveInteger( "Enter amount of monsters: " );
 
@@ -189,7 +189,7 @@ void Game::Save( )
     outFile << _config.sizeDungeon.x << '\t';
     outFile << _config.generateDoors << '\t';
     outFile << _config.generateOuterWalls << '\t';
-    outFile << _config.generatePath << '\t';
+    outFile << _config.generateHiddenPath << '\t';
     outFile << _config.generateSourceWalls << '\t';
     outFile << _config.generateExtensionWalls << '\t';
     outFile << _config.generateFillerWalls << '\t';
@@ -264,7 +264,7 @@ bool Game::Load( )
         _config.sizeDungeon.y           = configArgs[2];
         _config.generateDoors           = configArgs[3] != 0;
         _config.generateOuterWalls      = configArgs[4] != 0;
-        _config.generatePath            = configArgs[5] != 0;
+        _config.generateHiddenPath      = configArgs[5] != 0;
         _config.generateSourceWalls     = configArgs[6] != 0;
         _config.generateExtensionWalls  = configArgs[7] != 0;
         _config.generateFillerWalls     = configArgs[8] != 0;

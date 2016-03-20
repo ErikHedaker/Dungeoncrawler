@@ -6,7 +6,7 @@
 
 struct Player : public Combatant
 {
-    Player( int health, int healthMax, int healthRegeneration, int damage, int abilities );
+    Player( int health, int healthMax, int healthRegen, int damage, int spells = 0 );
 
     int visionReach;
     Vector2<int> position;

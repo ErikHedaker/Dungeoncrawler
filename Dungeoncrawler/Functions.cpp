@@ -112,12 +112,12 @@ void PrintCombatantInformation( const Combatant& combatant )
 {
     std::cout << combatant.name << " HP: " << combatant.health << " (";
 
-    if( combatant.healthRegeneration > 0 )
+    if( combatant.healthRegen > 0 )
     {
         std::cout << "+";
     }
 
-    std::cout << combatant.healthRegeneration << ")\n";
+    std::cout << combatant.healthRegen << ")\n";
     std::cout << combatant.name << " spells owned: " << __popcnt( combatant.spells ) << "\n";
 }
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation& orientation )
