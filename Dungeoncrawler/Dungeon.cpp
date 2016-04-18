@@ -498,7 +498,7 @@ void Dungeon::GenerateHiddenPath( bool generate )
 
         for( const auto& link : links )
         {
-            std::vector<Vector2<int>> path = AStarAlgorithm( link.entry, center, _size, obstacles );
+            const std::vector<Vector2<int>> path = AStarAlgorithm( link.entry, center, _size, obstacles );
 
             for( const auto& position : path )
             {

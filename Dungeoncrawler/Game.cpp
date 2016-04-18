@@ -405,7 +405,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
         'R', 'r',
         'F', 'f'
     };
-    static const std::map<char, Orientation> direction =
+    static const std::map<char, Orientation> directions =
     {
         { 'W', Orientation::North }, { 'w', Orientation::North },
         { 'A', Orientation::West  }, { 'a', Orientation::West  },
@@ -438,7 +438,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
             case 'D': case 'd':
             {
                 done = true;
-                dungeon.MovementPlayer( direction.at( choice ) );
+                dungeon.MovementPlayer( directions.at( choice ) );
 
                 break;
             }

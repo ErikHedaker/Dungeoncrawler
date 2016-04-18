@@ -80,7 +80,7 @@ class Dungeon
     private:
         Vector2<int> _size;
         Components _components;
-        std::size_t _indexPlayerLocal;
+        int _indexPlayerLocal;
 
         /* 1D arrays interpreted as 2D arrays */
         std::vector<Tile> _tileMap;
