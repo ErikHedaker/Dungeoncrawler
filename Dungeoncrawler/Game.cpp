@@ -154,23 +154,23 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 }
 void Game::Reset( )
 {
-    _player.status = PlayerStatus::Wandering;
+    _player.states = 0;
     _player.health = _player.healthMax;
     _dungeons.clear( );
     _dungeons.emplace_back( _config );
-    _indexCurrent = _dungeons.size( ) - 1;
-    FullLinkDungeon( _indexCurrent );
-    _dungeons[_indexCurrent].CreatePlayerLocal( _dungeons[_indexCurrent].GetSize( ) / 2, _player );
+    _indexCurrent = 0;
+    FullLinkDungeon( 0 );
+    _dungeons[0].CreatePlayerLocal( _dungeons[0].GetSize( ) / 2, _player );
 }
 void Game::Start( )
 {
     while( _status == GameStatus::Neutral &&
-           _player.status != PlayerStatus::Dead )
+           !( _player.states & States::Dead ) )
     {
         PlayerTurn( _dungeons[_indexCurrent] );
         _dungeons[_indexCurrent].MovementRandom( );
         _dungeons[_indexCurrent].CheckEvents( _player );
-        CheckEventsPlayer( );
+        UpdatePlayerStates( );
     }
 }
 
@@ -468,20 +468,25 @@ void Game::PlayerTurn( Dungeon& dungeon )
         }
     }
 }
-void Game::CheckEventsPlayer( )
+void Game::UpdatePlayerStates( )
 {
     _player.Update( );
 
-    if( _player.status == PlayerStatus::Traveling )
+    if( _player.states & States::Switch )
     {
+        _player.states &= ~States::Switch;
         SwitchDungeon( );
-        _player.status = PlayerStatus::Wandering;
     }
 
-    if( _player.status == PlayerStatus::Combat )
+    if( _player.states & States::Combat )
     {
+        _player.states &= ~States::Combat;
         _battleSystem.EngageRandomMonster( _player );
-        _player.status = ( _player.health <= 0 ? PlayerStatus::Dead : PlayerStatus::Wandering );
+
+        if( _player.health <= 0 )
+        {
+            _player.states |= States::Dead;
+        }
     }
 }
 void Game::SwitchDungeon( )

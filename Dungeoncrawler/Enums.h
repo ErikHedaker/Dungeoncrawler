@@ -33,13 +33,16 @@ struct Spells
     };
 };
 
-enum class PlayerStatus
+struct States
 {
-    Wandering,
-    Traveling,
-    Combat,
-    Dead
+    enum StatesType
+    {
+        Switch  = 1 << 0,
+        Combat  = 1 << 1,
+        Dead    = 1 << 2
+    };
 };
+
 
 enum class GameStatus
 {

@@ -4,5 +4,5 @@ Player::Player( int health, int healthMax, int healthRegen, int damage, int spel
     Combatant( "Player", health, healthMax, healthRegen, damage, spells ),
     visionReach( 3 ),
     position( { -1, -1 } ),
-    status( PlayerStatus::Traveling )
+    states( 0 )
 { }

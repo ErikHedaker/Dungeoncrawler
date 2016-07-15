@@ -8,7 +8,7 @@ struct Player : public Combatant
 {
     Player( int health, int healthMax, int healthRegen, int damage, int spells = 0 );
 
-    int visionReach;
     Vector2<int> position;
-    PlayerStatus status;
+    int visionReach;
+    int states;
 };

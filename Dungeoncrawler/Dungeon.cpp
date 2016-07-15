@@ -221,7 +221,7 @@ void Dungeon::CheckEvents( Player& player )
         if( _components.attributes[index] & Attributes::Monster )
         {
             deleteEntites.push_back( index );
-            player.status = PlayerStatus::Combat;
+            player.states |= States::Combat;
         }
     }
 
@@ -231,7 +231,7 @@ void Dungeon::CheckEvents( Player& player )
         if( _components.position[_indexPlayerLocal] == link.entry )
         {
             deleteEntites.push_back( _indexPlayerLocal );
-            player.status = PlayerStatus::Traveling;
+            player.states |= States::Switch;
         }
     }
 

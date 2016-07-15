@@ -34,7 +34,7 @@ class Game
 
         /* Various functions */
         void PlayerTurn( Dungeon& dungeon );
-        void CheckEventsPlayer( );
+        void UpdatePlayerStates( );
         void SwitchDungeon( );
         void FullLinkDungeon( int indexDungeonCurrent );
         void LinksRotateClockwise( int indexDungeon );
