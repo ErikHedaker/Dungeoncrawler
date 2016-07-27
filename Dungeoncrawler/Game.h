@@ -2,6 +2,7 @@
 
 #include "Dungeon.h"
 #include "Player.h"
+#include "EntityLibrary.h"
 #include "BattleSystem.h"
 
 class Game
@@ -18,6 +19,7 @@ class Game
     private:
         Player _player;
         GameStatus _status;
+        EntityLibrary _entityLibrary;
         BattleSystem _battleSystem;
         DungeonConfiguration _config;
         std::vector<Dungeon> _dungeons;

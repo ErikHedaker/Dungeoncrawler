@@ -18,7 +18,6 @@
 *.suo
 *.idb
 *.db
-*.txt
 
 2D-cmd-dungeoncrawler/Debug/
 2D-cmd-dungeoncrawler/Release/

@@ -3,6 +3,7 @@
 #include "Enums.h"
 #include "Player.h"
 #include "Vector2.h"
+#include "EntityLibrary.h"
 #include <vector>
 #include <utility>
 
@@ -34,16 +35,12 @@ struct Link
     Vector2<int> entry;
 };
 
-struct Components
+struct Entity
 {
-    int indexCount = 0;
-    std::vector<char> icon;
-    std::vector<Vector2<int>> position;
-    std::vector<Vector2<int>> positionPrevious;
-    std::vector<int> attributes;
-
-    int Add( );
-    void Delete( int index );
+    Vector2<int> position;
+    Vector2<int> positionPrevious;
+    Category::CategoryType category;
+    int id;
 };
 
 struct Tile
@@ -55,12 +52,12 @@ struct Tile
 class Dungeon
 {
     public:
-        Dungeon( const DungeonConfiguration& config );
-        Dungeon( const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap, Player& player );
+        Dungeon( const DungeonConfiguration& config, const EntityLibrary& entityLibrary );
+        Dungeon( const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap, const EntityLibrary& entityLibrary, Player& player );
 
         std::vector<Link> links;
 
-        void CreatePlayerLocal( const Vector2<int>& position, Player& player );
+        void EntityPlayerAdd( const Vector2<int>& position, Player& player );
         void RotateClockwise( );
 
         void MovementPlayer( const Orientation& orientation );
@@ -79,8 +76,9 @@ class Dungeon
 
     private:
         Vector2<int> _size;
-        Components _components;
-        int _indexPlayerLocal;
+        const EntityLibrary& _entityLibrary;
+        std::vector<Entity> _entities;
+        int _indexEntityPlayer;
 
         /* 1D arrays interpreted as 2D arrays */
         std::vector<Tile> _tileMap;
@@ -88,15 +86,10 @@ class Dungeon
 
         void UpdateVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
+        void EntityAdd( const Vector2<int>& position, Category::CategoryType category, int id );
+        void EntityRemove( int index );
         void OccupantAdd( int index );
         void OccupantRemove( int index );
-        void DeleteEntity( int index );
-
-        /* Preset entities */
-        void DoorAdd( const Vector2<int>& position );
-        void WallAdd( const Vector2<int>& position );
-        void StepAdd( const Vector2<int>& position );
-        void MonsterAdd( const Vector2<int>& position );
 
         /* Called in constructor */
         void GenerateDoors( bool generate, int amount );

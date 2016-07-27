@@ -157,10 +157,10 @@ void Game::Reset( )
     _player.states = 0;
     _player.health = _player.healthMax;
     _dungeons.clear( );
-    _dungeons.emplace_back( _config );
+    _dungeons.emplace_back( _config, _entityLibrary );
     _indexCurrent = 0;
     FullLinkDungeon( 0 );
-    _dungeons[0].CreatePlayerLocal( _dungeons[0].GetSize( ) / 2, _player );
+    _dungeons[0].EntityPlayerAdd( _dungeons[0].GetSize( ) / 2, _player );
 }
 void Game::Start( )
 {
@@ -176,7 +176,7 @@ void Game::Start( )
 
 void Game::Save( )
 {
-    const std::string fileName = "DungeoncrawlerSave.txt";
+    const std::string fileName = "Dungeoncrawler_Save_Dungeon.txt";
     std::ofstream outFile( fileName, std::ios::out | std::ios::trunc );
 
     if( !outFile.is_open( ) )
@@ -245,7 +245,7 @@ bool Game::Load( )
 {
     try
     {
-        const std::string fileName = "DungeoncrawlerSave.txt";
+        const std::string fileName = "Dungeoncrawler_Save_Dungeon.txt";
         std::ifstream inFile( fileName, std::ios::in );
         std::string line;
 
@@ -368,7 +368,7 @@ bool Game::Load( )
                 }
             }
 
-            _dungeons.emplace_back( sizeDungeon, visionMap, iconMap, _player );
+            _dungeons.emplace_back( sizeDungeon, visionMap, iconMap, _entityLibrary, _player );
 
             std::getline( inFile, line );
             const int linkCount = std::stoi( line );
@@ -496,7 +496,7 @@ void Game::SwitchDungeon( )
         if( link.entry == _player.position )
         {
             _indexCurrent = link.indexDungeon;
-            _dungeons[_indexCurrent].CreatePlayerLocal( link.exit, _player );
+            _dungeons[_indexCurrent].EntityPlayerAdd( link.exit, _player );
             FullLinkDungeon( _indexCurrent );
 
             break;
@@ -511,7 +511,7 @@ void Game::FullLinkDungeon( int indexCurrentDungeon )
     {
         if( _dungeons[indexCurrentDungeon].links[indexCurrentLink].indexLink < 0 )
         {
-            _dungeons.emplace_back( _config );
+            _dungeons.emplace_back( _config, _entityLibrary );
 
             const int indexPartnerDungeon = _dungeons.size( ) - 1;
             const int indexPartnerLink = 0;

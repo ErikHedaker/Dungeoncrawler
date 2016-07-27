@@ -12,6 +12,15 @@ struct Icon
     };
 };
 
+struct Category
+{
+    enum CategoryType
+    {
+        Character = 0,
+        Structure = 1
+    };
+};
+
 struct Attributes
 {
     enum AttributesType
@@ -19,7 +28,7 @@ struct Attributes
         PassablePlayer = 1 << 0,
         PassableOthers = 1 << 1,
         MovementRandom = 1 << 2,
-        Monster        = 1 << 3
+        Combative      = 1 << 3
     };
 };
 
@@ -37,9 +46,10 @@ struct States
 {
     enum StatesType
     {
-        Switch  = 1 << 0,
-        Combat  = 1 << 1,
-        Dead    = 1 << 2
+        Switch = 1 << 0,
+        Combat = 1 << 1,
+        Dead   = 1 << 2,
+        Loot   = 1 << 3
     };
 };
 
