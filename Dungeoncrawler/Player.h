@@ -1,14 +1,12 @@
 #pragma once
 
-#include "BattleSystem.h"
+#include "EntityLibrary.h"
 #include "Vector2.h"
 #include "Enums.h"
 
-struct Player : public Combatant
+struct Player : public Character
 {
-    Player( int health, int healthMax, int healthRegen, int damage, int spells = 0 );
-
     Vector2<int> position;
-    int visionReach;
-    int states;
+    int visionReach = 4;
+    int states = 0;
 };

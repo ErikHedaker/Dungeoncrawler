@@ -16,67 +16,85 @@ void Character::Update( )
     }
 }
 
-EntityLibrary::EntityLibrary( )
+EntityLibrary::EntityLibrary( ) :
+    abilities( LoadAbilities( ) ),
+    characters( LoadCharacters( ) ),
+    structures( LoadStructures( ) )
 {
-    LoadCharacters( );
-    LoadStructures( );
-}
-
-const Character& EntityLibrary::GetCharacter( int id ) const
-{
-    return _characters[id];
-}
-const Structure& EntityLibrary::GetStructure( int id ) const
-{
-    return _structures[id];
-}
-char EntityLibrary::GetIcon( Category::CategoryType category, int id ) const
-{
-    switch( category )
+    for( const auto& character : characters )
     {
-        case Category::Character:
-        {
-            return _characters[id].icon;
-        }
-
-        case Category::Structure:
-        {
-            return _structures[id].icon;
-        }
+        _baseEntities.push_back( &character );
     }
 
-    return '?';
-}
-int EntityLibrary::GetAttribute( Category::CategoryType category, int id ) const
-{
-    switch( category )
+    for( const auto& structure : structures )
     {
-        case Category::Character:
-        {
-            return _characters[id].attributes;
-        }
-
-        case Category::Structure:
-        {
-            return _structures[id].attributes;
-        }
+        _baseEntities.push_back( &structure );
     }
-
-    return 0;
 }
 
-void EntityLibrary::LoadCharacters( )
+const BaseEntity& EntityLibrary::GetBaseEntity( const Category::CategoryType& category, int id ) const
 {
-    const std::string fileName = "Dungeoncrawler_Category_Characters.txt";
+    const int index = id + ( category == Category::Structure ? characters.size( ) : 0 );
+
+    return *_baseEntities[index];
+}
+
+std::vector<Ability> EntityLibrary::LoadAbilities( ) const
+{
+    const std::string fileName = "Dungeoncrawler_Category_Skills.txt";
     std::ifstream inFile( fileName, std::ios::in );
     std::string line;
+    std::vector<Ability> temp;
 
     if( !inFile.is_open( ) )
     {
         throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
     }
 
-    _characters.clear( );
+    while( std::getline( inFile, line ) )
+    {
+        if( !line.empty( ) && line[0] == ':' )
+        {
+            line.erase( 0, 1 );
+            std::vector<std::string> args( { line } );
+            Ability ability;
+
+            for( int i = 0; i < 2; i++ )
+            {
+                std::getline( inFile, line );
+                line.erase( 0, 1 );
+                args.push_back( line );
+            }
+
+            ability.name = args[0];
+            ability.icon = args[1][0];
+            ability.attributes = 0;
+            ability.damage = std::stoi( args[3] );
+
+            std::vector<int> attributeArgs( ( std::istream_iterator<int>( std::stringstream( args[2] ) ) ), std::istream_iterator<int>( ) );
+
+            for( auto attribute : attributeArgs )
+            {
+                ability.attributes |= 1 << attribute;
+            }
+
+            temp.push_back( ability );
+        }
+    }
+
+    return temp;
+}
+std::vector<Character> EntityLibrary::LoadCharacters( ) const
+{
+    const std::string fileName = "Dungeoncrawler_Category_Characters.txt";
+    std::ifstream inFile( fileName, std::ios::in );
+    std::string line;
+    std::vector<Character> temp;
+
+    if( !inFile.is_open( ) )
+    {
+        throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
+    }
 
     while( std::getline( inFile, line ) )
     {
@@ -99,16 +117,14 @@ void EntityLibrary::LoadCharacters( )
             character.healthMax = std::stoi( args[3] );
             character.healthRegen = std::stoi( args[4] );
             character.damage = std::stoi( args[5] );
-
-            character.spells = 0;
             character.attributes = 0;
 
-            std::vector<int> spellArgs( ( std::istream_iterator<int>( std::stringstream( args[6] ) ) ), std::istream_iterator<int>( ) );
+            std::vector<int> abilityArgs( ( std::istream_iterator<int>( std::stringstream( args[6] ) ) ), std::istream_iterator<int>( ) );
             std::vector<int> attributeArgs( ( std::istream_iterator<int>( std::stringstream( args[7] ) ) ), std::istream_iterator<int>( ) );
 
-            for( auto spell : spellArgs )
+            for( auto i : abilityArgs )
             {
-                character.spells |= 1 << spell;
+                character.abilities.push_back( abilities[i] );
             }
 
             for( auto attribute : attributeArgs )
@@ -116,22 +132,23 @@ void EntityLibrary::LoadCharacters( )
                 character.attributes |= 1 << attribute;
             }
 
-            _characters.push_back( character );
+            temp.push_back( character );
         }
     }
+
+    return temp;
 }
-void EntityLibrary::LoadStructures( )
+std::vector<Structure> EntityLibrary::LoadStructures( ) const
 {
     const std::string fileName = "Dungeoncrawler_Category_Structures.txt";
     std::ifstream inFile( fileName, std::ios::in );
     std::string line;
+    std::vector<Structure> temp;
 
     if( !inFile.is_open( ) )
     {
         throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
     }
-
-    _structures.clear( );
 
     while( std::getline( inFile, line ) )
     {
@@ -159,7 +176,9 @@ void EntityLibrary::LoadStructures( )
                 structure.attributes |= 1 << attribute;
             }
 
-            _structures.push_back( structure );
+            temp.push_back( structure );
         }
     }
+
+    return temp;
 }

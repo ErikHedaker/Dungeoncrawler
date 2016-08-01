@@ -4,57 +4,47 @@
 #include <vector>
 #include <string>
 
-struct Character
+struct BaseEntity
 {
     std::string name;
     char icon;
+    int attributes;
+};
+
+struct Ability : public BaseEntity
+{
+    float damage;
+};
+
+struct Character : public BaseEntity
+{
     int health;
     int healthMax;
     int healthRegen;
-    int damage;
-    int spells;
-    int attributes;
+    float damage;
+    std::vector<Ability> abilities;
 
     void Update( );
 };
 
-struct Structure
-{
-    std::string name;
-    char icon;
-    int attributes;
-};
+struct Structure : public BaseEntity
+{ };
 
 class EntityLibrary
 {
     public:
         EntityLibrary( );
 
-        //template<Category::CategoryType category, class T> const T& Get( int id ) const;
-        const Character& GetCharacter( int id ) const;
-        const Structure& GetStructure( int id ) const;
-        char GetIcon( Category::CategoryType category, int id ) const;
-        int GetAttribute( Category::CategoryType category, int id ) const;
+        const std::vector<Ability> abilities;
+        const std::vector<Character> characters;
+        const std::vector<Structure> structures;
+
+        const BaseEntity& GetBaseEntity( const Category::CategoryType& category, int id ) const;
 
     private:
-        std::vector<Character> _characters;
-        std::vector<Structure> _structures;
+        std::vector<const BaseEntity*> _baseEntities;
 
-        void LoadCharacters( );
-        void LoadStructures( );
+        std::vector<Ability> LoadAbilities( ) const;
+        std::vector<Character> LoadCharacters( ) const;
+        std::vector<Structure> LoadStructures( ) const;
 };
-
-//template<Category::CategoryType category, class T> const T& EntityLibrary::Get( int id ) const
-//{
-//    return T( );
-//}
-//
-//template<Category::Character, class T = Character> const T& EntityLibrary::Get( int id ) const
-//{
-//    return _character[id];
-//}
-//
-//template<Category::Structure, class T = Structure> const T& EntityLibrary::Get( int id ) const
-//{
-//    return _structure[id];
-//}

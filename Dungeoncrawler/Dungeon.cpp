@@ -152,7 +152,7 @@ void Dungeon::MovementRandom( )
 {
     for( unsigned int i = 0; i < _entities.size( ); i++ )
     {
-        if( _entityLibrary.GetAttribute( _entities[i].category, _entities[i].id ) & Attributes::MovementRandom )
+        if( _entityLibrary.GetBaseEntity( _entities[i].category, _entities[i].id ).attributes & Attributes::MovementRandom )
         {
             OccupantRemove( i );
             _entities[i].positionPrevious = _entities[i].position;
@@ -176,7 +176,7 @@ void Dungeon::CheckEvents( Player& player )
     /* Collision detection for other entities */
     for( unsigned int i = 0; i < _entities.size( ); i++ )
     {
-        if( _entityLibrary.GetAttribute( _entities[i].category, _entities[i].id ) & Attributes::MovementRandom &&
+        if( _entityLibrary.GetBaseEntity( _entities[i].category, _entities[i].id ).attributes & Attributes::MovementRandom &&
             !CheckTile( _entities[i].position, Attributes::PassableOthers ) )
         {
             OccupantRemove( i );
@@ -191,10 +191,16 @@ void Dungeon::CheckEvents( Player& player )
     /* Engage aggressive entity on players position */
     for( auto i : _tileMap[( _entities[_indexEntityPlayer].position.y * _size.x ) + _entities[_indexEntityPlayer].position.x].indexOccupants )
     {
-        if( _entityLibrary.GetAttribute( _entities[i].category, _entities[i].id ) & Attributes::Combative )
+        if( _entityLibrary.GetBaseEntity( _entities[i].category, _entities[i].id ).attributes & Attributes::Combative )
         {
-            indexesEntityRemove.push_back( i );
-            player.states |= States::Combat;
+            auto monster = _entityLibrary.characters[_entities[i].id];
+            
+            Combat( player, monster );
+
+            if( player.health > 0 )
+            {
+                indexesEntityRemove.push_back( i );
+            }
         }
     }
 
@@ -234,7 +240,7 @@ bool Dungeon::CheckTile( const Vector2<int>& position, int bitmask ) const
 
     for( auto i : indexes )
     {
-        if( _entityLibrary.GetAttribute( _entities[i].category, _entities[i].id ) & bitmask )
+        if( _entityLibrary.GetBaseEntity( _entities[i].category, _entities[i].id ).attributes & bitmask )
         {
             count++;
         }
@@ -313,7 +319,7 @@ void Dungeon::UpdateTile( const Vector2<int>& position )
 
     for( auto i : tile.indexOccupants )
     {
-        tile.icon = _entityLibrary.GetIcon( _entities[i].category, _entities[i].id );
+        tile.icon = _entityLibrary.GetBaseEntity( _entities[i].category, _entities[i].id ).icon;
     }
 }
 void Dungeon::EntityAdd( const Vector2<int>& position, Category::CategoryType category, int id )
@@ -327,8 +333,7 @@ void Dungeon::EntityRemove( int index )
 
     OccupantRemove( indexLast );
     OccupantRemove( index );
-
-    std::swap( _entities[index], _entities[_entities.size( ) - 1] );
+    std::swap( _entities[index], _entities[indexLast] );
     _entities.pop_back( );
 
     if( index != indexLast )
@@ -426,7 +431,7 @@ void Dungeon::GenerateHiddenPath( bool generate )
 
         for( int i = 0; i < _entities.size( ); i++ )
         {
-            if( !( _entityLibrary.GetAttribute( _entities[i].category, _entities[i].id ) & Attributes::PassablePlayer ) )
+            if( !( _entityLibrary.GetBaseEntity( _entities[i].category, _entities[i].id ).attributes & Attributes::PassablePlayer ) )
             {
                 obstacles.push_back( _entities[i].position );
             }
@@ -487,8 +492,8 @@ void Dungeon::GenerateExtensionWalls( bool generate, int amount )
         {
             for( int i = 0; i < _entities.size( ); i++ )
             {
-                if( !( _entityLibrary.GetAttribute( _entities[i].category, _entities[i].id ) & Attributes::PassablePlayer ) &&
-                    !( _entityLibrary.GetAttribute( _entities[i].category, _entities[i].id ) & Attributes::PassableOthers ) )
+                if( !( _entityLibrary.GetBaseEntity( _entities[i].category, _entities[i].id ).attributes & Attributes::PassablePlayer ) &&
+                    !( _entityLibrary.GetBaseEntity( _entities[i].category, _entities[i].id ).attributes & Attributes::PassableOthers ) )
                 {
                     const int indexDirection = RandomNumberGenerator( 0, 3 );
                     const Vector2<int> position = _entities[i].position + directions[indexDirection];

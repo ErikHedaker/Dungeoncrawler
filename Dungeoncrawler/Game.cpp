@@ -8,7 +8,7 @@
 #include <iterator>
 
 Game::Game( ) :
-    _player( 200, 70, 1, 50, Spells::TouchOfDeath | Spells::Fireball | Spells::Iceblast )
+    _player( LoadPlayer( ) )
 { }
 
 void Game::Menu( )
@@ -51,7 +51,7 @@ void Game::Menu( )
                 system( "CLS" );
                 std::cout << "Loading, please wait.";
 
-                if( Load( ) )
+                if( LoadDungeons( ) )
                 {
                     Start( );
                 }
@@ -167,16 +167,16 @@ void Game::Start( )
     while( _status == GameStatus::Neutral &&
            !( _player.states & States::Dead ) )
     {
-        PlayerTurn( _dungeons[_indexCurrent] );
+        TurnPlayer( _dungeons[_indexCurrent] );
         _dungeons[_indexCurrent].MovementRandom( );
         _dungeons[_indexCurrent].CheckEvents( _player );
         UpdatePlayerStates( );
     }
 }
 
-void Game::Save( )
+void Game::SaveDungeons( )
 {
-    const std::string fileName = "Dungeoncrawler_Save_Dungeon.txt";
+    const std::string fileName = "Dungeoncrawler_Save_Dungeons.txt";
     std::ofstream outFile( fileName, std::ios::out | std::ios::trunc );
 
     if( !outFile.is_open( ) )
@@ -241,11 +241,11 @@ void Game::Save( )
         }
     }
 }
-bool Game::Load( )
+bool Game::LoadDungeons( )
 {
     try
     {
-        const std::string fileName = "Dungeoncrawler_Save_Dungeon.txt";
+        const std::string fileName = "Dungeoncrawler_Save_Dungeons.txt";
         std::ifstream inFile( fileName, std::ios::in );
         std::string line;
 
@@ -392,8 +392,69 @@ bool Game::Load( )
 
     return true;
 }
+Player Game::LoadPlayer( )
+{
+    const std::string fileName = "Dungeoncrawler_Save_Player.txt";
+    std::ifstream inFile( fileName, std::ios::in );
+    std::string line;
+    Player player;
 
-void Game::PlayerTurn( Dungeon& dungeon )
+    if( !inFile.is_open( ) )
+    {
+        throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
+    }
+
+    while( std::getline( inFile, line ) )
+    {
+        if( !line.empty( ) && line[0] == ':' )
+        {
+            line.erase( 0, 1 );
+            std::vector<std::string> args( { line } );
+
+            for( int i = 0; i < 2; i++ )
+            {
+                std::getline( inFile, line );
+                line.erase( 0, 1 );
+                args.push_back( line );
+            }
+
+            player.name = args[0];
+            player.icon = args[1][0];
+            player.attributes = 0;
+            player.health = std::stoi( args[2] );
+            player.healthMax = std::stoi( args[3] );
+            player.healthRegen = std::stoi( args[4] );
+            player.damage = std::stoi( args[5] );
+
+            std::stringstream attributesStream( line );
+            std::string attributeValue;
+
+            while( std::getline( attributesStream, attributeValue, ',' ) )
+            {
+                player.attributes |= 1 << std::stoi( attributeValue );
+            }
+
+            std::stringstream abilitiesStream( line );
+            std::string abilityValue;
+
+            while( std::getline( abilitiesStream, abilityValue, ',' ) )
+            {
+                player.abilities.push_back( _entityLibrary.abilities[std::stoi( abilityValue )] );
+            }
+
+            std::stringstream positionStream( line );
+            std::string positionValue;
+            std::getline( abilitiesStream, abilityValue, ',' );
+            player.position.x = std::stoi( positionValue );
+            std::getline( abilitiesStream, abilityValue, ',' );
+            player.position.y = std::stoi( positionValue );
+        }
+    }
+
+    return player;
+}
+
+void Game::TurnPlayer( Dungeon& dungeon )
 {
     static const std::vector<char> choices =
     {
@@ -419,7 +480,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
     {
         system( "CLS" );
         PrintDungeonCentered( dungeon, _player.visionReach, _player.position );
-        PrintCombatantInformation( _player );
+        PrintHealth( _player );
         std::cout << "\n";
         std::cout << "[W] Go North\n";
         std::cout << "[A] Go West\n";
@@ -446,7 +507,7 @@ void Game::PlayerTurn( Dungeon& dungeon )
             {
                 done = true;
                 _status = GameStatus::Menu;
-                Save( );
+                SaveDungeons( );
 
                 break;
             }
@@ -481,7 +542,6 @@ void Game::UpdatePlayerStates( )
     if( _player.states & States::Combat )
     {
         _player.states &= ~States::Combat;
-        _battleSystem.EngageRandomMonster( _player );
 
         if( _player.health <= 0 )
         {

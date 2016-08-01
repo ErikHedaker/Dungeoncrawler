@@ -10,17 +10,17 @@ double RandomNumberGenerator( double min, double max )
 {
     static std::random_device rd;
     static std::mt19937 generator( rd( ) );
-    std::uniform_real_distribution<double> randomNumber( min, max );
+    std::uniform_real_distribution<double> random( min, max );
 
-    return randomNumber( generator );
+    return random( generator );
 }
 int RandomNumberGenerator( int min, int max )
 {
     static std::random_device rd;
     static std::mt19937 generator( rd( ) );
-    std::uniform_int_distribution<int> randomNumber( min, max );
+    std::uniform_int_distribution<int> random( min, max );
 
-    return randomNumber( generator );
+    return random( generator );
 }
 int GetPositiveInteger( const std::string& context )
 {
@@ -108,7 +108,7 @@ void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector
 
     std::cout << '\n';
 }
-void PrintCombatantInformation( const Combatant& combatant )
+void PrintHealth( const Character& combatant )
 {
     std::cout << combatant.name << " HP: " << combatant.health << " (";
 
@@ -118,7 +118,6 @@ void PrintCombatantInformation( const Combatant& combatant )
     }
 
     std::cout << combatant.healthRegen << ")\n";
-    std::cout << combatant.name << " spells owned: " << __popcnt( combatant.spells ) << "\n";
 }
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation& orientation )
 {
@@ -161,4 +160,118 @@ Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, i
 Vector2<int> PositionRotateClockwise( const Vector2<int>& position, const Vector2<int>& sizeGrid )
 {
     return { sizeGrid.x - position.y - 1, position.x };
+}
+Ability GetAbility( const std::vector<Ability>& abilities )
+{
+    std::map<char, Ability> abilitiesMap;
+    std::vector<char> choices;
+    char id = '1';
+    
+    std::cout << "\nChoose a spell:\n\n";
+
+    for( const auto& ability : abilities )
+    {
+        abilitiesMap.emplace( id, ability );
+        choices.push_back( id );
+        std::cout << "[" << id << "] " << abilitiesMap.at( id ).name << "\n";
+        id++;
+    }
+    
+    return abilitiesMap.at( GetValidChar( "Enter choice: ", choices ) );
+}
+std::string UseAbility( const Ability& ability, Character& caster, Character& target )
+{
+    const int healthOld = target.health;
+
+    target.health -= static_cast<int>( ability.damage * RandomNumberGenerator( 0.9, 1.1 ) );
+
+    return std::string( caster.name + " casts " + ability.name + " on " + target.name + ", which dealt " + std::to_string( healthOld - target.health ) + " damage!\n" );
+}
+std::string UseWeapon( Character& attacker, Character& target )
+{
+    const int healthOld = target.health;
+
+    target.health -= static_cast<int>( attacker.damage * RandomNumberGenerator( 0.9, 1.1 ) );
+
+    return std::string( attacker.name + " attacks " + target.name + " with a weapon, which dealt " + std::to_string( healthOld - target.health ) + " damage!\n" );
+}
+std::string TurnPlayer( Character& player, Character& AI )
+{
+    const std::vector<char> choices = { '1', '2' };
+    char choice;
+    bool done = false;
+    std::string result;
+
+    while( !done )
+    {
+        std::cout << "\n";
+        std::cout << "[1] Attack with weapon\n";
+        std::cout << "[2] Attack with spell\n\n";
+        choice = GetValidChar( "Enter choice: ", choices );
+
+        switch( choice )
+        {
+            case '1':
+            {
+                result = UseWeapon( player, AI );
+                done = true;
+
+                break;
+            }
+            case '2':
+            {
+                if( player.abilities.size( ) > 0 )
+                {
+                    result = UseAbility( GetAbility( player.abilities ), player, AI );
+                    done = true;
+                }
+
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+std::string TurnAI( Character& player, Character& AI )
+{
+    const int number = RandomNumberGenerator( 0, AI.abilities.size( ) );
+
+    return ( number == AI.abilities.size( ) ? UseWeapon( AI, player ) : UseAbility( AI.abilities[number], AI, player ) );
+}
+void Combat( Character& player, Character& AI )
+{
+    std::string previousTurnPlayer;
+    std::string previousTurnAI;
+
+    while( true )
+    {
+        system( "CLS" );
+        std::cout << "You've been engaged in combat with a " << AI.name << "!\n\n";
+        std::cout << "-----\n\n";
+
+        player.Update( );
+        AI.Update( );
+
+        PrintHealth( player );
+        PrintHealth( AI );
+        
+        std::cout << previousTurnPlayer << "\n\n";
+        std::cout << previousTurnAI << "\n\n";
+        std::cout << "-----\n\n";
+
+        previousTurnPlayer = TurnPlayer( player, AI );
+        previousTurnAI = TurnAI( player, AI );
+
+        if( player.health <= 0 ||
+            AI.health <= 0 )
+        {
+            std::cout << "\n-----\n\n";
+            std::cout << ( player.health <= 0 ? player.name : AI.name ) << " died!";
+            std::cout << "\n\nPress enter to continue: ";
+            GetEnter( );
+
+            break;
+        }
+    }
 }

@@ -17,7 +17,8 @@ struct Category
     enum CategoryType
     {
         Character = 0,
-        Structure = 1
+        Structure = 1,
+        Spell = 2
     };
 };
 

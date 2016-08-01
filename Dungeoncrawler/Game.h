@@ -3,7 +3,6 @@
 #include "Dungeon.h"
 #include "Player.h"
 #include "EntityLibrary.h"
-#include "BattleSystem.h"
 
 class Game
 {
@@ -20,7 +19,6 @@ class Game
         Player _player;
         GameStatus _status;
         EntityLibrary _entityLibrary;
-        BattleSystem _battleSystem;
         DungeonConfiguration _config;
         std::vector<Dungeon> _dungeons;
         int _indexCurrent;
@@ -31,11 +29,12 @@ class Game
         void Start( );
 
         /* File IO */
-        void Save( );
-        bool Load( );
+        void SaveDungeons( );
+        bool LoadDungeons( );
+        Player LoadPlayer( );
 
         /* Various functions */
-        void PlayerTurn( Dungeon& dungeon );
+        void TurnPlayer( Dungeon& dungeon );
         void UpdatePlayerStates( );
         void SwitchDungeon( );
         void FullLinkDungeon( int indexDungeonCurrent );

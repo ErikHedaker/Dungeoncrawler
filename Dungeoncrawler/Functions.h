@@ -1,9 +1,9 @@
 #pragma once
 
+#include "EntityLibrary.h"
 #include "Vector2.h"
 #include "Enums.h"
 #include "Dungeon.h"
-#include "BattleSystem.h"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -14,7 +14,13 @@ int GetPositiveInteger( const std::string& context );
 char GetValidChar( const std::string& context, const std::vector<char>& valid );
 void GetEnter( );
 void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen = { 40, 20 } );
-void PrintCombatantInformation( const Combatant& combatant );
+void PrintHealth( const Character& character );
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation& orientation );
 Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, int west, int south, int east, int still );
 Vector2<int> PositionRotateClockwise( const Vector2<int>& position, const Vector2<int>& sizeGrid );
+Ability GetAbility( const std::vector<Ability>& abilities );
+std::string UseAbility( const Ability& ability, Character& caster, Character& target );
+std::string UseWeapon( Character& attacker, Character& target );
+std::string TurnPlayer( Character& player, Character& AI );
+std::string TurnAI( Character& player, Character& AI );
+void Combat( Character& player, Character& AI );
