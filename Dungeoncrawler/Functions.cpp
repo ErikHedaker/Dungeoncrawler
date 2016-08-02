@@ -49,7 +49,7 @@ char GetValidChar( const std::string& context, const std::vector<char>& valid )
         std::cout << context;
         std::cin >> choice;
 
-        if( std::find( valid.begin( ), valid.end( ), choice[0] ) != valid.end( ) )
+        if( std::find( valid.begin( ), valid.end( ), choice.back( ) ) != valid.end( ) )
         {
             break;
         }

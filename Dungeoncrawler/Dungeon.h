@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Enums.h"
-#include "Player.h"
 #include "Vector2.h"
 #include "EntityLibrary.h"
 #include <vector>
 #include <utility>
+#include <memory>
 
 struct DungeonConfiguration
 {
@@ -37,10 +37,10 @@ struct Link
 
 struct Entity
 {
+    std::unique_ptr<BaseEntity> base;
+    Category::CategoryType category;
     Vector2<int> position;
     Vector2<int> positionPrevious;
-    Category::CategoryType category;
-    int id;
 };
 
 struct Tile
@@ -52,19 +52,20 @@ struct Tile
 class Dungeon
 {
     public:
-        Dungeon( const DungeonConfiguration& config, const EntityLibrary& entityLibrary );
-        Dungeon( const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap, const EntityLibrary& entityLibrary, Player& player );
+        Dungeon( const EntityLibrary& entityLibrary, const DungeonConfiguration& config );
+        Dungeon( const EntityLibrary& entityLibrary, const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
 
         std::vector<Link> links;
 
-        void EntityPlayerAdd( const Vector2<int>& position, Player& player );
+        void PlayerAdd( const Vector2<int>& position );
         void RotateClockwise( );
 
         void MovementPlayer( const Orientation& orientation );
         void MovementRandom( );
-        void CheckEvents( Player& player );
+        void Events( );
 
         const Vector2<int>& GetSize( ) const;
+        const Vector2<int>& GetPlayerPosition( ) const;
         const Tile& GetTile( const Vector2<int>& position ) const;
         bool GetVision( const Vector2<int>& position ) const;
 
@@ -78,7 +79,7 @@ class Dungeon
         Vector2<int> _size;
         const EntityLibrary& _entityLibrary;
         std::vector<Entity> _entities;
-        int _indexEntityPlayer;
+        int _indexPlayer;
 
         /* 1D arrays interpreted as 2D arrays */
         std::vector<Tile> _tileMap;
@@ -91,7 +92,6 @@ class Dungeon
         void OccupantAdd( int index );
         void OccupantRemove( int index );
 
-        /* Called in constructor */
         void GenerateDoors( bool generate, int amount );
         void GenerateOuterWalls( bool generate );
         void GenerateHiddenPath( bool generate );

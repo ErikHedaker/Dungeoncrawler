@@ -6,10 +6,14 @@
 #include <string>
 #include <sstream>
 #include <iterator>
+#include <algorithm>
 
 Game::Game( ) :
+    _entityLibrary( ),
     _player( LoadPlayer( ) )
-{ }
+{
+    _entityLibrary.player.reset( new PlayerEntity( _player ) );
+}
 
 void Game::Menu( )
 {
@@ -157,10 +161,10 @@ void Game::Reset( )
     _player.states = 0;
     _player.health = _player.healthMax;
     _dungeons.clear( );
-    _dungeons.emplace_back( _config, _entityLibrary );
+    _dungeons.emplace_back( _entityLibrary, _config );
     _indexCurrent = 0;
-    FullLinkDungeon( 0 );
-    _dungeons[0].EntityPlayerAdd( _dungeons[0].GetSize( ) / 2, _player );
+    DungeonLink( 0 );
+    _dungeons[0].PlayerAdd( _dungeons[0].GetSize( ) / 2 );
 }
 void Game::Start( )
 {
@@ -169,8 +173,14 @@ void Game::Start( )
     {
         TurnPlayer( _dungeons[_indexCurrent] );
         _dungeons[_indexCurrent].MovementRandom( );
-        _dungeons[_indexCurrent].CheckEvents( _player );
-        UpdatePlayerStates( );
+        _dungeons[_indexCurrent].Events( );
+        _player.Update( );
+
+        if( _player.states & States::Switch )
+        {
+            _player.states &= ~States::Switch;
+            DungeonSwitch( );
+        }
     }
 }
 
@@ -301,47 +311,7 @@ bool Game::LoadDungeons( )
 
                 for( iterator.x = 0; iterator.x < sizeDungeon.x * 2; iterator.x++ )
                 {
-                    if( iterator.x < sizeDungeon.x )
-                    {
-                        switch( line[iterator.x] )
-                        {
-                            case Icon::Player:
-                            {
-                                iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = Icon::Player;
-
-                                break;
-                            }
-                            case Icon::Monster:
-                            {
-                                iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = Icon::Monster;
-
-                                break;
-                            }
-                            case Icon::Door:
-                            {
-                                iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = Icon::Door;
-
-                                break;
-                            }
-                            case Icon::Wall:
-                            {
-                                iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = Icon::Wall;
-
-                                break;
-                            }
-                            case Icon::Ground:
-                            {
-                                iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = Icon::Ground;
-
-                                break;
-                            }
-                            default:
-                            {
-                                throw std::exception( std::string( "Could not read tile" ).c_str( ) );
-                            }
-                        }
-                    }
-                    else
+                    if( iterator.x > sizeDungeon.x )
                     {
                         const Vector2<int> position = { iterator.x % sizeDungeon.x, iterator.y };
 
@@ -365,10 +335,14 @@ bool Game::LoadDungeons( )
                             }
                         }
                     }
+                    else
+                    {
+                        iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = line[iterator.x];
+                    }
                 }
             }
 
-            _dungeons.emplace_back( sizeDungeon, visionMap, iconMap, _entityLibrary, _player );
+            _dungeons.emplace_back( _entityLibrary, sizeDungeon, visionMap, iconMap );
 
             std::getline( inFile, line );
             const int linkCount = std::stoi( line );
@@ -392,66 +366,64 @@ bool Game::LoadDungeons( )
 
     return true;
 }
-Player Game::LoadPlayer( )
+Player Game::LoadPlayer( Load::LoadType load )
 {
-    const std::string fileName = "Dungeoncrawler_Save_Player.txt";
-    std::ifstream inFile( fileName, std::ios::in );
+    const std::vector<Ability>& abilitiesLibrary = _entityLibrary.abilities;
+    const int offset = 10 * load;
+    const std::string nameFile = "Dungeoncrawler_Save_Player.txt";
+    std::ifstream inFile( nameFile, std::ios::in );
     std::string line;
-    Player player;
+    std::vector<std::string> cacheFile;
+    auto GetBitmask = [] ( const std::string& line )
+    {
+        std::stringstream sstream( line );
+        std::string value;
+        int bitmask = 0;
+
+        while( std::getline( sstream, value, ',' ) )
+        {
+            bitmask |= 1 << std::stoi( value );
+        }
+
+        return bitmask;
+    };
+    auto GetAbilities = [&abilitiesLibrary] ( const std::string& line )
+    {
+        std::stringstream sstream( line );
+        std::string value;
+        std::vector<Ability> abilities;
+
+        while( std::getline( sstream, value, ',' ) )
+        {
+            abilities.push_back( abilitiesLibrary[std::stoi( value )] );
+        }
+
+        return abilities;
+    };
 
     if( !inFile.is_open( ) )
     {
-        throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
+        throw std::exception( std::string( "Could not open file " + nameFile ).c_str( ) );
     }
 
     while( std::getline( inFile, line ) )
     {
-        if( !line.empty( ) && line[0] == ':' )
-        {
-            line.erase( 0, 1 );
-            std::vector<std::string> args( { line } );
-
-            for( int i = 0; i < 2; i++ )
-            {
-                std::getline( inFile, line );
-                line.erase( 0, 1 );
-                args.push_back( line );
-            }
-
-            player.name = args[0];
-            player.icon = args[1][0];
-            player.attributes = 0;
-            player.health = std::stoi( args[2] );
-            player.healthMax = std::stoi( args[3] );
-            player.healthRegen = std::stoi( args[4] );
-            player.damage = std::stoi( args[5] );
-
-            std::stringstream attributesStream( line );
-            std::string attributeValue;
-
-            while( std::getline( attributesStream, attributeValue, ',' ) )
-            {
-                player.attributes |= 1 << std::stoi( attributeValue );
-            }
-
-            std::stringstream abilitiesStream( line );
-            std::string abilityValue;
-
-            while( std::getline( abilitiesStream, abilityValue, ',' ) )
-            {
-                player.abilities.push_back( _entityLibrary.abilities[std::stoi( abilityValue )] );
-            }
-
-            std::stringstream positionStream( line );
-            std::string positionValue;
-            std::getline( abilitiesStream, abilityValue, ',' );
-            player.position.x = std::stoi( positionValue );
-            std::getline( abilitiesStream, abilityValue, ',' );
-            player.position.y = std::stoi( positionValue );
-        }
+        cacheFile.push_back( line );
     }
 
-    return player;
+    cacheFile.erase( std::remove_if( cacheFile.begin( ), cacheFile.end( ), [] ( const std::string& line ) { return line[0] != ':'; } ), cacheFile.end( ) );
+    std::for_each( cacheFile.begin( ), cacheFile.end( ), [] ( std::string& line ) { line.erase( 0, 1 ); } );
+
+    return Player( cacheFile[0 + offset],
+                   cacheFile[1 + offset].back( ),
+       GetBitmask( cacheFile[2 + offset] ),
+        std::stoi( cacheFile[3 + offset] ),
+        std::stoi( cacheFile[4 + offset] ),
+        std::stoi( cacheFile[5 + offset] ),
+        std::stof( cacheFile[6 + offset] ),
+     GetAbilities( cacheFile[7 + offset] ),
+        std::stoi( cacheFile[8 + offset] ),
+       GetBitmask( cacheFile[9 + offset] ) );
 }
 
 void Game::TurnPlayer( Dungeon& dungeon )
@@ -479,7 +451,7 @@ void Game::TurnPlayer( Dungeon& dungeon )
     while( !done )
     {
         system( "CLS" );
-        PrintDungeonCentered( dungeon, _player.visionReach, _player.position );
+        PrintDungeonCentered( dungeon, _player.visionReach, dungeon.GetPlayerPosition( ) );
         PrintHealth( _player );
         std::cout << "\n";
         std::cout << "[W] Go North\n";
@@ -522,48 +494,27 @@ void Game::TurnPlayer( Dungeon& dungeon )
             {
                 dungeon.RotateClockwise( );
                 LinksRotateClockwise( _indexCurrent );
-                _player.position = PositionRotateClockwise( _player.position, dungeon.GetSize( ) );
 
                 break;
             }
         }
     }
 }
-void Game::UpdatePlayerStates( )
-{
-    _player.Update( );
-
-    if( _player.states & States::Switch )
-    {
-        _player.states &= ~States::Switch;
-        SwitchDungeon( );
-    }
-
-    if( _player.states & States::Combat )
-    {
-        _player.states &= ~States::Combat;
-
-        if( _player.health <= 0 )
-        {
-            _player.states |= States::Dead;
-        }
-    }
-}
-void Game::SwitchDungeon( )
+void Game::DungeonSwitch( )
 {
     for( const auto& link : _dungeons[_indexCurrent].links )
     {
-        if( link.entry == _player.position )
+        if( link.entry == _dungeons[_indexCurrent].GetPlayerPosition( ) )
         {
             _indexCurrent = link.indexDungeon;
-            _dungeons[_indexCurrent].EntityPlayerAdd( link.exit, _player );
-            FullLinkDungeon( _indexCurrent );
+            _dungeons[_indexCurrent].PlayerAdd( link.exit );
+            DungeonLink( _indexCurrent );
 
             break;
         }
     }
 }
-void Game::FullLinkDungeon( int indexCurrentDungeon )
+void Game::DungeonLink( int indexCurrentDungeon )
 {
     const int amountLinks = _dungeons[indexCurrentDungeon].links.size( );
 
@@ -571,7 +522,7 @@ void Game::FullLinkDungeon( int indexCurrentDungeon )
     {
         if( _dungeons[indexCurrentDungeon].links[indexCurrentLink].indexLink < 0 )
         {
-            _dungeons.emplace_back( _config, _entityLibrary );
+            _dungeons.emplace_back( _entityLibrary, _config );
 
             const int indexPartnerDungeon = _dungeons.size( ) - 1;
             const int indexPartnerLink = 0;

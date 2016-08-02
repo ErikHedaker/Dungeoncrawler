@@ -3,9 +3,12 @@
 #include "Enums.h"
 #include <vector>
 #include <string>
+#include <memory>
 
 struct BaseEntity
 {
+    BaseEntity( const std::string& name, char icon, int attributes );
+
     std::string name;
     char icon;
     int attributes;
@@ -13,11 +16,15 @@ struct BaseEntity
 
 struct Ability : public BaseEntity
 {
+    Ability( const std::string& name, char icon, int attributes, float damage );
+
     float damage;
 };
 
 struct Character : public BaseEntity
 {
+    Character( const std::string& name, char icon, int attributes, int health, int healthMax, int healthRegen, float damage, const std::vector<Ability>& abilities );
+
     int health;
     int healthMax;
     int healthRegen;
@@ -28,22 +35,36 @@ struct Character : public BaseEntity
 };
 
 struct Structure : public BaseEntity
-{ };
+{
+    Structure( const std::string& name, char icon, int attributes );
+};
+
+struct Player : public Character
+{
+    Player( const std::string& name, char icon, int attributes, int health, int healthMax, int healthRegen, float damage, const std::vector<Ability>& abilities, int visionReach, int states );
+
+    int visionReach;
+    int states;
+};
+
+struct PlayerEntity : public BaseEntity
+{
+    PlayerEntity( Player& player );
+
+    Player& player;
+};
 
 class EntityLibrary
 {
     public:
         EntityLibrary( );
 
+        std::unique_ptr<PlayerEntity> player;
         const std::vector<Ability> abilities;
         const std::vector<Character> characters;
         const std::vector<Structure> structures;
 
-        const BaseEntity& GetBaseEntity( const Category::CategoryType& category, int id ) const;
-
     private:
-        std::vector<const BaseEntity*> _baseEntities;
-
         std::vector<Ability> LoadAbilities( ) const;
         std::vector<Character> LoadCharacters( ) const;
         std::vector<Structure> LoadStructures( ) const;

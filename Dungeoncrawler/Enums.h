@@ -1,24 +1,13 @@
 #pragma once
 
-struct Icon
-{
-    enum IconType
-    {
-        Player  = '@',
-        Monster = 'M',
-        Door    = '+',
-        Wall    = '#',
-        Ground  = '-'
-    };
-};
-
 struct Category
 {
     enum CategoryType
     {
-        Character = 0,
-        Structure = 1,
-        Spell = 2
+        Ability      = 0,
+        Character    = 1,
+        Structure    = 2,
+        PlayerEntity = 3
     };
 };
 
@@ -54,6 +43,14 @@ struct States
     };
 };
 
+struct Load
+{
+    enum LoadType
+    {
+        Default  = 0,
+        Previous = 1
+    };
+};
 
 enum class GameStatus
 {
@@ -74,3 +71,4 @@ enum class Orientation
     South,
     East
 };
+
