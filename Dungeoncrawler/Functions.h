@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EntityLibrary.h"
+#include "Game.h"
 #include "Vector2.h"
 #include "Enums.h"
 #include "Dungeon.h"
@@ -24,3 +24,9 @@ std::string UseWeapon( Character& attacker, Character& target );
 std::string TurnPlayer( Character& player, Character& AI );
 std::string TurnAI( Character& player, Character& AI );
 void Combat( Character& player, Character& AI );
+void SaveDungeonSystem( const DungeonSystem& dungeonSystem );
+DungeonSystem LoadDungeonSystem( const EntityLibrary& entityLibrary );
+Player LoadPlayer( const std::vector<Ability>& abilitiesLibrary, Load::LoadType load = Load::Default );
+std::vector<Ability> LoadAbilities( );
+std::vector<Character> LoadCharacters( const std::vector<Ability>& abilitiesLibrary );
+std::vector<Structure> LoadStructures( );

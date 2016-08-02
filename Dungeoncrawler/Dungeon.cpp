@@ -5,6 +5,40 @@
 #include <algorithm>
 #include <random>
 
+DungeonConfiguration::DungeonConfiguration( ) :
+    sizeDungeonFixed( false ),
+    sizeDungeon( { 0, 0 } ),
+    generateDoors( true ),
+    generateOuterWalls( true ),
+    generateHiddenPath( true ),
+    generateSourceWalls( true ),
+    generateExtensionWalls( true ),
+    generateFillerWalls( true ),
+    generateMonsters( true ),
+    amountDoors( 0 ),
+    amountSourceWalls( 0 ),
+    amountExtensionWalls( 0 ),
+    amountFillerWallsCycles( 0 ),
+    amountMonsters( 0 )
+{ }
+DungeonConfiguration::DungeonConfiguration( bool a, Vector2<int> b, bool c, bool d, bool e, bool f, bool g, bool h, bool i, int j, int k, int l, int m, int n ) :
+    sizeDungeonFixed( a ),
+    sizeDungeon( b ),
+    generateDoors( c ),
+    generateOuterWalls( d ),
+    generateHiddenPath( e ),
+    generateSourceWalls( f ),
+    generateExtensionWalls( g ),
+    generateFillerWalls( h ),
+    generateMonsters( i ),
+    amountDoors( j ),
+    amountSourceWalls( k ),
+    amountExtensionWalls( l ),
+    amountFillerWallsCycles( m ),
+    amountMonsters( n )
+{
+}
+
 Dungeon::Dungeon( const EntityLibrary& entityLibrary, const DungeonConfiguration& config ) :
     _size
     ( {
@@ -30,41 +64,41 @@ Dungeon::Dungeon( const EntityLibrary& entityLibrary, const Vector2<int>& size, 
     _tileMap( _size.x * _size.y ),
     _visionMap( visionMap )
 {
-    Vector2<int> iterator;
+    //Vector2<int> iterator;
 
-    for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
-    {
-        for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
-        {
-            switch( iconMap[( iterator.y * _size.x ) + iterator.x] )
-            {
-                case Icon::Player:
-                {
-                    PlayerAdd( iterator );
+    //for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
+    //{
+    //    for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
+    //    {
+    //        switch( iconMap[( iterator.y * _size.x ) + iterator.x] )
+    //        {
+    //            case Icon::Player:
+    //            {
+    //                PlayerAdd( iterator );
 
-                    break;
-                }
-                case Icon::Monster:
-                {
-                    EntityAdd( iterator, Category::Character, 1 );
+    //                break;
+    //            }
+    //            case Icon::Monster:
+    //            {
+    //                EntityAdd( iterator, Category::Character, 1 );
 
-                    break;
-                }
-                case Icon::Door:
-                {
-                    EntityAdd( iterator, Category::Structure, 1 );
+    //                break;
+    //            }
+    //            case Icon::Door:
+    //            {
+    //                EntityAdd( iterator, Category::Structure, 1 );
 
-                    break;
-                }
-                case Icon::Wall:
-                {
-                    EntityAdd( iterator, Category::Character, 0 );
+    //                break;
+    //            }
+    //            case Icon::Wall:
+    //            {
+    //                EntityAdd( iterator, Category::Character, 0 );
 
-                    break;
-                }
-            }
-        }
-    }
+    //                break;
+    //            }
+    //        }
+    //    }
+    //}
 }
 
 void Dungeon::PlayerAdd( const Vector2<int>& position )
@@ -316,7 +350,7 @@ void Dungeon::UpdateTile( const Vector2<int>& position )
 {
     auto& tile = _tileMap[( position.y * _size.x ) + position.x];
 
-    tile.icon = Icon::Ground;
+    tile.icon = '-';
 
     for( auto i : tile.indexOccupants )
     {

@@ -9,22 +9,25 @@
 
 struct DungeonConfiguration
 {
-    bool sizeDungeonFixed = false;
-    Vector2<int> sizeDungeon = { 0, 0 };
+    DungeonConfiguration( );
+    DungeonConfiguration( bool a, Vector2<int> b, bool c, bool d, bool e, bool f, bool g, bool h, bool i, int j, int k, int l, int m, int n );
 
-    bool generateDoors = true;
-    bool generateOuterWalls = true;
-    bool generateHiddenPath = true;
-    bool generateSourceWalls = true;
-    bool generateExtensionWalls = true;
-    bool generateFillerWalls = true;
-    bool generateMonsters = true;
+    bool sizeDungeonFixed;
+    Vector2<int> sizeDungeon;
 
-    int amountDoors = 0;
-    int amountSourceWalls = 0;
-    int amountExtensionWalls = 0;
-    int amountFillerWallsCycles = 0;
-    int amountMonsters = 0;
+    bool generateDoors;
+    bool generateOuterWalls;
+    bool generateHiddenPath;
+    bool generateSourceWalls;
+    bool generateExtensionWalls;
+    bool generateFillerWalls;
+    bool generateMonsters;
+
+    int amountDoors;
+    int amountSourceWalls;
+    int amountExtensionWalls;
+    int amountFillerWallsCycles;
+    int amountMonsters;
 };
 
 struct Link
@@ -46,7 +49,7 @@ struct Entity
 struct Tile
 {
     std::vector<int> indexOccupants;
-    char icon = Icon::Ground;
+    char icon = '-';
 };
 
 class Dungeon

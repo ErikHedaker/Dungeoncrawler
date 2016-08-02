@@ -54,18 +54,12 @@ struct PlayerEntity : public BaseEntity
     Player& player;
 };
 
-class EntityLibrary
+struct EntityLibrary
 {
-    public:
-        EntityLibrary( );
+    EntityLibrary( );
 
-        std::unique_ptr<PlayerEntity> player;
-        const std::vector<Ability> abilities;
-        const std::vector<Character> characters;
-        const std::vector<Structure> structures;
-
-    private:
-        std::vector<Ability> LoadAbilities( ) const;
-        std::vector<Character> LoadCharacters( ) const;
-        std::vector<Structure> LoadStructures( ) const;
+    std::unique_ptr<PlayerEntity> player;
+    const std::vector<Ability> abilities;
+    const std::vector<Character> characters;
+    const std::vector<Structure> structures;
 };

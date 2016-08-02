@@ -3,6 +3,13 @@
 #include "Dungeon.h"
 #include "EntityLibrary.h"
 
+struct DungeonSystem
+{
+    DungeonConfiguration config;
+    std::vector<Dungeon> dungeons;
+    int indexCurrent;
+};
+
 class Game
 {
     public:
@@ -13,20 +20,14 @@ class Game
         bool Exist( ) const;
 
     private:
+        GameStatus _status;
+        DungeonSystem _dungeonSystem;
         EntityLibrary _entityLibrary;
         Player _player;
-        GameStatus _status;
-        DungeonConfiguration _config;
-        std::vector<Dungeon> _dungeons;
-        int _indexCurrent;
 
         void SetDungeonConfiguration( const GameConfig& type );
         void Reset( );
         void Start( );
-
-        void SaveDungeons( );
-        bool LoadDungeons( );
-        Player LoadPlayer( Load::LoadType load = Load::Default );
 
         void TurnPlayer( Dungeon& dungeon );
         void DungeonSwitch( );

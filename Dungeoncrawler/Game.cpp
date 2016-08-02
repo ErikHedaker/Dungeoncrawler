@@ -2,15 +2,10 @@
 #include "Functions.h"
 #include <iostream>
 #include <map>
-#include <fstream>
-#include <string>
-#include <sstream>
-#include <iterator>
-#include <algorithm>
 
 Game::Game( ) :
     _entityLibrary( ),
-    _player( LoadPlayer( ) )
+    _player( LoadPlayer( _entityLibrary.abilities ) )
 {
     _entityLibrary.player.reset( new PlayerEntity( _player ) );
 }
@@ -54,8 +49,9 @@ void Game::Menu( )
             {
                 system( "CLS" );
                 std::cout << "Loading, please wait.";
+                LoadDungeonSystem( _entityLibrary );
 
-                if( LoadDungeons( ) )
+                if( Exist( ) )
                 {
                     Start( );
                 }
@@ -96,7 +92,7 @@ void Game::Menu( )
 
 bool Game::Exist( ) const
 {
-    return _dungeons.size( ) != 0;
+    return _dungeonSystem.dungeons.size( ) != 0;
 }
 
 void Game::SetDungeonConfiguration( const GameConfig& type )
@@ -105,7 +101,7 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
     {
         case GameConfig::Default:
         {
-            _config = DungeonConfiguration( );
+            _dungeonSystem.config = DungeonConfiguration( );
 
             break;
         }
@@ -125,32 +121,32 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 
             std::cout << "\n";
 
-            _config.sizeDungeonFixed       = GetBool( GetValidChar( "Fixed dungeon size, [Y/N]: ",       choices ) );
-            _config.generateDoors          = GetBool( GetValidChar( "Generate doors, [Y/N]: ",           choices ) );
-            _config.generateOuterWalls     = GetBool( GetValidChar( "Generate outer walls, [Y/N]: ",     choices ) );
-            _config.generateHiddenPath     = GetBool( GetValidChar( "Generate hidden path, [Y/N]: ",     choices ) );
-            _config.generateSourceWalls    = GetBool( GetValidChar( "Generate source walls, [Y/N]: ",    choices ) );
-            _config.generateExtensionWalls = GetBool( GetValidChar( "Generate extension walls, [Y/N]: ", choices ) );
-            _config.generateFillerWalls    = GetBool( GetValidChar( "Generate filler walls, [Y/N]: ",    choices ) );
-            _config.generateMonsters       = GetBool( GetValidChar( "Generate monsters, [Y/N]: ",        choices ) );
+            _dungeonSystem.config.sizeDungeonFixed       = GetBool( GetValidChar( "Fixed dungeon size, [Y/N]: ",       choices ) );
+            _dungeonSystem.config.generateDoors          = GetBool( GetValidChar( "Generate doors, [Y/N]: ",           choices ) );
+            _dungeonSystem.config.generateOuterWalls     = GetBool( GetValidChar( "Generate outer walls, [Y/N]: ",     choices ) );
+            _dungeonSystem.config.generateHiddenPath     = GetBool( GetValidChar( "Generate hidden path, [Y/N]: ",     choices ) );
+            _dungeonSystem.config.generateSourceWalls    = GetBool( GetValidChar( "Generate source walls, [Y/N]: ",    choices ) );
+            _dungeonSystem.config.generateExtensionWalls = GetBool( GetValidChar( "Generate extension walls, [Y/N]: ", choices ) );
+            _dungeonSystem.config.generateFillerWalls    = GetBool( GetValidChar( "Generate filler walls, [Y/N]: ",    choices ) );
+            _dungeonSystem.config.generateMonsters       = GetBool( GetValidChar( "Generate monsters, [Y/N]: ",        choices ) );
 
             std::cout << "\n";
 
-            if( _config.sizeDungeonFixed )
+            if( _dungeonSystem.config.sizeDungeonFixed )
             {
-                _config.sizeDungeon.x           = GetPositiveInteger( "Enter dungeon width: " );
-                _config.sizeDungeon.y           = GetPositiveInteger( "Enter dungeon height: " );
+                _dungeonSystem.config.sizeDungeon.x           = GetPositiveInteger( "Enter dungeon width: " );
+                _dungeonSystem.config.sizeDungeon.y           = GetPositiveInteger( "Enter dungeon height: " );
             }
-            if( _config.generateDoors )
-                _config.amountDoors             = GetPositiveInteger( "Enter amount of doors: " );
-            if( _config.generateSourceWalls )
-                _config.amountSourceWalls       = GetPositiveInteger( "Enter amount of source walls: " );
-            if( _config.generateExtensionWalls )
-                _config.amountExtensionWalls    = GetPositiveInteger( "Enter amount of extension walls: " );
-            if( _config.generateFillerWalls )
-                _config.amountFillerWallsCycles = GetPositiveInteger( "Enter amount of filler wall cycles: " );
-            if( _config.generateMonsters )
-                _config.amountMonsters          = GetPositiveInteger( "Enter amount of monsters: " );
+            if( _dungeonSystem.config.generateDoors )
+                _dungeonSystem.config.amountDoors             = GetPositiveInteger( "Enter amount of doors: " );
+            if( _dungeonSystem.config.generateSourceWalls )
+                _dungeonSystem.config.amountSourceWalls       = GetPositiveInteger( "Enter amount of source walls: " );
+            if( _dungeonSystem.config.generateExtensionWalls )
+                _dungeonSystem.config.amountExtensionWalls    = GetPositiveInteger( "Enter amount of extension walls: " );
+            if( _dungeonSystem.config.generateFillerWalls )
+                _dungeonSystem.config.amountFillerWallsCycles = GetPositiveInteger( "Enter amount of filler wall cycles: " );
+            if( _dungeonSystem.config.generateMonsters )
+                _dungeonSystem.config.amountMonsters          = GetPositiveInteger( "Enter amount of monsters: " );
 
             break;
         }
@@ -160,20 +156,20 @@ void Game::Reset( )
 {
     _player.states = 0;
     _player.health = _player.healthMax;
-    _dungeons.clear( );
-    _dungeons.emplace_back( _entityLibrary, _config );
-    _indexCurrent = 0;
+    _dungeonSystem.dungeons.clear( );
+    _dungeonSystem.dungeons.emplace_back( _entityLibrary, _dungeonSystem.config );
+    _dungeonSystem.indexCurrent = 0;
     DungeonLink( 0 );
-    _dungeons[0].PlayerAdd( _dungeons[0].GetSize( ) / 2 );
+    _dungeonSystem.dungeons[0].PlayerAdd( _dungeonSystem.dungeons[0].GetSize( ) / 2 );
 }
 void Game::Start( )
 {
     while( _status == GameStatus::Neutral &&
            !( _player.states & States::Dead ) )
     {
-        TurnPlayer( _dungeons[_indexCurrent] );
-        _dungeons[_indexCurrent].MovementRandom( );
-        _dungeons[_indexCurrent].Events( );
+        TurnPlayer( _dungeonSystem.dungeons[_dungeonSystem.indexCurrent] );
+        _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].MovementRandom( );
+        _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].Events( );
         _player.Update( );
 
         if( _player.states & States::Switch )
@@ -182,248 +178,6 @@ void Game::Start( )
             DungeonSwitch( );
         }
     }
-}
-
-void Game::SaveDungeons( )
-{
-    const std::string fileName = "Dungeoncrawler_Save_Dungeons.txt";
-    std::ofstream outFile( fileName, std::ios::out | std::ios::trunc );
-
-    if( !outFile.is_open( ) )
-    {
-        return;
-    }
-
-    outFile << _config.sizeDungeonFixed << '\t';
-    outFile << _config.sizeDungeon.x << '\t';
-    outFile << _config.sizeDungeon.x << '\t';
-    outFile << _config.generateDoors << '\t';
-    outFile << _config.generateOuterWalls << '\t';
-    outFile << _config.generateHiddenPath << '\t';
-    outFile << _config.generateSourceWalls << '\t';
-    outFile << _config.generateExtensionWalls << '\t';
-    outFile << _config.generateFillerWalls << '\t';
-    outFile << _config.generateMonsters << '\t';
-    outFile << _config.amountDoors << '\t';
-    outFile << _config.amountSourceWalls << '\t';
-    outFile << _config.amountExtensionWalls << '\t';
-    outFile << _config.amountFillerWallsCycles << '\t';
-    outFile << _config.amountMonsters << '\n';
-
-    outFile << _indexCurrent << '\n';
-    outFile << _dungeons.size( ) << '\n';
-
-    for( const auto& dungeon : _dungeons )
-    {
-        const Vector2<int> sizeDungeon = dungeon.GetSize( );
-        Vector2<int> iterator;
-
-        outFile << sizeDungeon.x << '\t';
-        outFile << sizeDungeon.y << '\n';
-
-        for( iterator.y = 0; iterator.y < sizeDungeon.y; iterator.y++ )
-        {
-            for( iterator.x = 0; iterator.x < sizeDungeon.x * 2; iterator.x++ )
-            {
-                if( iterator.x < sizeDungeon.x )
-                {
-                    outFile << dungeon.GetTile( iterator ).icon;
-                }
-                else
-                {
-                    outFile << dungeon.GetVision( { iterator.x % sizeDungeon.x, iterator.y } );
-                }
-            }
-
-            outFile << '\n';
-        }
-
-        outFile << dungeon.links.size( ) << '\n';
-
-        for( const auto& link : dungeon.links )
-        {
-            outFile << link.indexDungeon << '\t';
-            outFile << link.indexLink << '\t';
-            outFile << link.exit.x << '\t';
-            outFile << link.exit.y << '\t';
-            outFile << link.entry.x << '\t';
-            outFile << link.entry.y << '\n';
-        }
-    }
-}
-bool Game::LoadDungeons( )
-{
-    try
-    {
-        const std::string fileName = "Dungeoncrawler_Save_Dungeons.txt";
-        std::ifstream inFile( fileName, std::ios::in );
-        std::string line;
-
-        if( !inFile.is_open( ) )
-        {
-            throw std::exception( std::string( "Could not open file " + fileName ).c_str( ) );
-        }
-
-        _dungeons.clear( );
-
-        std::getline( inFile, line );
-        std::vector<int> configArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
-
-        _config.sizeDungeonFixed        = configArgs[0] != 0;
-        _config.sizeDungeon.x           = configArgs[1];
-        _config.sizeDungeon.y           = configArgs[2];
-        _config.generateDoors           = configArgs[3] != 0;
-        _config.generateOuterWalls      = configArgs[4] != 0;
-        _config.generateHiddenPath      = configArgs[5] != 0;
-        _config.generateSourceWalls     = configArgs[6] != 0;
-        _config.generateExtensionWalls  = configArgs[7] != 0;
-        _config.generateFillerWalls     = configArgs[8] != 0;
-        _config.generateMonsters        = configArgs[9] != 0;
-        _config.amountDoors             = configArgs[10];
-        _config.amountSourceWalls       = configArgs[11];
-        _config.amountExtensionWalls    = configArgs[12];
-        _config.amountFillerWallsCycles = configArgs[13];
-        _config.amountMonsters          = configArgs[14];
-
-        std::getline( inFile, line );
-        _indexCurrent = std::stoi( line );
-
-        std::getline( inFile, line );
-        const int dungeonCount = std::stoi( line );
-
-        for( int index = 0; index < dungeonCount; index++ )
-        {
-            Vector2<int> sizeDungeon;
-            Vector2<int> iterator;
-
-            std::getline( inFile, line, '\t' );
-            sizeDungeon.x = std::stoi( line );
-
-            std::getline( inFile, line );
-            sizeDungeon.y = std::stoi( line );
-
-            std::vector<char> iconMap( sizeDungeon.x * sizeDungeon.y );
-            std::vector<bool> visionMap( sizeDungeon.x * sizeDungeon.y );
-
-            for( iterator.y = 0; iterator.y < sizeDungeon.y; iterator.y++ )
-            {
-                std::getline( inFile, line );
-
-                for( iterator.x = 0; iterator.x < sizeDungeon.x * 2; iterator.x++ )
-                {
-                    if( iterator.x > sizeDungeon.x )
-                    {
-                        const Vector2<int> position = { iterator.x % sizeDungeon.x, iterator.y };
-
-                        switch( line[iterator.x] )
-                        {
-                            case '1':
-                            {
-                                visionMap[( position.y * sizeDungeon.x ) + position.x] = true;
-
-                                break;
-                            }
-                            case '0':
-                            {
-                                visionMap[( position.y * sizeDungeon.x ) + position.x] = false;
-
-                                break;
-                            }
-                            default:
-                            {
-                                throw std::exception( std::string( "Could not read vision" ).c_str( ) );
-                            }
-                        }
-                    }
-                    else
-                    {
-                        iconMap[( iterator.y * sizeDungeon.x ) + iterator.x] = line[iterator.x];
-                    }
-                }
-            }
-
-            _dungeons.emplace_back( _entityLibrary, sizeDungeon, visionMap, iconMap );
-
-            std::getline( inFile, line );
-            const int linkCount = std::stoi( line );
-
-            for( int indexLink = 0; indexLink < linkCount; indexLink++ )
-            {
-                std::getline( inFile, line );
-                std::vector<int> linkArgs( ( std::istream_iterator<int>( std::stringstream( line ) ) ), std::istream_iterator<int>( ) );
-                _dungeons.back( ).links.push_back( { linkArgs[0], linkArgs[1], { linkArgs[2], linkArgs[3] }, { linkArgs[4], linkArgs[5] } } );
-            }
-        }
-    }
-    catch( const std::exception& e )
-    {
-        std::cout << "\n\nException: " << e.what( );
-        std::cout << "\n\nPress enter to continue: ";
-        GetEnter( );
-
-        return false;
-    }
-
-    return true;
-}
-Player Game::LoadPlayer( Load::LoadType load )
-{
-    const std::vector<Ability>& abilitiesLibrary = _entityLibrary.abilities;
-    const int offset = 10 * load;
-    const std::string nameFile = "Dungeoncrawler_Save_Player.txt";
-    std::ifstream inFile( nameFile, std::ios::in );
-    std::string line;
-    std::vector<std::string> cacheFile;
-    auto GetBitmask = [] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        int bitmask = 0;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            bitmask |= 1 << std::stoi( value );
-        }
-
-        return bitmask;
-    };
-    auto GetAbilities = [&abilitiesLibrary] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        std::vector<Ability> abilities;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            abilities.push_back( abilitiesLibrary[std::stoi( value )] );
-        }
-
-        return abilities;
-    };
-
-    if( !inFile.is_open( ) )
-    {
-        throw std::exception( std::string( "Could not open file " + nameFile ).c_str( ) );
-    }
-
-    while( std::getline( inFile, line ) )
-    {
-        cacheFile.push_back( line );
-    }
-
-    cacheFile.erase( std::remove_if( cacheFile.begin( ), cacheFile.end( ), [] ( const std::string& line ) { return line[0] != ':'; } ), cacheFile.end( ) );
-    std::for_each( cacheFile.begin( ), cacheFile.end( ), [] ( std::string& line ) { line.erase( 0, 1 ); } );
-
-    return Player( cacheFile[0 + offset],
-                   cacheFile[1 + offset].back( ),
-       GetBitmask( cacheFile[2 + offset] ),
-        std::stoi( cacheFile[3 + offset] ),
-        std::stoi( cacheFile[4 + offset] ),
-        std::stoi( cacheFile[5 + offset] ),
-        std::stof( cacheFile[6 + offset] ),
-     GetAbilities( cacheFile[7 + offset] ),
-        std::stoi( cacheFile[8 + offset] ),
-       GetBitmask( cacheFile[9 + offset] ) );
 }
 
 void Game::TurnPlayer( Dungeon& dungeon )
@@ -479,7 +233,7 @@ void Game::TurnPlayer( Dungeon& dungeon )
             {
                 done = true;
                 _status = GameStatus::Menu;
-                SaveDungeons( );
+                SaveDungeonSystem( _dungeonSystem );
 
                 break;
             }
@@ -493,7 +247,7 @@ void Game::TurnPlayer( Dungeon& dungeon )
             case 'F': case 'f':
             {
                 dungeon.RotateClockwise( );
-                LinksRotateClockwise( _indexCurrent );
+                LinksRotateClockwise( _dungeonSystem.indexCurrent );
 
                 break;
             }
@@ -502,13 +256,13 @@ void Game::TurnPlayer( Dungeon& dungeon )
 }
 void Game::DungeonSwitch( )
 {
-    for( const auto& link : _dungeons[_indexCurrent].links )
+    for( const auto& link : _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].links )
     {
-        if( link.entry == _dungeons[_indexCurrent].GetPlayerPosition( ) )
+        if( link.entry == _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].GetPlayerPosition( ) )
         {
-            _indexCurrent = link.indexDungeon;
-            _dungeons[_indexCurrent].PlayerAdd( link.exit );
-            DungeonLink( _indexCurrent );
+            _dungeonSystem.indexCurrent = link.indexDungeon;
+            _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].PlayerAdd( link.exit );
+            DungeonLink( _dungeonSystem.indexCurrent );
 
             break;
         }
@@ -516,18 +270,18 @@ void Game::DungeonSwitch( )
 }
 void Game::DungeonLink( int indexCurrentDungeon )
 {
-    const int amountLinks = _dungeons[indexCurrentDungeon].links.size( );
+    const int amountLinks = _dungeonSystem.dungeons[indexCurrentDungeon].links.size( );
 
     for( int indexCurrentLink = 0; indexCurrentLink < amountLinks; indexCurrentLink++ )
     {
-        if( _dungeons[indexCurrentDungeon].links[indexCurrentLink].indexLink < 0 )
+        if( _dungeonSystem.dungeons[indexCurrentDungeon].links[indexCurrentLink].indexLink < 0 )
         {
-            _dungeons.emplace_back( _entityLibrary, _config );
+            _dungeonSystem.dungeons.emplace_back( _entityLibrary, _dungeonSystem.config );
 
-            const int indexPartnerDungeon = _dungeons.size( ) - 1;
+            const int indexPartnerDungeon = _dungeonSystem.dungeons.size( ) - 1;
             const int indexPartnerLink = 0;
-            auto& current = _dungeons[indexCurrentDungeon].links[indexCurrentLink];
-            auto& partner = _dungeons[indexPartnerDungeon].links[indexPartnerLink];
+            auto& current = _dungeonSystem.dungeons[indexCurrentDungeon].links[indexCurrentLink];
+            auto& partner = _dungeonSystem.dungeons[indexPartnerDungeon].links[indexPartnerLink];
 
             current = { indexPartnerDungeon, indexPartnerLink, partner.entry, current.entry };
             partner = { indexCurrentDungeon, indexCurrentLink, current.entry, partner.entry };
@@ -536,11 +290,11 @@ void Game::DungeonLink( int indexCurrentDungeon )
 }
 void Game::LinksRotateClockwise( int indexDungeon )
 {
-    for( auto& current : _dungeons[indexDungeon].links )
+    for( auto& current : _dungeonSystem.dungeons[indexDungeon].links )
     {
-        auto& partner = _dungeons[current.indexDungeon].links[current.indexLink];
+        auto& partner = _dungeonSystem.dungeons[current.indexDungeon].links[current.indexLink];
 
-        current.entry = PositionRotateClockwise( current.entry, _dungeons[indexDungeon].GetSize( ) );
-        partner.exit  = PositionRotateClockwise( partner.exit,  _dungeons[indexDungeon].GetSize( ) );
+        current.entry = PositionRotateClockwise( current.entry, _dungeonSystem.dungeons[indexDungeon].GetSize( ) );
+        partner.exit  = PositionRotateClockwise( partner.exit,  _dungeonSystem.dungeons[indexDungeon].GetSize( ) );
     }
 }
