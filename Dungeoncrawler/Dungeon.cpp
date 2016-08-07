@@ -4,6 +4,7 @@
 #include <math.h>
 #include <algorithm>
 #include <random>
+#include <map>
 
 DungeonConfiguration::DungeonConfiguration( ) :
     sizeDungeonFixed( false ),
@@ -36,8 +37,7 @@ DungeonConfiguration::DungeonConfiguration( bool a, Vector2<int> b, bool c, bool
     amountExtensionWalls( l ),
     amountFillerWallsCycles( m ),
     amountMonsters( n )
-{
-}
+{ }
 
 Dungeon::Dungeon( const EntityLibrary& entityLibrary, const DungeonConfiguration& config ) :
     _size
@@ -47,7 +47,8 @@ Dungeon::Dungeon( const EntityLibrary& entityLibrary, const DungeonConfiguration
     } ),
     _entityLibrary( entityLibrary ),
     _tileMap( _size.x * _size.y ),
-    _visionMap( _size.x * _size.y, false )
+    _visionMap( _size.x * _size.y, false ),
+    _indexPlayer( -1 )
 
 {
     GenerateDoors( config.generateDoors, config.amountDoors );
@@ -61,64 +62,137 @@ Dungeon::Dungeon( const EntityLibrary& entityLibrary, const DungeonConfiguration
 Dungeon::Dungeon( const EntityLibrary& entityLibrary, const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap ) :
     _size( size ),
     _entityLibrary( entityLibrary ),
-    _tileMap( _size.x * _size.y ),
-    _visionMap( visionMap )
+    _tileMap( size.x * size.y ),
+    _visionMap( visionMap ),
+    _indexPlayer( -1 )
 {
-    //Vector2<int> iterator;
+    Vector2<int> iterator;
+    std::pair<Category::CategoryType, int> entity;
+    auto GetEntity = [&entityLibrary] ( char icon )
+    {
+        auto CheckBase = [icon] ( const BaseEntity& base )
+        {
+            return base.icon == icon;
+        };
+        auto ability = std::find_if( entityLibrary.abilities.begin( ), entityLibrary.abilities.end( ), CheckBase );
+        auto character = std::find_if( entityLibrary.characters.begin( ), entityLibrary.characters.end( ), CheckBase );
+        auto structure = std::find_if( entityLibrary.structures.begin( ), entityLibrary.structures.end( ), CheckBase );
 
-    //for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
-    //{
-    //    for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
-    //    {
-    //        switch( iconMap[( iterator.y * _size.x ) + iterator.x] )
-    //        {
-    //            case Icon::Player:
-    //            {
-    //                PlayerAdd( iterator );
+        if( ability != entityLibrary.abilities.end( ) )
+        {
+            return std::make_pair( Category::Ability, std::distance( entityLibrary.abilities.begin( ), ability ) );
+        }
 
-    //                break;
-    //            }
-    //            case Icon::Monster:
-    //            {
-    //                EntityAdd( iterator, Category::Character, 1 );
+        if( character != entityLibrary.characters.end( ) )
+        {
+            return std::make_pair( Category::Character, std::distance( entityLibrary.characters.begin( ), character ) );
+        }
 
-    //                break;
-    //            }
-    //            case Icon::Door:
-    //            {
-    //                EntityAdd( iterator, Category::Structure, 1 );
+        if( structure != entityLibrary.structures.end( ) )
+        {
+            return std::make_pair( Category::Structure, std::distance( entityLibrary.structures.begin( ), structure ) );
+        }
 
-    //                break;
-    //            }
-    //            case Icon::Wall:
-    //            {
-    //                EntityAdd( iterator, Category::Character, 0 );
+        return std::make_pair( Category::Ability, 0 );
+    };
 
-    //                break;
-    //            }
-    //        }
-    //    }
-    //}
+    for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
+    {
+        for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
+        {
+            char icon = iconMap[( iterator.y * size.x ) + iterator.x];
+
+            if( icon != '-' )
+            {
+                if( icon == '@' )
+                {
+                    PlayerAdd( iterator );
+                }
+                else
+                {
+                    entity = GetEntity( icon );
+                    EntityAdd( iterator, entity.first, entity.second );
+                }
+            }
+        }
+    }
 }
 
+void Dungeon::Rotate( const Orientation::OrientationType& orientation )
+{
+    for( int i = 0; i < orientation; i++ )
+    {
+        auto tileMapRotated = _tileMap;
+        auto visionMapRotated = _visionMap;
+        Vector2<int> iterator;
+
+        std::swap( _size.x, _size.y );
+
+        for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
+        {
+            for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
+            {
+                tileMapRotated[( iterator.y * _size.x ) + iterator.x] = _tileMap[( iterator.x * _size.y ) + iterator.y];
+                visionMapRotated[( iterator.y * _size.x ) + iterator.x] = _visionMap[( iterator.x * _size.y ) + iterator.y];
+            }
+
+            auto& tileColoumBegin = tileMapRotated.begin( ) + iterator.y * _size.x;
+            auto& tileColoumEnd = tileMapRotated.begin( ) + iterator.y * _size.x + _size.x;
+            auto& visionColoumBegin = visionMapRotated.begin( ) + iterator.y * _size.x;
+            auto& visionColoumEnd = visionMapRotated.begin( ) + iterator.y * _size.x + _size.x;
+
+            std::reverse( tileColoumBegin, tileColoumEnd );
+            std::reverse( visionColoumBegin, visionColoumEnd );
+        }
+
+        _tileMap = tileMapRotated;
+        _visionMap = visionMapRotated;
+    }
+
+    for( auto& entity : _entities )
+    {
+        entity.position = PositionRotate( entity.position, _size, orientation );
+        entity.positionPrevious = PositionRotate( entity.positionPrevious, _size, orientation );
+    }
+}
+const Orientation::OrientationType& Dungeon::RotateOnSwitch( const Vector2<int>& position )
+{
+    const std::map<Orientation::OrientationType, Vector2<int>> directions =
+    {
+        { Orientation::North, {  0, -1 } },
+        { Orientation::East,  {  1,  0 } },
+        { Orientation::South, {  0,  1 } },
+        { Orientation::West,  { -1,  0 } }
+    };
+    Orientation::OrientationType orientation;
+
+    for( const auto& direction : directions )
+    {
+        const Vector2<int> nearby = position + direction.second;
+
+        if( !InBounds( nearby ) )
+        {
+            orientation = direction.first;
+            Rotate( direction.first );
+
+            break;
+        }
+    }
+
+    return orientation;
+}
 void Dungeon::PlayerAdd( const Vector2<int>& position )
 {
-    EntityAdd( position, Category::PlayerEntity, 0 );
-    _indexPlayer = _entities.size( ) - 1;
+    Vector2<int> positionPlayer = position;
 
-    if( CheckTile( position, Attributes::PassableOthers ) )
-    {
-        _entities[_indexPlayer].position = position;
-        _entities[_indexPlayer].positionPrevious = position;
-    }
-    else
+    if( !CheckTile( position, Attributes::PassableOthers ) )
     {
         const std::array<Vector2<int>, 4> directions =
         { {
             {  0, -1 },
-            { -1,  0 },
+            {  1,  0 },
             {  0,  1 },
-            {  1,  0 }
+            { -1,  0 }
         } };
 
         for( const auto& direction : directions )
@@ -128,53 +202,25 @@ void Dungeon::PlayerAdd( const Vector2<int>& position )
             if( InBounds( nearby ) &&
                 CheckTile( nearby, Attributes::PassableOthers ) )
             {
-                _entities[_indexPlayer].position = nearby;
-                _entities[_indexPlayer].positionPrevious = nearby;
+                positionPlayer = nearby;
 
                 break;
             }
         }
     }
 
+    if( _indexPlayer >= 0 )
+    {
+        EntityRemove( _indexPlayer );
+    }
+
+    EntityAdd( positionPlayer, Category::PlayerEntity, 0 );
+    _indexPlayer = _entities.size( ) - 1;
     UpdateVision( _entities[_indexPlayer].position, static_cast<PlayerEntity*>( _entities[_indexPlayer].base.get( ) )->player.visionReach );
     OccupantAdd( _indexPlayer );
 }
-void Dungeon::RotateClockwise( )
-{
-    auto tileMapRotated   = _tileMap;
-    auto visionMapRotated = _visionMap;
-    Vector2<int> iterator;
 
-    std::swap( _size.x, _size.y );
-
-    for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
-    {
-        for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
-        {
-            tileMapRotated[  ( iterator.y * _size.x ) + iterator.x] = _tileMap[  ( iterator.x * _size.y ) + iterator.y];
-            visionMapRotated[( iterator.y * _size.x ) + iterator.x] = _visionMap[( iterator.x * _size.y ) + iterator.y];
-        }
-
-        auto& tileColoumBegin   = tileMapRotated.begin( )   + iterator.y * _size.x;
-        auto& tileColoumEnd     = tileMapRotated.begin( )   + iterator.y * _size.x + _size.x;
-        auto& visionColoumBegin = visionMapRotated.begin( ) + iterator.y * _size.x;
-        auto& visionColoumEnd   = visionMapRotated.begin( ) + iterator.y * _size.x + _size.x;
-
-        std::reverse( tileColoumBegin, tileColoumEnd );
-        std::reverse( visionColoumBegin, visionColoumEnd );
-    }
-
-    _tileMap   = tileMapRotated;
-    _visionMap = visionMapRotated;
-
-    for( auto& entity : _entities )
-    {
-        entity.position = PositionRotateClockwise( entity.position, _size );
-        entity.positionPrevious = PositionRotateClockwise( entity.positionPrevious, _size );
-    }
-}
-
-void Dungeon::MovementPlayer( const Orientation& orientation )
+void Dungeon::MovementPlayer( const Orientation::OrientationType& orientation )
 {
     OccupantRemove( _indexPlayer );
     _entities[_indexPlayer].positionPrevious = _entities[_indexPlayer].position;
@@ -219,7 +265,7 @@ void Dungeon::Events( )
         }
     }
     
-    /* Engage aggressive entity on players position */
+    /* Engage combative entity on players position */
     for( auto i : _tileMap[( _entities[_indexPlayer].position.y * _size.x ) + _entities[_indexPlayer].position.x].indexOccupants )
     {
         if( _entities[i].base->attributes & Attributes::Combative )
@@ -238,8 +284,8 @@ void Dungeon::Events( )
     {
         if( _entities[_indexPlayer].position == link.entry )
         {
-            indexesEntityRemove.push_back( _indexPlayer );
             player.states |= States::Switch;
+            OccupantRemove( _indexPlayer );
         }
     }
 

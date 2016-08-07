@@ -2,7 +2,6 @@
 #include "Game.h"
 #include "Enums.h"
 #include <iostream>
-#include <algorithm>
 #include <random>
 #include <map>
 #include <fstream>
@@ -124,9 +123,20 @@ void PrintHealth( const Character& combatant )
 
     std::cout << combatant.healthRegen << ")\n";
 }
-Vector2<int> PositionMove( const Vector2<int>& position, const Orientation& orientation )
+Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& sizeGrid, const Orientation::OrientationType& orientation )
 {
-    static const std::map<Orientation, Vector2<int>> directions =
+    Vector2<int> positionRotated = position;
+
+    for( int i = 0; i < orientation; i++ )
+    {
+        positionRotated = { sizeGrid.x - positionRotated.y - 1, positionRotated.x };
+    }
+
+    return positionRotated;
+}
+Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::OrientationType& orientation )
+{
+    static const std::map<Orientation::OrientationType, Vector2<int>> directions =
     {
         { Orientation::North, {  0, -1 } },
         { Orientation::West,  { -1,  0 } },
@@ -162,17 +172,13 @@ Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, i
 
     return position;
 }
-Vector2<int> PositionRotateClockwise( const Vector2<int>& position, const Vector2<int>& sizeGrid )
-{
-    return { sizeGrid.x - position.y - 1, position.x };
-}
 Ability GetAbility( const std::vector<Ability>& abilities )
 {
     std::map<char, Ability> abilitiesMap;
     std::vector<char> choices;
     char id = '1';
     
-    std::cout << "\nChoose a spell:\n\n";
+    std::cout << "\nChoose an ability:\n";
 
     for( const auto& ability : abilities )
     {
@@ -182,7 +188,7 @@ Ability GetAbility( const std::vector<Ability>& abilities )
         id++;
     }
     
-    return abilitiesMap.at( GetValidChar( "Enter choice: ", choices ) );
+    return abilitiesMap.at( GetValidChar( "\nEnter choice: ", choices ) );
 }
 std::string UseAbility( const Ability& ability, Character& caster, Character& target )
 {
@@ -190,7 +196,7 @@ std::string UseAbility( const Ability& ability, Character& caster, Character& ta
 
     target.health -= static_cast<int>( ability.damage * RandomNumberGenerator( 0.9, 1.1 ) );
 
-    return std::string( caster.name + " casts " + ability.name + " on " + target.name + ", which dealt " + std::to_string( healthOld - target.health ) + " damage!\n" );
+    return std::string( caster.name + " casts " + ability.name + " on " + target.name + ", which dealt " + std::to_string( healthOld - target.health ) + " damage!" );
 }
 std::string UseWeapon( Character& attacker, Character& target )
 {
@@ -198,7 +204,7 @@ std::string UseWeapon( Character& attacker, Character& target )
 
     target.health -= static_cast<int>( attacker.damage * RandomNumberGenerator( 0.9, 1.1 ) );
 
-    return std::string( attacker.name + " attacks " + target.name + " with a weapon, which dealt " + std::to_string( healthOld - target.health ) + " damage!\n" );
+    return std::string( attacker.name + " attacks " + target.name + " with a weapon, which dealt " + std::to_string( healthOld - target.health ) + " damage!" );
 }
 std::string TurnPlayer( Character& player, Character& AI )
 {
@@ -209,9 +215,9 @@ std::string TurnPlayer( Character& player, Character& AI )
 
     while( !done )
     {
-        std::cout << "\n";
+        std::cout << "\nChoose an action:\n";
         std::cout << "[1] Attack with weapon\n";
-        std::cout << "[2] Attack with spell\n\n";
+        std::cout << "[2] Attack with ability\n\n";
         choice = GetValidChar( "Enter choice: ", choices );
 
         switch( choice )
@@ -246,8 +252,8 @@ std::string TurnAI( Character& player, Character& AI )
 }
 void Combat( Character& player, Character& AI )
 {
-    std::string previousTurnPlayer = "\n";
-    std::string previousTurnAI = "\n";
+    std::string previousTurnPlayer;
+    std::string previousTurnAI;
 
     while( true )
     {
@@ -261,10 +267,10 @@ void Combat( Character& player, Character& AI )
         PrintHealth( player );
         PrintHealth( AI );
 
-        std::cout << "\n-----\n\n";
-        std::cout << previousTurnPlayer << "\n";
-        std::cout << previousTurnAI << "\n";
-        std::cout << "-----\n";
+        std::cout << "\n-----\n";
+        std::cout << "\n" << previousTurnPlayer << "\n";
+        std::cout << "\n" << previousTurnAI << "\n";
+        std::cout << "\n-----\n";
 
         if( player.health <= 0 ||
             AI.health <= 0 )
@@ -364,22 +370,22 @@ DungeonSystem LoadDungeonSystem( const EntityLibrary& entityLibrary )
         }
 
         return DungeonConfiguration
-            (
-                values[0] != 0,
-                { values[1], values[2] },
-                values[3] != 0,
-                values[4] != 0,
-                values[5] != 0,
-                values[6] != 0,
-                values[7] != 0,
-                values[8] != 0,
-                values[9] != 0,
-                values[10],
-                values[11],
-                values[12],
-                values[13],
-                values[14]
-                );
+        (
+            values[0] != 0,
+            { values[1], values[2] },
+            values[3] != 0,
+            values[4] != 0,
+            values[5] != 0,
+            values[6] != 0,
+            values[7] != 0,
+            values[8] != 0,
+            values[9] != 0,
+            values[10],
+            values[11],
+            values[12],
+            values[13],
+            values[14]
+        );
     };
     auto GetVector2 = [] ( const std::string& line )
     {
@@ -467,9 +473,10 @@ DungeonSystem LoadDungeonSystem( const EntityLibrary& entityLibrary )
 Player LoadPlayer( const std::vector<Ability>& abilities, Load::LoadType load )
 {
     const int offset = 10 * load;
+    std::ifstream inFile( "Dungeoncrawler_Save_Player.txt", std::ios::in );
     std::vector<std::string> cacheFile
     {
-        std::istream_iterator<std::string>( std::ifstream( "Dungeoncrawler_Save_Player.txt", std::ios::in ) ),
+        std::istream_iterator<std::string>( inFile ),
         std::istream_iterator<std::string>( )
     };
     auto GetBitmask = [] ( const std::string& line )
@@ -524,9 +531,11 @@ Player LoadPlayer( const std::vector<Ability>& abilities, Load::LoadType load )
 std::vector<Ability> LoadAbilities( )
 {
     const int offset = 4;
+    std::ifstream inFile( "Dungeoncrawler_Category_Ability.txt", std::ios::in );
+    //inFile >> std::noskipws;
     std::vector<std::string> cacheFile
     {
-        std::istream_iterator<std::string>( std::ifstream( "Dungeoncrawler_Category_Ability.txt", std::ios::in ) ),
+        std::istream_iterator<std::string>( inFile ),
         std::istream_iterator<std::string>( )
     };
     std::vector<Ability> result;
@@ -568,9 +577,11 @@ std::vector<Ability> LoadAbilities( )
 std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 {
     const int offset = 8;
+    std::ifstream inFile( "Dungeoncrawler_Category_Character.txt", std::ios::in );
+    //inFile >> std::noskipws;
     std::vector<std::string> cacheFile
     {
-        std::istream_iterator<std::string>( std::ifstream( "Dungeoncrawler_Category_Character.txt", std::ios::in ) ),
+        std::istream_iterator<std::string>( inFile ),
         std::istream_iterator<std::string>( )
     };
     std::vector<Character> characters;
@@ -629,9 +640,10 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 std::vector<Structure> LoadStructures( )
 {
     const int offset = 3;
+    std::ifstream inFile( "Dungeoncrawler_Category_Structure.txt", std::ios::in );
     std::vector<std::string> cacheFile
     {
-        std::istream_iterator<std::string>( std::ifstream( "Dungeoncrawler_Category_Structure.txt", std::ios::in ) ),
+        std::istream_iterator<std::string>( inFile ),
         std::istream_iterator<std::string>( )
     };
     std::vector<Structure> structures;

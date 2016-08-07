@@ -36,10 +36,20 @@ struct States
 {
     enum StatesType
     {
-        Switch = 1 << 0,
-        Combat = 1 << 1,
-        Dead   = 1 << 2,
-        Loot   = 1 << 3
+        Combat = 1 << 0,
+        Switch = 1 << 1,
+        Loot   = 1 << 2
+    };
+};
+
+struct Orientation
+{
+    enum OrientationType
+    {
+        North = 0,
+        East  = 1,
+        West  = 2,
+        South = 3
     };
 };
 
@@ -62,13 +72,5 @@ enum class GameConfig
 {
     Default,
     Configure
-};
-
-enum class Orientation
-{
-    North,
-    West,
-    South,
-    East
 };
 

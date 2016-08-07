@@ -61,9 +61,10 @@ class Dungeon
         std::vector<Link> links;
 
         void PlayerAdd( const Vector2<int>& position );
-        void RotateClockwise( );
+        void Rotate( const Orientation::OrientationType& orientation );
+        const Orientation::OrientationType& RotateOnSwitch( const Vector2<int>& position );
 
-        void MovementPlayer( const Orientation& orientation );
+        void MovementPlayer( const Orientation::OrientationType& orientation );
         void MovementRandom( );
         void Events( );
 
@@ -79,10 +80,10 @@ class Dungeon
         bool Surrounded( const Vector2<int>& position, int threshold ) const;
 
     private:
-        Vector2<int> _size;
         const EntityLibrary& _entityLibrary;
-        std::vector<Entity> _entities;
+        Vector2<int> _size;
         int _indexPlayer;
+        std::vector<Entity> _entities;
 
         /* 1D arrays interpreted as 2D arrays */
         std::vector<Tile> _tileMap;

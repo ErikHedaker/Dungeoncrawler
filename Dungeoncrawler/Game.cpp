@@ -49,7 +49,7 @@ void Game::Menu( )
             {
                 system( "CLS" );
                 std::cout << "Loading, please wait.";
-                LoadDungeonSystem( _entityLibrary );
+                _dungeonSystem = LoadDungeonSystem( _entityLibrary );
 
                 if( Exist( ) )
                 {
@@ -89,7 +89,6 @@ void Game::Menu( )
         }
     }
 }
-
 bool Game::Exist( ) const
 {
     return _dungeonSystem.dungeons.size( ) != 0;
@@ -165,7 +164,7 @@ void Game::Reset( )
 void Game::Start( )
 {
     while( _status == GameStatus::Neutral &&
-           !( _player.states & States::Dead ) )
+           _player.health > 0  )
     {
         TurnPlayer( _dungeonSystem.dungeons[_dungeonSystem.indexCurrent] );
         _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].MovementRandom( );
@@ -192,7 +191,7 @@ void Game::TurnPlayer( Dungeon& dungeon )
         'R', 'r',
         'F', 'f'
     };
-    static const std::map<char, Orientation> directions =
+    static const std::map<char, Orientation::OrientationType> directions =
     {
         { 'W', Orientation::North }, { 'w', Orientation::North },
         { 'A', Orientation::West  }, { 'a', Orientation::West  },
@@ -224,30 +223,30 @@ void Game::TurnPlayer( Dungeon& dungeon )
             case 'S': case 's':
             case 'D': case 'd':
             {
-                done = true;
                 dungeon.MovementPlayer( directions.at( choice ) );
+                done = true;
 
                 break;
             }
             case 'E': case 'e':
             {
-                done = true;
                 _status = GameStatus::Menu;
                 SaveDungeonSystem( _dungeonSystem );
+                done = true;
 
                 break;
             }
             case 'R': case 'r':
             {
-                done = true;
                 _status = GameStatus::Menu;
+                done = true;
 
                 break;
             }
             case 'F': case 'f':
             {
-                dungeon.RotateClockwise( );
-                LinksRotateClockwise( _dungeonSystem.indexCurrent );
+                dungeon.Rotate( Orientation::East );
+                LinksRotate( _dungeonSystem.indexCurrent, Orientation::East );
 
                 break;
             }
@@ -261,8 +260,9 @@ void Game::DungeonSwitch( )
         if( link.entry == _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].GetPlayerPosition( ) )
         {
             _dungeonSystem.indexCurrent = link.indexDungeon;
-            _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].PlayerAdd( link.exit );
-            DungeonLink( _dungeonSystem.indexCurrent );
+            //LinksRotate( link.indexDungeon, _dungeonSystem.dungeons[link.indexDungeon].RotateOnSwitch( link.exit ) );
+            _dungeonSystem.dungeons[link.indexDungeon].PlayerAdd( link.exit );
+            DungeonLink( link.indexDungeon );
 
             break;
         }
@@ -288,13 +288,16 @@ void Game::DungeonLink( int indexCurrentDungeon )
         }
     }
 }
-void Game::LinksRotateClockwise( int indexDungeon )
+void Game::LinksRotate( int indexDungeon, const Orientation::OrientationType& orientation )
 {
-    for( auto& current : _dungeonSystem.dungeons[indexDungeon].links )
+    for( int i = 0; i < orientation; i++ )
     {
-        auto& partner = _dungeonSystem.dungeons[current.indexDungeon].links[current.indexLink];
+        for( auto& current : _dungeonSystem.dungeons[indexDungeon].links )
+        {
+            auto& partner = _dungeonSystem.dungeons[current.indexDungeon].links[current.indexLink];
 
-        current.entry = PositionRotateClockwise( current.entry, _dungeonSystem.dungeons[indexDungeon].GetSize( ) );
-        partner.exit  = PositionRotateClockwise( partner.exit,  _dungeonSystem.dungeons[indexDungeon].GetSize( ) );
+            current.entry = PositionRotate( current.entry, _dungeonSystem.dungeons[indexDungeon].GetSize( ), Orientation::East );
+            partner.exit = PositionRotate( partner.exit, _dungeonSystem.dungeons[indexDungeon].GetSize( ), Orientation::East );
+        }
     }
 }

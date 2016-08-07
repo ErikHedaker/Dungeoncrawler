@@ -16,7 +16,6 @@ class Game
         Game( );
 
         void Menu( );
-
         bool Exist( ) const;
 
     private:
@@ -32,5 +31,5 @@ class Game
         void TurnPlayer( Dungeon& dungeon );
         void DungeonSwitch( );
         void DungeonLink( int indexDungeonCurrent );
-        void LinksRotateClockwise( int indexDungeon );
+        void LinksRotate( int indexDungeon, const Orientation::OrientationType& orientation );
 };
