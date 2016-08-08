@@ -1,0 +1,23 @@
+# Name
+# Icon
+# Attributes
+
+# 0
+:Ground
+:-
+:0,1
+
+# 1
+:Path
+:-
+:0,1
+
+# 2
+:Wall
+:#
+:
+
+# 3
+:Door
+:+
+:0
