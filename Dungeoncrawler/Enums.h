@@ -48,8 +48,8 @@ struct Orientation
     {
         North = 0,
         East  = 1,
-        West  = 2,
-        South = 3
+        South = 2,
+        West  = 3
     };
 };
 

@@ -29,7 +29,7 @@ class Game
         void Start( );
 
         void TurnPlayer( Dungeon& dungeon );
-        void DungeonSwitch( );
         void DungeonLink( int indexDungeonCurrent );
-        void LinksRotate( int indexDungeon, const Orientation::OrientationType& orientation );
+        void DungeonRotate( int indexDungeon, const Orientation::OrientationType& orientation );
+        void DungeonSwitch( );
 };

@@ -9,6 +9,7 @@
 #include <sstream>
 #include <iterator>
 #include <algorithm>
+#include <cctype>
 
 double RandomNumberGenerator( double min, double max )
 {
@@ -44,22 +45,21 @@ int GetPositiveInteger( const std::string& context )
 
     return std::stoi( choice );
 }
-char GetValidChar( const std::string& context, const std::vector<char>& valid )
+char GetChar( const std::string& context, const std::vector<char>& valid, std::function<int(int)> modifier )
 {
-    std::string choice;
+    char last;
 
-    while( true )
+    do
     {
+        std::string choice;
+
         std::cout << context;
         std::cin >> choice;
-
-        if( std::find( valid.begin( ), valid.end( ), choice.back( ) ) != valid.end( ) )
-        {
-            break;
-        }
+        last = ( modifier != nullptr ) ? modifier( choice.back( ) ) : choice.back( );
     }
+    while( std::find( valid.begin( ), valid.end( ), last ) == valid.end( ) );
 
-    return choice[0];
+    return last;
 }
 void GetEnter( )
 {
@@ -123,16 +123,18 @@ void PrintHealth( const Character& combatant )
 
     std::cout << combatant.healthRegen << ")\n";
 }
-Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& sizeGrid, const Orientation::OrientationType& orientation )
+Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::OrientationType& orientation )
 {
-    Vector2<int> positionRotated = position;
+    Vector2<int> positionRotation = position;
+    Vector2<int> sizeRotation = size;
 
     for( int i = 0; i < orientation; i++ )
     {
-        positionRotated = { sizeGrid.x - positionRotated.y - 1, positionRotated.x };
+        positionRotation = { sizeRotation.x - positionRotation.y - 1, positionRotation.x };
+        std::swap( sizeRotation.x, sizeRotation.y );
     }
 
-    return positionRotated;
+    return positionRotation;
 }
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::OrientationType& orientation )
 {
@@ -187,8 +189,10 @@ Ability GetAbility( const std::vector<Ability>& abilities )
         std::cout << "[" << id << "] " << abilitiesMap.at( id ).name << "\n";
         id++;
     }
+
+    std::cout << "\n";
     
-    return abilitiesMap.at( GetValidChar( "\nEnter choice: ", choices ) );
+    return abilitiesMap.at( GetChar( "Enter choice: ", choices ) );
 }
 std::string UseAbility( const Ability& ability, Character& caster, Character& target )
 {
@@ -208,17 +212,15 @@ std::string UseWeapon( Character& attacker, Character& target )
 }
 std::string TurnPlayer( Character& player, Character& AI )
 {
-    const std::vector<char> choices = { '1', '2' };
-    char choice;
-    bool done = false;
     std::string result;
+    bool done = false;
 
     while( !done )
     {
         std::cout << "\nChoose an action:\n";
         std::cout << "[1] Attack with weapon\n";
         std::cout << "[2] Attack with ability\n\n";
-        choice = GetValidChar( "Enter choice: ", choices );
+        const char choice = GetChar( "Enter choice: ", { '1', '2' }, std::toupper );
 
         switch( choice )
         {
@@ -272,8 +274,7 @@ void Combat( Character& player, Character& AI )
         std::cout << "\n" << previousTurnAI << "\n";
         std::cout << "\n-----\n";
 
-        if( player.health <= 0 ||
-            AI.health <= 0 )
+        if( player.health <= 0 || AI.health <= 0 )
         {
             std::cout << "\n" << ( player.health <= 0 ? player.name : AI.name ) << " died!";
             std::cout << "\n\nPress enter to continue: ";
@@ -470,75 +471,11 @@ DungeonSystem LoadDungeonSystem( const EntityLibrary& entityLibrary )
 
     return dungeonSystem;
 }
-Player LoadPlayer( const std::vector<Ability>& abilities, Load::LoadType load )
-{
-    const int offset = 10 * load;
-    std::ifstream inFile( "Dungeoncrawler_Save_Player.txt", std::ios::in );
-    std::vector<std::string> cacheFile
-    {
-        std::istream_iterator<std::string>( inFile ),
-        std::istream_iterator<std::string>( )
-    };
-    auto GetBitmask = [] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        int values = 0;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values |= 1 << std::stoi( value );
-        }
-
-        return values;
-    };
-    auto GetAbilities = [&abilities] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        std::vector<Ability> values;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values.push_back( abilities[std::stoi( value )] );
-        }
-
-        return values;
-    };
-    auto Valueless = [] ( const std::string& line )
-    {
-        return line[0] != ':';
-    };
-    auto RemoveFirst = [] ( std::string& line )
-    {
-        line.erase( 0, 1 );
-    };
-
-    cacheFile.erase( std::remove_if( cacheFile.begin( ), cacheFile.end( ), Valueless ), cacheFile.end( ) );
-    std::for_each( cacheFile.begin( ), cacheFile.end( ), RemoveFirst );
-
-    return Player( cacheFile[0 + offset],
-                   cacheFile[1 + offset].back( ),
-       GetBitmask( cacheFile[2 + offset] ),
-        std::stoi( cacheFile[3 + offset] ),
-        std::stoi( cacheFile[4 + offset] ),
-        std::stoi( cacheFile[5 + offset] ),
-        std::stof( cacheFile[6 + offset] ),
-     GetAbilities( cacheFile[7 + offset] ),
-        std::stoi( cacheFile[8 + offset] ),
-       GetBitmask( cacheFile[9 + offset] ) );
-}
 std::vector<Ability> LoadAbilities( )
 {
     const int offset = 4;
-    std::ifstream inFile( "Dungeoncrawler_Category_Ability.txt", std::ios::in );
-    //inFile >> std::noskipws;
-    std::vector<std::string> cacheFile
-    {
-        std::istream_iterator<std::string>( inFile ),
-        std::istream_iterator<std::string>( )
-    };
-    std::vector<Ability> result;
+    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Category_Ability.txt", std::ios::in } }, { } };
+    std::vector<Ability> abilities;
     auto GetBitmask = [] ( const std::string& line )
     {
         std::stringstream sstream( line );
@@ -552,38 +489,21 @@ std::vector<Ability> LoadAbilities( )
 
         return values;
     };
-    auto Valueless = [] ( const std::string& line )
-    {
-        return line[0] != ':';
-    };
-    auto RemoveFirst = [] ( std::string& line )
-    {
-        line.erase( 0, 1 );
-    };
-
-    cacheFile.erase( std::remove_if( cacheFile.begin( ), cacheFile.end( ), Valueless ), cacheFile.end( ) );
-    std::for_each( cacheFile.begin( ), cacheFile.end( ), RemoveFirst );
 
     for( unsigned int i = 0; i < cacheFile.size( ); i += offset )
     {
-        result.emplace_back( cacheFile[0 + i],
+        abilities.emplace_back( cacheFile[0 + i],
                              cacheFile[1 + i].back( ),
                  GetBitmask( cacheFile[2 + i] ),
                   std::stof( cacheFile[3 + i] ) );
     }
 
-    return result;
+    return abilities;
 }
 std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 {
     const int offset = 8;
-    std::ifstream inFile( "Dungeoncrawler_Category_Character.txt", std::ios::in );
-    //inFile >> std::noskipws;
-    std::vector<std::string> cacheFile
-    {
-        std::istream_iterator<std::string>( inFile ),
-        std::istream_iterator<std::string>( )
-    };
+    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Category_Character.txt", std::ios::in } }, { } };
     std::vector<Character> characters;
     auto GetBitmask = [] ( const std::string& line )
     {
@@ -611,17 +531,6 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 
         return values;
     };
-    auto Valueless = [] ( const std::string& line )
-    {
-        return line[0] != ':';
-    };
-    auto RemoveFirst = [] ( std::string& line )
-    {
-        line.erase( 0, 1 );
-    };
-
-    cacheFile.erase( std::remove_if( cacheFile.begin( ), cacheFile.end( ), Valueless ), cacheFile.end( ) );
-    std::for_each( cacheFile.begin( ), cacheFile.end( ), RemoveFirst );
 
     for( unsigned int i = 0; i < cacheFile.size( ); i += offset )
     {
@@ -640,12 +549,7 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 std::vector<Structure> LoadStructures( )
 {
     const int offset = 3;
-    std::ifstream inFile( "Dungeoncrawler_Category_Structure.txt", std::ios::in );
-    std::vector<std::string> cacheFile
-    {
-        std::istream_iterator<std::string>( inFile ),
-        std::istream_iterator<std::string>( )
-    };
+    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Category_Structure.txt", std::ios::in } }, { } };
     std::vector<Structure> structures;
     auto GetBitmask = [] ( const std::string& line )
     {
@@ -660,17 +564,6 @@ std::vector<Structure> LoadStructures( )
 
         return values;
     };
-    auto Valueless = [] ( const std::string& line )
-    {
-        return line[0] != ':';
-    };
-    auto RemoveFirst = [] ( std::string& line )
-    {
-        line.erase( 0, 1 );
-    };
-
-    cacheFile.erase( std::remove_if( cacheFile.begin( ), cacheFile.end( ), Valueless ), cacheFile.end( ) );
-    std::for_each( cacheFile.begin( ), cacheFile.end( ), RemoveFirst );
 
     for( unsigned int i = 0; i < cacheFile.size( ); i += offset )
     {
@@ -680,4 +573,46 @@ std::vector<Structure> LoadStructures( )
     }
 
     return structures;
+}
+Player LoadPlayer( const std::vector<Ability>& abilities, Load::LoadType load )
+{
+    const int offset = 10 * load;
+    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Save_Player.txt", std::ios::in } }, { } };
+    auto GetBitmask = [] ( const std::string& line )
+    {
+        std::stringstream sstream( line );
+        std::string value;
+        int values = 0;
+
+        while( std::getline( sstream, value, ',' ) )
+        {
+            values |= 1 << std::stoi( value );
+        }
+
+        return values;
+    };
+    auto GetAbilities = [&abilities] ( const std::string& line )
+    {
+        std::stringstream sstream( line );
+        std::string value;
+        std::vector<Ability> values;
+
+        while( std::getline( sstream, value, ',' ) )
+        {
+            values.push_back( abilities[std::stoi( value )] );
+        }
+
+        return values;
+    };
+
+    return Player( cacheFile[0 + offset],
+                   cacheFile[1 + offset].back( ),
+       GetBitmask( cacheFile[2 + offset] ),
+        std::stoi( cacheFile[3 + offset] ),
+        std::stoi( cacheFile[4 + offset] ),
+        std::stoi( cacheFile[5 + offset] ),
+        std::stof( cacheFile[6 + offset] ),
+     GetAbilities( cacheFile[7 + offset] ),
+        std::stoi( cacheFile[8 + offset] ),
+       GetBitmask( cacheFile[9 + offset] ) );
 }

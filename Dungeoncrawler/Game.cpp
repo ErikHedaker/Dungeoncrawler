@@ -2,6 +2,7 @@
 #include "Functions.h"
 #include <iostream>
 #include <map>
+#include <cctype>
 
 Game::Game( ) :
     _entityLibrary( ),
@@ -12,27 +13,16 @@ Game::Game( ) :
 
 void Game::Menu( )
 {
-    const std::vector<char> choices =
-    {
-        '1',
-        '2',
-        '3',
-        '4',
-        '5'
-    };
-    char choice;
-
     while( true )
     {
-        _status = GameStatus::Neutral;
-
         system( "CLS" );
         std::cout << "[1] Continue current game\n";
         std::cout << "[2] Load game from file\n";
         std::cout << "[3] Build new game (Randomization)\n";
         std::cout << "[4] Build new game (Configuration)\n";
         std::cout << "[5] Exit\n\n";
-        choice = GetValidChar( "Enter choice: ", choices );
+        const char choice = GetChar( "Enter choice: ", { '1', '2', '3', '4', '5' } );
+        _status = GameStatus::Neutral;
 
         switch( choice )
         {
@@ -61,10 +51,8 @@ void Game::Menu( )
             case '3':
             {
                 SetDungeonConfiguration( GameConfig::Default );
-
                 system( "CLS" );
                 std::cout << "Loading, please wait.";
-
                 Reset( );
                 Start( );
 
@@ -73,10 +61,8 @@ void Game::Menu( )
             case '4':
             {
                 SetDungeonConfiguration( GameConfig::Configure );
-
                 system( "CLS" );
                 std::cout << "Loading, please wait.";
-
                 Reset( );
                 Start( );
 
@@ -106,12 +92,7 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
         }
         case GameConfig::Configure:
         {
-            const std::vector<char> choices =
-            { 
-                'Y', 'y',
-                'N', 'n'
-            };
-            auto GetBool = [] ( char input ) -> bool
+            auto ToBool = [] ( char input ) -> bool
             {
                 return 
                     input == 'Y' ||
@@ -119,16 +100,14 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
             };
 
             std::cout << "\n";
-
-            _dungeonSystem.config.sizeDungeonFixed       = GetBool( GetValidChar( "Fixed dungeon size, [Y/N]: ",       choices ) );
-            _dungeonSystem.config.generateDoors          = GetBool( GetValidChar( "Generate doors, [Y/N]: ",           choices ) );
-            _dungeonSystem.config.generateOuterWalls     = GetBool( GetValidChar( "Generate outer walls, [Y/N]: ",     choices ) );
-            _dungeonSystem.config.generateHiddenPath     = GetBool( GetValidChar( "Generate hidden path, [Y/N]: ",     choices ) );
-            _dungeonSystem.config.generateSourceWalls    = GetBool( GetValidChar( "Generate source walls, [Y/N]: ",    choices ) );
-            _dungeonSystem.config.generateExtensionWalls = GetBool( GetValidChar( "Generate extension walls, [Y/N]: ", choices ) );
-            _dungeonSystem.config.generateFillerWalls    = GetBool( GetValidChar( "Generate filler walls, [Y/N]: ",    choices ) );
-            _dungeonSystem.config.generateMonsters       = GetBool( GetValidChar( "Generate monsters, [Y/N]: ",        choices ) );
-
+            _dungeonSystem.config.sizeDungeonFixed       = ToBool( GetChar( "Fixed dungeon size, [Y/N]: ",       { 'Y', 'N' }, std::toupper ) );
+            _dungeonSystem.config.generateDoors          = ToBool( GetChar( "Generate doors, [Y/N]: ",           { 'Y', 'N' }, std::toupper ) );
+            _dungeonSystem.config.generateOuterWalls     = ToBool( GetChar( "Generate outer walls, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
+            _dungeonSystem.config.generateHiddenPath     = ToBool( GetChar( "Generate hidden path, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
+            _dungeonSystem.config.generateSourceWalls    = ToBool( GetChar( "Generate source walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
+            _dungeonSystem.config.generateExtensionWalls = ToBool( GetChar( "Generate extension walls, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
+            _dungeonSystem.config.generateFillerWalls    = ToBool( GetChar( "Generate filler walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
+            _dungeonSystem.config.generateMonsters       = ToBool( GetChar( "Generate monsters, [Y/N]: ",        { 'Y', 'N' }, std::toupper ) );
             std::cout << "\n";
 
             if( _dungeonSystem.config.sizeDungeonFixed )
@@ -153,8 +132,7 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 }
 void Game::Reset( )
 {
-    _player.states = 0;
-    _player.health = _player.healthMax;
+    _player = LoadPlayer( _entityLibrary.abilities );
     _dungeonSystem.dungeons.clear( );
     _dungeonSystem.dungeons.emplace_back( _entityLibrary, _dungeonSystem.config );
     _dungeonSystem.indexCurrent = 0;
@@ -181,24 +159,13 @@ void Game::Start( )
 
 void Game::TurnPlayer( Dungeon& dungeon )
 {
-    static const std::vector<char> choices =
-    {
-        'W', 'w',
-        'A', 'a',
-        'S', 's',
-        'D', 'd',
-        'E', 'e',
-        'R', 'r',
-        'F', 'f'
-    };
     static const std::map<char, Orientation::OrientationType> directions =
     {
-        { 'W', Orientation::North }, { 'w', Orientation::North },
-        { 'A', Orientation::West  }, { 'a', Orientation::West  },
-        { 'S', Orientation::South }, { 's', Orientation::South },
-        { 'D', Orientation::East  }, { 'd', Orientation::East  }
+        { 'W', Orientation::North },
+        { 'A', Orientation::West  },
+        { 'S', Orientation::South },
+        { 'D', Orientation::East  },
     };
-    char choice;
     bool done = false;
 
     while( !done )
@@ -213,22 +180,22 @@ void Game::TurnPlayer( Dungeon& dungeon )
         std::cout << "[D] Go East\n";
         std::cout << "[E] Save and exit to meny\n";
         std::cout << "[R] Exit to meny\n";
-        std::cout << "[F] Rotate dungeon 90 degrees clockwise\n\n";
-        choice = GetValidChar( "Enter choice: ", choices );
+        std::cout << "[F] Rotate dungeon 90 degrees clockwise\n";
+        const char choice = GetChar( "Enter choice: ", { 'W', 'A', 'S', 'D', 'E', 'R', 'F' }, std::toupper );
 
         switch( choice )
         {
-            case 'W': case 'w':
-            case 'A': case 'a':
-            case 'S': case 's':
-            case 'D': case 'd':
+            case 'W':
+            case 'A':
+            case 'S':
+            case 'D':
             {
                 dungeon.MovementPlayer( directions.at( choice ) );
                 done = true;
 
                 break;
             }
-            case 'E': case 'e':
+            case 'E':
             {
                 _status = GameStatus::Menu;
                 SaveDungeonSystem( _dungeonSystem );
@@ -236,35 +203,19 @@ void Game::TurnPlayer( Dungeon& dungeon )
 
                 break;
             }
-            case 'R': case 'r':
+            case 'R':
             {
                 _status = GameStatus::Menu;
                 done = true;
 
                 break;
             }
-            case 'F': case 'f':
+            case 'F':
             {
-                dungeon.Rotate( Orientation::East );
-                LinksRotate( _dungeonSystem.indexCurrent, Orientation::East );
+                DungeonRotate( _dungeonSystem.indexCurrent, Orientation::East );
 
                 break;
             }
-        }
-    }
-}
-void Game::DungeonSwitch( )
-{
-    for( const auto& link : _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].links )
-    {
-        if( link.entry == _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].GetPlayerPosition( ) )
-        {
-            _dungeonSystem.indexCurrent = link.indexDungeon;
-            //LinksRotate( link.indexDungeon, _dungeonSystem.dungeons[link.indexDungeon].RotateOnSwitch( link.exit ) );
-            _dungeonSystem.dungeons[link.indexDungeon].PlayerAdd( link.exit );
-            DungeonLink( link.indexDungeon );
-
-            break;
         }
     }
 }
@@ -288,16 +239,29 @@ void Game::DungeonLink( int indexCurrentDungeon )
         }
     }
 }
-void Game::LinksRotate( int indexDungeon, const Orientation::OrientationType& orientation )
+void Game::DungeonRotate( int indexDungeon, const Orientation::OrientationType& orientation )
 {
-    for( int i = 0; i < orientation; i++ )
-    {
-        for( auto& current : _dungeonSystem.dungeons[indexDungeon].links )
-        {
-            auto& partner = _dungeonSystem.dungeons[current.indexDungeon].links[current.indexLink];
+    _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].Rotate( orientation );
 
-            current.entry = PositionRotate( current.entry, _dungeonSystem.dungeons[indexDungeon].GetSize( ), Orientation::East );
-            partner.exit = PositionRotate( partner.exit, _dungeonSystem.dungeons[indexDungeon].GetSize( ), Orientation::East );
+    for( auto& current : _dungeonSystem.dungeons[indexDungeon].links )
+    {
+        auto& partner = _dungeonSystem.dungeons[current.indexDungeon].links[current.indexLink];
+
+        current.entry = PositionRotate( current.entry, _dungeonSystem.dungeons[indexDungeon].GetSize( ), orientation );
+        partner.exit  = PositionRotate( partner.exit,  _dungeonSystem.dungeons[indexDungeon].GetSize( ), orientation );
+    }
+}
+void Game::DungeonSwitch( )
+{
+    for( auto& link : _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].links )
+    {
+        if( link.entry == _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].GetPlayerPosition( ) )
+        {
+            DungeonLink( link.indexDungeon );
+            _dungeonSystem.dungeons[link.indexDungeon].PlayerAdd( link.exit );
+            _dungeonSystem.indexCurrent = link.indexDungeon;
+
+            break;
         }
     }
 }

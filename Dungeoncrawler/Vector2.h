@@ -19,7 +19,7 @@ template<class T> struct Vector2
         y = y - rhs.y;
         return *this;
     }
-    template<class Y> operator Vector2<Y>( )
+    template<class Y> operator Vector2<Y>( ) const
     {
         return { static_cast<Y>( x ), static_cast<Y>( y ) };
     }

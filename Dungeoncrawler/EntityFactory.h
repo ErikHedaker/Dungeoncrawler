@@ -1,9 +1,12 @@
+/*
 #pragma once
 
 #include "Enums.h"
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
+
 
 struct BaseEntity
 {
@@ -65,3 +68,61 @@ struct EntityLibrary
     const std::vector<Character> characters;
     const std::vector<Structure> structures;
 };
+
+class VariantinatorBase
+{
+    public:
+        VariantinatorBase( ){ }
+        virtual ~VariantinatorBase( ){ }
+        virtual std::unique_ptr<BaseEntity> Create( ) = 0;
+};
+
+template<class T>
+class Variantinator : public VariantinatorBase
+{
+    public:
+        Variantinator( ){ }
+        virtual ~Variantinator( ){ }
+        virtual std::unique_ptr<BaseEntity> Create( )
+        {
+            return new T;
+        }
+};
+
+class VariantFactory
+{
+    public:
+        VariantFactory( )
+        {
+            // If you want, you can do all your Register() calls in here, and even
+            // make the Register() function private.
+        }
+
+        void Register( std::pair<int, int> id, std::unique_ptr<VariantinatorBase> creator )
+        {
+            _entities[id] = creator;
+        }
+
+        std::unique_ptr<BaseEntity> Create( std::pair<int, int> id )
+        {
+            auto it = _entities.find( id );
+
+            if( it == _entities.end( ) )
+            {
+                return nullptr;
+            }
+            
+            return it->second->Create( );
+        }
+
+    private:
+        std::map<std::pair<int, int>, std::unique_ptr<VariantinatorBase>> _entities;
+};
+
+//VariantFactory factory;
+//factory.Register( 0, new Variantinator<VariantA> );
+//factory.Register( 1, new Variantinator<VariantB> );
+//factory.Register( 2, new Variantinator<VariantC> );
+//
+//std::unique_ptr<Variant> thing = factory.Create( switchValue );
+*/

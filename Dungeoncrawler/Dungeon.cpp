@@ -147,39 +147,13 @@ void Dungeon::Rotate( const Orientation::OrientationType& orientation )
 
         _tileMap = tileMapRotated;
         _visionMap = visionMapRotated;
-    }
 
-    for( auto& entity : _entities )
-    {
-        entity.position = PositionRotate( entity.position, _size, orientation );
-        entity.positionPrevious = PositionRotate( entity.positionPrevious, _size, orientation );
-    }
-}
-const Orientation::OrientationType& Dungeon::RotateOnSwitch( const Vector2<int>& position )
-{
-    const std::map<Orientation::OrientationType, Vector2<int>> directions =
-    {
-        { Orientation::North, {  0, -1 } },
-        { Orientation::East,  {  1,  0 } },
-        { Orientation::South, {  0,  1 } },
-        { Orientation::West,  { -1,  0 } }
-    };
-    Orientation::OrientationType orientation;
-
-    for( const auto& direction : directions )
-    {
-        const Vector2<int> nearby = position + direction.second;
-
-        if( !InBounds( nearby ) )
+        for( auto& entity : _entities )
         {
-            orientation = direction.first;
-            Rotate( direction.first );
-
-            break;
+            entity.position = PositionRotate( entity.position, _size, Orientation::East );
+            entity.positionPrevious = PositionRotate( entity.positionPrevious, _size, Orientation::East );
         }
     }
-
-    return orientation;
 }
 void Dungeon::PlayerAdd( const Vector2<int>& position )
 {
@@ -304,6 +278,23 @@ const Vector2<int>& Dungeon::GetSize( ) const
 const Vector2<int>& Dungeon::GetPlayerPosition( ) const
 {
     return _entities[_indexPlayer].position;
+}
+Orientation::OrientationType Dungeon::GetQuadrant( Vector2<int> position ) const
+{
+    const std::map<std::pair<bool, bool>, Orientation::OrientationType> quadrant
+    {
+        { { true,  false }, Orientation::North },
+        { { true,  true  }, Orientation::East  },
+        { { false, true  }, Orientation::South },
+        { { false, false }, Orientation::West  }
+    };
+    const Vector2<float> positionf = position;
+    const Vector2<float> size = _size;
+    const Vector2<float> ratio = size / size.y;
+    const bool rightOfMainDiagonal = positionf.x > ( positionf.y * ratio.x );
+    const bool rightOfAntiDiagonal = positionf.x > ( size.x - positionf.y * ratio.x - 1 );
+
+    return quadrant.at( { rightOfMainDiagonal, rightOfAntiDiagonal } );
 }
 const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
 {

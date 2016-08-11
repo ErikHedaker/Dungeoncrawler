@@ -60,9 +60,8 @@ class Dungeon
 
         std::vector<Link> links;
 
-        void PlayerAdd( const Vector2<int>& position );
         void Rotate( const Orientation::OrientationType& orientation );
-        const Orientation::OrientationType& RotateOnSwitch( const Vector2<int>& position );
+        void PlayerAdd( const Vector2<int>& position );
 
         void MovementPlayer( const Orientation::OrientationType& orientation );
         void MovementRandom( );
@@ -70,6 +69,7 @@ class Dungeon
 
         const Vector2<int>& GetSize( ) const;
         const Vector2<int>& GetPlayerPosition( ) const;
+        Orientation::OrientationType GetQuadrant( Vector2<int> position ) const;
         const Tile& GetTile( const Vector2<int>& position ) const;
         bool GetVision( const Vector2<int>& position ) const;
 
