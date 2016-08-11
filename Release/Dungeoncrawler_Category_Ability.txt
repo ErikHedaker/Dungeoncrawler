@@ -1,0 +1,22 @@
+# Name
+# Icon
+# Attributes
+# Damage
+
+# 0
+:Touch of Death
+:?
+:
+:1000
+
+# 0
+:Iceblast
+:?
+:
+:50
+
+# 0
+:Fireball
+:?
+:
+:50
