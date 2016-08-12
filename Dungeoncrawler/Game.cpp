@@ -5,11 +5,10 @@
 #include <cctype>
 
 Game::Game( ) :
-    _entityLibrary( ),
-    _player( LoadPlayer( _entityLibrary.abilities ) )
-{
-    _entityLibrary.player.reset( new PlayerEntity( _player ) );
-}
+    _status( GameStatus::Menu ),
+    _player( LoadPlayer( LoadAbilities( ) ) ),
+    _entityLibrary( &_player )
+{ }
 
 void Game::Menu( )
 {

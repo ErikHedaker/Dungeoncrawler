@@ -141,35 +141,35 @@ Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Orie
     static const std::map<Orientation::OrientationType, Vector2<int>> directions =
     {
         { Orientation::North, {  0, -1 } },
-        { Orientation::West,  { -1,  0 } },
+        { Orientation::East,  {  1,  0 } },
         { Orientation::South, {  0,  1 } },
-        { Orientation::East,  {  1,  0 } }
+        { Orientation::West,  { -1,  0 } },
     };
 
     return position + directions.at( orientation );
 }
 Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, int west, int south, int east, int still )
 {
-    const int random = RandomNumberGenerator( 0, north + west + south + east + still - 1 );
+    const int random = RandomNumberGenerator( 0, north + east + south + west + still - 1 );
 
     if( random < north )
     {
         return PositionMove( position, Orientation::North );
     }
 
-    if( random < north + west )
+    if( random < north + east )
     {
-        return PositionMove( position, Orientation::West );
+        return PositionMove( position, Orientation::East );
     }
 
-    if( random < north + west + south )
+    if( random < north + east + south )
     {
         return PositionMove( position, Orientation::South );
     }
 
-    if( random < north + west + south + east )
+    if( random < north + east + south + west )
     {
-        return PositionMove( position, Orientation::East );
+        return PositionMove( position, Orientation::West );
     }
 
     return position;

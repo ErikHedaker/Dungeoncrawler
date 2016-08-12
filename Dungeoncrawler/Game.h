@@ -20,9 +20,9 @@ class Game
 
     private:
         GameStatus _status;
-        DungeonSystem _dungeonSystem;
-        EntityLibrary _entityLibrary;
         Player _player;
+        EntityLibrary _entityLibrary;
+        DungeonSystem _dungeonSystem;
 
         void SetDungeonConfiguration( const GameConfig& type );
         void Reset( );

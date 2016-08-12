@@ -190,7 +190,7 @@ void Dungeon::PlayerAdd( const Vector2<int>& position )
 
     EntityAdd( positionPlayer, Category::PlayerEntity, 0 );
     _indexPlayer = _entities.size( ) - 1;
-    UpdateVision( _entities[_indexPlayer].position, static_cast<PlayerEntity*>( _entities[_indexPlayer].base.get( ) )->player.visionReach );
+    UpdateVision( _entities[_indexPlayer].position, static_cast<PlayerEntity*>( _entities[_indexPlayer].base.get( ) )->player->visionReach );
     OccupantAdd( _indexPlayer );
 }
 
@@ -216,7 +216,7 @@ void Dungeon::MovementRandom( )
 }
 void Dungeon::Events( )
 {
-    Player& player = static_cast<PlayerEntity*>( _entities[_indexPlayer].base.get( ) )->player;
+    Player& player = *static_cast<PlayerEntity*>( _entities[_indexPlayer].base.get( ) )->player;
     std::vector<int> indexesEntityRemove;
 
     /* Collision detection for player */
@@ -343,13 +343,13 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
     static const std::array<Vector2<int>, 8> directions =
     { {
         {  0, -1 },
-        { -1, -1 },
-        { -1,  0 },
-        { -1,  1 },
-        {  0,  1 },
-        {  1,  1 },
+        {  1, -1 },
         {  1,  0 },
-        {  1, -1 }
+        {  1,  1 },
+        {  0,  1 },
+        { -1,  1 },
+        { -1,  0 },
+        { -1, -1 }
     } };
     int entities = 0;
 
@@ -418,7 +418,7 @@ void Dungeon::EntityAdd( const Vector2<int>& position, Category::CategoryType ca
         }
         case Category::PlayerEntity:
         {
-            _entities.push_back( { std::unique_ptr<BaseEntity>( new PlayerEntity( *_entityLibrary.player ) ), category, position, position } );
+            _entities.push_back( { std::unique_ptr<BaseEntity>( new PlayerEntity( _entityLibrary.playerEntity ) ), category, position, position } );
 
             break;
         }

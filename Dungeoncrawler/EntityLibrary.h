@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 
 struct BaseEntity
 {
@@ -51,17 +52,30 @@ struct Player : public Character
 
 struct PlayerEntity : public BaseEntity
 {
-    PlayerEntity( Player& player );
+    PlayerEntity( Player* player );
 
-    Player& player;
+    Player* player;
 };
 
 struct EntityLibrary
 {
-    EntityLibrary( );
+    EntityLibrary( Player* player );
 
-    std::unique_ptr<PlayerEntity> player;
+    const PlayerEntity playerEntity;
     const std::vector<Ability> abilities;
     const std::vector<Character> characters;
     const std::vector<Structure> structures;
 };
+
+//class EntityFactory
+//{
+//    public:
+//        EntityFactory( Player* player );
+//
+//        const std::unique_ptr<BaseEntity>& Get( const std::pair<Category::CategoryType, int>& id ) const;
+//        const std::unique_ptr<BaseEntity>& Get( const std::string& name ) const;
+//        const std::unique_ptr<BaseEntity>& Get( char icon ) const;
+//
+//    private:
+//        std::map<std::pair<Category::CategoryType, int>, std::unique_ptr<BaseEntity>> _entities;
+//};
