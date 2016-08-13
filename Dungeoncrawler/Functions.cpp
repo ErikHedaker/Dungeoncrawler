@@ -353,7 +353,7 @@ void SaveDungeonSystem( const DungeonSystem& dungeonSystem )
         }
     }
 }
-DungeonSystem LoadDungeonSystem( const EntityLibrary& entityLibrary )
+DungeonSystem LoadDungeonSystem( const EntityFactory& entityLibrary )
 {
     std::ifstream inFile( "Dungeoncrawler_Save_DungeonSystem.txt", std::ios::in );
     std::string line;

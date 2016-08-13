@@ -7,7 +7,7 @@
 Game::Game( ) :
     _status( GameStatus::Menu ),
     _player( LoadPlayer( LoadAbilities( ) ) ),
-    _entityLibrary( &_player )
+    _entityFactory( _player )
 { }
 
 void Game::Menu( )
@@ -38,7 +38,7 @@ void Game::Menu( )
             {
                 system( "CLS" );
                 std::cout << "Loading, please wait.";
-                _dungeonSystem = LoadDungeonSystem( _entityLibrary );
+                _dungeonSystem = LoadDungeonSystem( _entityFactory );
 
                 if( Exist( ) )
                 {
@@ -131,9 +131,9 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 }
 void Game::Reset( )
 {
-    _player = LoadPlayer( _entityLibrary.abilities );
+    _player = LoadPlayer( LoadAbilities( ) );
     _dungeonSystem.dungeons.clear( );
-    _dungeonSystem.dungeons.emplace_back( _entityLibrary, _dungeonSystem.config );
+    _dungeonSystem.dungeons.emplace_back( _entityFactory, _dungeonSystem.config );
     _dungeonSystem.indexCurrent = 0;
     DungeonLink( 0 );
     _dungeonSystem.dungeons[0].PlayerAdd( _dungeonSystem.dungeons[0].GetSize( ) / 2 );
@@ -226,7 +226,7 @@ void Game::DungeonLink( int indexCurrentDungeon )
     {
         if( _dungeonSystem.dungeons[indexCurrentDungeon].links[indexCurrentLink].indexLink < 0 )
         {
-            _dungeonSystem.dungeons.emplace_back( _entityLibrary, _dungeonSystem.config );
+            _dungeonSystem.dungeons.emplace_back( _entityFactory, _dungeonSystem.config );
 
             const int indexPartnerDungeon = _dungeonSystem.dungeons.size( ) - 1;
             const int indexPartnerLink = 0;

@@ -2,7 +2,7 @@
 
 #include "Enums.h"
 #include "Vector2.h"
-#include "EntityLibrary.h"
+#include "EntityFactory.h"
 #include <vector>
 #include <utility>
 #include <memory>
@@ -41,7 +41,6 @@ struct Link
 struct Entity
 {
     std::unique_ptr<BaseEntity> base;
-    Category::CategoryType category;
     Vector2<int> position;
     Vector2<int> positionPrevious;
 };
@@ -55,8 +54,8 @@ struct Tile
 class Dungeon
 {
     public:
-        Dungeon( const EntityLibrary& entityLibrary, const DungeonConfiguration& config );
-        Dungeon( const EntityLibrary& entityLibrary, const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
+        Dungeon( const EntityFactory& entityLibrary, const DungeonConfiguration& config );
+        Dungeon( const EntityFactory& entityLibrary, const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
 
         std::vector<Link> links;
 
@@ -80,7 +79,7 @@ class Dungeon
         bool Surrounded( const Vector2<int>& position, int threshold ) const;
 
     private:
-        const EntityLibrary& _entityLibrary;
+        const EntityFactory& _entityFactory;
         Vector2<int> _size;
         int _indexPlayer;
         std::vector<Entity> _entities;
@@ -91,7 +90,9 @@ class Dungeon
 
         void UpdateVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
-        void EntityAdd( const Vector2<int>& position, Category::CategoryType category, int id );
+        void EntityAdd( const Vector2<int>& position, const std::pair<Category::CategoryType, int>& id );
+        void EntityAdd( const Vector2<int>& position, const std::string& name );
+        void EntityAdd( const Vector2<int>& position, char icon );
         void EntityRemove( int index );
         void OccupantAdd( int index );
         void OccupantRemove( int index );

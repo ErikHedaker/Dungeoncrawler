@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Dungeon.h"
-#include "EntityLibrary.h"
+#include "EntityFactory.h"
 
 struct DungeonSystem
 {
@@ -21,7 +21,7 @@ class Game
     private:
         GameStatus _status;
         Player _player;
-        EntityLibrary _entityLibrary;
+        EntityFactory _entityFactory;
         DungeonSystem _dungeonSystem;
 
         void SetDungeonConfiguration( const GameConfig& type );

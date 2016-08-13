@@ -39,13 +39,13 @@ DungeonConfiguration::DungeonConfiguration( bool a, Vector2<int> b, bool c, bool
     amountMonsters( n )
 { }
 
-Dungeon::Dungeon( const EntityLibrary& entityLibrary, const DungeonConfiguration& config ) :
+Dungeon::Dungeon( const EntityFactory& entityFactory, const DungeonConfiguration& config ) :
     _size
     ( {
         config.sizeDungeonFixed ? config.sizeDungeon.x : RandomNumberGenerator( 30, 50 ),
         config.sizeDungeonFixed ? config.sizeDungeon.y : RandomNumberGenerator( 30, 50 )
     } ),
-    _entityLibrary( entityLibrary ),
+    _entityFactory( entityFactory ),
     _tileMap( _size.x * _size.y ),
     _visionMap( _size.x * _size.y, false ),
     _indexPlayer( -1 )
@@ -59,42 +59,15 @@ Dungeon::Dungeon( const EntityLibrary& entityLibrary, const DungeonConfiguration
     GenerateFillerWalls( config.generateFillerWalls, config.amountFillerWallsCycles );
     GenerateMonsters( config.generateMonsters, config.amountMonsters );
 }
-Dungeon::Dungeon( const EntityLibrary& entityLibrary, const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap ) :
+Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap ) :
     _size( size ),
-    _entityLibrary( entityLibrary ),
+    _entityFactory( entityFactory ),
     _tileMap( size.x * size.y ),
     _visionMap( visionMap ),
     _indexPlayer( -1 )
 {
     Vector2<int> iterator;
     std::pair<Category::CategoryType, int> entity;
-    auto GetEntity = [&entityLibrary] ( char icon )
-    {
-        auto CheckBase = [icon] ( const BaseEntity& base )
-        {
-            return base.icon == icon;
-        };
-        auto ability = std::find_if( entityLibrary.abilities.begin( ), entityLibrary.abilities.end( ), CheckBase );
-        auto character = std::find_if( entityLibrary.characters.begin( ), entityLibrary.characters.end( ), CheckBase );
-        auto structure = std::find_if( entityLibrary.structures.begin( ), entityLibrary.structures.end( ), CheckBase );
-
-        if( ability != entityLibrary.abilities.end( ) )
-        {
-            return std::make_pair( Category::Ability, std::distance( entityLibrary.abilities.begin( ), ability ) );
-        }
-
-        if( character != entityLibrary.characters.end( ) )
-        {
-            return std::make_pair( Category::Character, std::distance( entityLibrary.characters.begin( ), character ) );
-        }
-
-        if( structure != entityLibrary.structures.end( ) )
-        {
-            return std::make_pair( Category::Structure, std::distance( entityLibrary.structures.begin( ), structure ) );
-        }
-
-        return std::make_pair( Category::Ability, 0 );
-    };
 
     for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
     {
@@ -110,8 +83,7 @@ Dungeon::Dungeon( const EntityLibrary& entityLibrary, const Vector2<int>& size, 
                 }
                 else
                 {
-                    entity = GetEntity( icon );
-                    EntityAdd( iterator, entity.first, entity.second );
+                    EntityAdd( iterator, icon );
                 }
             }
         }
@@ -188,10 +160,9 @@ void Dungeon::PlayerAdd( const Vector2<int>& position )
         EntityRemove( _indexPlayer );
     }
 
-    EntityAdd( positionPlayer, Category::PlayerEntity, 0 );
+    EntityAdd( positionPlayer, std::make_pair( Category::PlayerEntity, 0 ) );
     _indexPlayer = _entities.size( ) - 1;
-    UpdateVision( _entities[_indexPlayer].position, static_cast<PlayerEntity*>( _entities[_indexPlayer].base.get( ) )->player->visionReach );
-    OccupantAdd( _indexPlayer );
+    UpdateVision( _entities[_indexPlayer].position, static_cast<PlayerEntity*>( _entities[_indexPlayer].base.get( ) )->player.visionReach );
 }
 
 void Dungeon::MovementPlayer( const Orientation::OrientationType& orientation )
@@ -216,7 +187,7 @@ void Dungeon::MovementRandom( )
 }
 void Dungeon::Events( )
 {
-    Player& player = *static_cast<PlayerEntity*>( _entities[_indexPlayer].base.get( ) )->player;
+    Player& player = static_cast<PlayerEntity*>( _entities[_indexPlayer].base.get( ) )->player;
     std::vector<int> indexesEntityRemove;
 
     /* Collision detection for player */
@@ -394,40 +365,19 @@ void Dungeon::UpdateTile( const Vector2<int>& position )
         tile.icon = _entities[i].base->icon;
     }
 }
-void Dungeon::EntityAdd( const Vector2<int>& position, Category::CategoryType category, int id )
+void Dungeon::EntityAdd( const Vector2<int>& position, const std::pair<Category::CategoryType, int>& id )
 {
-    switch( category )
-    {
-        case Category::Ability:
-        {
-            _entities.push_back( { std::unique_ptr<BaseEntity>( new Ability( _entityLibrary.abilities[id] ) ), category, position, position } );
-
-            break;
-        }
-        case Category::Character:
-        {
-            _entities.push_back( { std::unique_ptr<BaseEntity>( new Character( _entityLibrary.characters[id] ) ), category, position, position } );
-
-            break;
-        }
-        case Category::Structure:
-        {
-            _entities.push_back( { std::unique_ptr<BaseEntity>( new Structure( _entityLibrary.structures[id] ) ), category, position, position } );
-
-            break;
-        }
-        case Category::PlayerEntity:
-        {
-            _entities.push_back( { std::unique_ptr<BaseEntity>( new PlayerEntity( _entityLibrary.playerEntity ) ), category, position, position } );
-
-            break;
-        }
-        default:
-        {
-            abort( );
-        }
-    }
-
+    _entities.push_back( { std::unique_ptr<BaseEntity>( _entityFactory.Get( id )->Clone( ) ), position, position } );
+    OccupantAdd( _entities.size( ) - 1 );
+}
+void Dungeon::EntityAdd( const Vector2<int>& position, const std::string& name )
+{
+    _entities.push_back( { std::unique_ptr<BaseEntity>( _entityFactory.Get( name )->Clone( ) ), position, position } );
+    OccupantAdd( _entities.size( ) - 1 );
+}
+void Dungeon::EntityAdd( const Vector2<int>& position, char icon )
+{
+    _entities.push_back( { std::unique_ptr<BaseEntity>( _entityFactory.Get( icon )->Clone( ) ), position, position } );
     OccupantAdd( _entities.size( ) - 1 );
 }
 void Dungeon::EntityRemove( int index )
@@ -495,7 +445,7 @@ void Dungeon::GenerateDoors( bool generate, int amount )
         {
             const int index = RandomNumberGenerator( 0, valid.size( ) - 1 );
 
-            EntityAdd( valid[index], Category::Structure, 3 );
+            EntityAdd( valid[index], std::make_pair( Category::Structure, 3 ) );
             links.push_back( { -1, -1, { -1, -1 }, valid[index] } );
             valid.erase( valid.begin( ) + index );
         }
@@ -518,7 +468,7 @@ void Dungeon::GenerateOuterWalls( bool generate )
                         iterator.x == _size.x - 1 ||
                         iterator.y == _size.y - 1 )
                     {
-                        EntityAdd( iterator, Category::Structure, 2 );
+                        EntityAdd( iterator, std::make_pair( Category::Structure, 2 ) );
                     }
                 }
             }
@@ -548,7 +498,7 @@ void Dungeon::GenerateHiddenPath( bool generate )
             {
                 if( Unoccupied( position ) )
                 {
-                    EntityAdd( position, Category::Structure, 1 );
+                    EntityAdd( position, std::make_pair( Category::Structure, 1 ) );
                 }
             }
         }
@@ -571,7 +521,7 @@ void Dungeon::GenerateSourceWalls( bool generate, int amount )
             if( Unoccupied( position ) &&
                 position != center )
             {
-                EntityAdd( position, Category::Structure, 2 );
+                EntityAdd( position, std::make_pair( Category::Structure, 2 ) );
                 remaining--;
             }
         }
@@ -605,7 +555,7 @@ void Dungeon::GenerateExtensionWalls( bool generate, int amount )
                         Unoccupied( position ) &&
                         position != center )
                     {
-                        EntityAdd( position, Category::Structure, 2 );
+                        EntityAdd( position, std::make_pair( Category::Structure, 2 ) );
                         remaining--;
                     }
                 }
@@ -631,7 +581,7 @@ void Dungeon::GenerateFillerWalls( bool generate, int amount )
                         Surrounded( iterator, 5 ) &&
                         iterator != center )
                     {
-                        EntityAdd( iterator, Category::Structure, 2 );
+                        EntityAdd( iterator, std::make_pair( Category::Structure, 2 ) );
                     }
                 }
             }
@@ -661,7 +611,7 @@ void Dungeon::GenerateMonsters( bool generate, int amount )
                 {
                     std::vector<int> possibilities( { 0, 1, 2 } );
 
-                    EntityAdd( position, Category::Character, possibilities[RandomNumberGenerator( 0, possibilities.size( ) - 1 )] );
+                    EntityAdd( position, std::make_pair( Category::Character, possibilities[RandomNumberGenerator( 0, possibilities.size( ) - 1 )] ) );
 
                     break;
                 }

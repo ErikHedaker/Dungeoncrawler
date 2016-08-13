@@ -26,7 +26,7 @@ std::string TurnPlayer( Character& player, Character& AI );
 std::string TurnAI( Character& player, Character& AI );
 void Combat( Character& player, Character& AI );
 void SaveDungeonSystem( const DungeonSystem& dungeonSystem );
-DungeonSystem LoadDungeonSystem( const EntityLibrary& entityLibrary );
+DungeonSystem LoadDungeonSystem( const EntityFactory& entityLibrary );
 std::vector<Ability> LoadAbilities( );
 std::vector<Character> LoadCharacters( const std::vector<Ability>& abilitiesLibrary );
 std::vector<Structure> LoadStructures( );
