@@ -19,13 +19,13 @@
 *.idb
 *.db
 
-2D-cmd-dungeoncrawler/Debug/
-2D-cmd-dungeoncrawler/Release/
-2D-cmd-dungeoncrawler/.vs/
-2D-cmd-dungeoncrawler/2D-cmd-dungeoncrawler/
+Dungeoncrawler/Debug/
+Dungeoncrawler/Release/
+Dungeoncrawler/.vs/
+Dungeoncrawler/Dungeoncrawler/
 
-2D-cmd-dungeoncrawler/Debug/Dungeoncrawler_Save_DungeonSystem.txt
-2D-cmd-dungeoncrawler/Release/Dungeoncrawler_Save_DungeonSystem.txt
+Debug/Dungeoncrawler_Save_DungeonSystem.txt
+Release/Dungeoncrawler_Save_DungeonSystem.txt
 
-2D-cmd-dungeoncrawler/Debug/Dungeoncrawler_Save_Player.txt
-2D-cmd-dungeoncrawler/Release/Dungeoncrawler_Save_Player.txt
+Debug/Dungeoncrawler_Save_Player.txt
+Release/Dungeoncrawler_Save_Player.txt
