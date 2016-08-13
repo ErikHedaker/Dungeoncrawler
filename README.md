@@ -1,6 +1,8 @@
 ```
-2D-cmd-dungeoncrawler
+Dungeoncrawler
+
 ---------------------
+
 A game made in C++ using no frameworks, created for learning purposes.
 
 - Game.h        - God class.
