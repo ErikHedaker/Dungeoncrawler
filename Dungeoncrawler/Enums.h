@@ -64,8 +64,8 @@ struct Load
 
 enum class GameStatus
 {
-    Neutral,
-    Menu
+    Menu,
+    Playing
 };
 
 enum class GameConfig

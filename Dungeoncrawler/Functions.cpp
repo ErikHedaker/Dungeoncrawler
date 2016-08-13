@@ -123,15 +123,15 @@ void PrintHealth( const Character& combatant )
 
     std::cout << combatant.healthRegen << ")\n";
 }
-Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::OrientationType& orientation )
+Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& sizeOld, const Orientation::OrientationType& orientation )
 {
     Vector2<int> positionRotation = position;
-    Vector2<int> sizeRotation = size;
+    Vector2<int> sizeRotation = sizeOld;
 
     for( int i = 0; i < orientation; i++ )
     {
-        positionRotation = { sizeRotation.x - positionRotation.y - 1, positionRotation.x };
         std::swap( sizeRotation.x, sizeRotation.y );
+        positionRotation = { sizeRotation.x - positionRotation.y - 1, positionRotation.x };
     }
 
     return positionRotation;

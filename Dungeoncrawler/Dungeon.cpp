@@ -92,6 +92,8 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, 
 
 void Dungeon::Rotate( const Orientation::OrientationType& orientation )
 {
+    const Vector2<int> sizeOld = _size;
+
     for( int i = 0; i < orientation; i++ )
     {
         auto tileMapRotated = _tileMap;
@@ -108,23 +110,23 @@ void Dungeon::Rotate( const Orientation::OrientationType& orientation )
                 visionMapRotated[( iterator.y * _size.x ) + iterator.x] = _visionMap[( iterator.x * _size.y ) + iterator.y];
             }
 
-            auto& tileColoumBegin = tileMapRotated.begin( ) + iterator.y * _size.x;
-            auto& tileColoumEnd = tileMapRotated.begin( ) + iterator.y * _size.x + _size.x;
+            auto& tileColoumBegin   = tileMapRotated.begin( )   + iterator.y * _size.x;
+            auto& tileColoumEnd     = tileMapRotated.begin( )   + iterator.y * _size.x + _size.x;
             auto& visionColoumBegin = visionMapRotated.begin( ) + iterator.y * _size.x;
-            auto& visionColoumEnd = visionMapRotated.begin( ) + iterator.y * _size.x + _size.x;
+            auto& visionColoumEnd   = visionMapRotated.begin( ) + iterator.y * _size.x + _size.x;
 
             std::reverse( tileColoumBegin, tileColoumEnd );
             std::reverse( visionColoumBegin, visionColoumEnd );
         }
 
-        _tileMap = tileMapRotated;
+        _tileMap   = tileMapRotated;
         _visionMap = visionMapRotated;
+    }
 
-        for( auto& entity : _entities )
-        {
-            entity.position = PositionRotate( entity.position, _size, Orientation::East );
-            entity.positionPrevious = PositionRotate( entity.positionPrevious, _size, Orientation::East );
-        }
+    for( auto& entity : _entities )
+    {
+        entity.position = PositionRotate( entity.position, sizeOld, orientation );
+        entity.positionPrevious = PositionRotate( entity.positionPrevious, sizeOld, orientation );
     }
 }
 void Dungeon::PlayerAdd( const Vector2<int>& position )
