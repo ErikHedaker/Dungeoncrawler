@@ -38,13 +38,6 @@ struct Link
     Vector2<int> entry;
 };
 
-struct Entity
-{
-    std::unique_ptr<BaseEntity> base;
-    Vector2<int> position;
-    Vector2<int> positionPrevious;
-};
-
 struct Tile
 {
     std::vector<int> indexOccupants;
@@ -82,7 +75,7 @@ class Dungeon
         const EntityFactory& _entityFactory;
         Vector2<int> _size;
         int _indexPlayer;
-        std::vector<Entity> _entities;
+        std::vector<std::unique_ptr<Entity>> _entities;
 
         /* 1D arrays interpreted as 2D arrays */
         std::vector<Tile> _tileMap;

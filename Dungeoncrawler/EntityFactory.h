@@ -1,32 +1,37 @@
 #pragma once
 
+#include "Vector2.h"
 #include "Enums.h"
 #include <vector>
 #include <string>
 #include <memory>
 #include <map>
 
-struct BaseEntity
+struct Entity
 {
-    BaseEntity( const std::string& name, char icon, int attributes ) :
+    Entity( const std::string& name, char icon, int attributes ) :
         name( name ),
         icon( icon ),
-        attributes( attributes )
+        attributes( attributes ),
+        position( { -1, -1 } ),
+        positionPrevious( { -1, -1 } )
     { }
 
-    virtual ~BaseEntity( ) { };
+    virtual ~Entity( ) { };
 
-    virtual BaseEntity* Clone( ) const = 0;
+    virtual Entity* Clone( ) const = 0;
 
     std::string name;
     char icon;
     int attributes;
+    Vector2<int> position;
+    Vector2<int> positionPrevious;
 };
 
-struct Ability : public BaseEntity
+struct Ability : public Entity
 {
     Ability( const std::string& name, char icon, int attributes, float damage ) :
-        BaseEntity( name, icon, attributes ),
+        Entity( name, icon, attributes ),
         damage( damage )
     { }
 
@@ -38,10 +43,10 @@ struct Ability : public BaseEntity
     float damage;
 };
 
-struct Character : public BaseEntity
+struct Character : public Entity
 {
     Character( const std::string& name, char icon, int attributes, int health, int healthMax, int healthRegen, float damage, const std::vector<Ability>& abilities ) :
-        BaseEntity( name, icon, attributes ),
+        Entity( name, icon, attributes ),
         health( health ),
         healthMax( healthMax ),
         healthRegen( healthRegen ),
@@ -71,10 +76,10 @@ struct Character : public BaseEntity
     std::vector<Ability> abilities;
 };
 
-struct Structure : public BaseEntity
+struct Structure : public Entity
 {
     Structure( const std::string& name, char icon, int attributes ) :
-        BaseEntity( name, icon, attributes )
+        Entity( name, icon, attributes )
     { }
 
     virtual Structure* Clone( ) const
@@ -100,16 +105,16 @@ struct Player : public Character
     int states;
 };
 
-struct PlayerEntity : public BaseEntity
+struct PlayerLocal : public Entity
 {
-    PlayerEntity( Player& player ) :
-        BaseEntity( player.name, player.icon, player.attributes ),
+    PlayerLocal( Player& player ) :
+        Entity( player.name, player.icon, player.attributes ),
         player( player )
     { }
 
-    virtual PlayerEntity* Clone( ) const
+    virtual PlayerLocal* Clone( ) const
     {
-        return new PlayerEntity( *this );
+        return new PlayerLocal( *this );
     }
 
     Player& player;
@@ -120,10 +125,10 @@ class EntityFactory
     public:
         EntityFactory( Player& player );
 
-        const std::unique_ptr<BaseEntity>& Get( const std::pair<Category::CategoryType, int>& id ) const;
-        const std::unique_ptr<BaseEntity>& Get( const std::string& name ) const;
-        const std::unique_ptr<BaseEntity>& Get( char icon ) const;
+        const std::unique_ptr<Entity>& Get( const std::pair<Category::CategoryType, int>& id ) const;
+        const std::unique_ptr<Entity>& Get( const std::string& name ) const;
+        const std::unique_ptr<Entity>& Get( char icon ) const;
 
     private:
-        const std::map<std::pair<Category::CategoryType, int>, std::unique_ptr<BaseEntity>> _entities;
+        const std::map<std::pair<Category::CategoryType, int>, std::unique_ptr<Entity>> _entities;
 };

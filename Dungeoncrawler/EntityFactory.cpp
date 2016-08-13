@@ -5,12 +5,12 @@
 EntityFactory::EntityFactory( Player& player ) :
     _entities( [&player] ( )
     {
-        std::map<std::pair<Category::CategoryType, int>, std::unique_ptr<BaseEntity>> entities;
+        std::map<std::pair<Category::CategoryType, int>, std::unique_ptr<Entity>> entities;
         auto abilities = LoadAbilities( );
         auto characters = LoadCharacters( abilities );
         auto structures = LoadStructures( );
 
-        entities.emplace( std::make_pair( Category::PlayerEntity, 0 ), std::make_unique<PlayerEntity>( PlayerEntity( player ) ) );
+        entities.emplace( std::make_pair( Category::PlayerEntity, 0 ), std::make_unique<PlayerLocal>( PlayerLocal( player ) ) );
 
         for( unsigned int i = 0; i < abilities.size( ); i++ )
         {
@@ -31,11 +31,11 @@ EntityFactory::EntityFactory( Player& player ) :
     }( ) )
 { }
 
-const std::unique_ptr<BaseEntity>& EntityFactory::Get( const std::pair<Category::CategoryType, int>& id ) const
+const std::unique_ptr<Entity>& EntityFactory::Get( const std::pair<Category::CategoryType, int>& id ) const
 {
     return _entities.at( id );
 }
-const std::unique_ptr<BaseEntity>& EntityFactory::Get( const std::string& name ) const
+const std::unique_ptr<Entity>& EntityFactory::Get( const std::string& name ) const
 {
     for( const auto& it : _entities )
     {
@@ -47,7 +47,7 @@ const std::unique_ptr<BaseEntity>& EntityFactory::Get( const std::string& name )
 
     throw;
 }
-const std::unique_ptr<BaseEntity>& EntityFactory::Get( char icon ) const
+const std::unique_ptr<Entity>& EntityFactory::Get( char icon ) const
 {
     for( const auto& it : _entities )
     {
