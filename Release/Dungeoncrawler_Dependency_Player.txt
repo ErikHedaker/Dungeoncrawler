@@ -1,0 +1,21 @@
+# Name
+# Icon
+# Attributes
+# Health
+# Health Max
+# Health Regen
+# Damage
+# Abilities
+# Vision Reach
+# States
+
+:Player
+:@
+:0,1
+:100
+:100
+:1
+:50.0
+:0,1,2
+:4
+:
