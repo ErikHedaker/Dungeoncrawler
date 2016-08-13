@@ -421,6 +421,11 @@ DungeonSystem LoadDungeonSystem( const EntityFactory& entityLibrary )
         };
     };
 
+    if( !inFile.is_open( ) )
+    {
+        throw std::exception( "Missing save files!" );
+    }
+
     std::getline( inFile, line );
     dungeonSystem.config = GetConfig( line );
     std::getline( inFile, line );
@@ -474,7 +479,7 @@ DungeonSystem LoadDungeonSystem( const EntityFactory& entityLibrary )
 std::vector<Ability> LoadAbilities( )
 {
     const int offset = 4;
-    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Category_Ability.txt", std::ios::in } }, { } };
+    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Abilities.txt", std::ios::in } }, { } };
     std::vector<Ability> abilities;
     auto GetBitmask = [] ( const std::string& line )
     {
@@ -490,12 +495,17 @@ std::vector<Ability> LoadAbilities( )
         return values;
     };
 
+    if( cacheFile.empty( ) )
+    {
+        throw std::exception( "Missing important files!" );
+    }
+
     for( unsigned int i = 0; i < cacheFile.size( ); i += offset )
     {
         abilities.emplace_back( cacheFile[0 + i],
-                             cacheFile[1 + i].back( ),
-                 GetBitmask( cacheFile[2 + i] ),
-                  std::stof( cacheFile[3 + i] ) );
+                                cacheFile[1 + i].back( ),
+                    GetBitmask( cacheFile[2 + i] ),
+                     std::stof( cacheFile[3 + i] ) );
     }
 
     return abilities;
@@ -503,7 +513,7 @@ std::vector<Ability> LoadAbilities( )
 std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 {
     const int offset = 8;
-    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Category_Character.txt", std::ios::in } }, { } };
+    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Characters.txt", std::ios::in } }, { } };
     std::vector<Character> characters;
     auto GetBitmask = [] ( const std::string& line )
     {
@@ -532,6 +542,11 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
         return values;
     };
 
+    if( cacheFile.empty( ) )
+    {
+        throw std::exception( "Missing important files!" );
+    }
+
     for( unsigned int i = 0; i < cacheFile.size( ); i += offset )
     {
         characters.emplace_back( cacheFile[0 + i],
@@ -549,7 +564,7 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 std::vector<Structure> LoadStructures( )
 {
     const int offset = 3;
-    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Category_Structure.txt", std::ios::in } }, { } };
+    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Structures.txt", std::ios::in } }, { } };
     std::vector<Structure> structures;
     auto GetBitmask = [] ( const std::string& line )
     {
@@ -565,6 +580,11 @@ std::vector<Structure> LoadStructures( )
         return values;
     };
 
+    if( cacheFile.empty( ) )
+    {
+        throw std::exception( "Missing important files!" );
+    }
+
     for( unsigned int i = 0; i < cacheFile.size( ); i += offset )
     {
         structures.emplace_back( cacheFile[0 + i],
@@ -574,10 +594,9 @@ std::vector<Structure> LoadStructures( )
 
     return structures;
 }
-Player LoadPlayer( const std::vector<Ability>& abilities, Load::LoadType load )
+Player LoadPlayerDefault( const std::vector<Ability>& abilities )
 {
-    const int offset = 10 * load;
-    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Save_Player.txt", std::ios::in } }, { } };
+    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Player.txt", std::ios::in } }, { } };
     auto GetBitmask = [] ( const std::string& line )
     {
         std::stringstream sstream( line );
@@ -605,14 +624,19 @@ Player LoadPlayer( const std::vector<Ability>& abilities, Load::LoadType load )
         return values;
     };
 
-    return Player( cacheFile[0 + offset],
-                   cacheFile[1 + offset].back( ),
-       GetBitmask( cacheFile[2 + offset] ),
-        std::stoi( cacheFile[3 + offset] ),
-        std::stoi( cacheFile[4 + offset] ),
-        std::stoi( cacheFile[5 + offset] ),
-        std::stof( cacheFile[6 + offset] ),
-     GetAbilities( cacheFile[7 + offset] ),
-        std::stoi( cacheFile[8 + offset] ),
-       GetBitmask( cacheFile[9 + offset] ) );
+    if( cacheFile.empty( ) )
+    {
+        throw std::exception( "Missing important files!" );
+    }
+
+    return Player( cacheFile[0],
+                   cacheFile[1].back( ),
+       GetBitmask( cacheFile[2] ),
+        std::stoi( cacheFile[3] ),
+        std::stoi( cacheFile[4] ),
+        std::stoi( cacheFile[5] ),
+        std::stof( cacheFile[6] ),
+     GetAbilities( cacheFile[7] ),
+        std::stoi( cacheFile[8] ),
+       GetBitmask( cacheFile[9] ) );
 }

@@ -9,7 +9,6 @@
 # Vision Reach
 # States
 
-# 0 Default
 :Player
 :@
 :0,1

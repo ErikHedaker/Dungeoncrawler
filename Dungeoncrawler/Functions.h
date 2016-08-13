@@ -30,7 +30,7 @@ DungeonSystem LoadDungeonSystem( const EntityFactory& entityLibrary );
 std::vector<Ability> LoadAbilities( );
 std::vector<Character> LoadCharacters( const std::vector<Ability>& abilitiesLibrary );
 std::vector<Structure> LoadStructures( );
-Player LoadPlayer( const std::vector<Ability>& abilitiesLibrary, Load::LoadType load = Load::Default );
+Player LoadPlayerDefault( const std::vector<Ability>& abilities );
 
 class StringWrapper
 {

@@ -6,7 +6,7 @@
 
 Game::Game( ) :
     _status( GameStatus::Menu ),
-    _player( LoadPlayer( LoadAbilities( ) ) ),
+    _player( LoadPlayerDefault( LoadAbilities( ) ) ),
     _entityFactory( _player )
 { }
 
@@ -38,7 +38,17 @@ void Game::Menu( )
             {
                 system( "CLS" );
                 std::cout << "Loading, please wait.";
-                _dungeonSystem = LoadDungeonSystem( _entityFactory );
+
+                try
+                {
+                    _dungeonSystem = LoadDungeonSystem( _entityFactory );
+                }
+                catch( const std::exception& e )
+                {
+                    std::cout << "\nError: " << e.what( );
+                    std::cout << "\n\nPress enter to continue: ";
+                    GetEnter( );
+                }
 
                 if( Exist( ) )
                 {
@@ -131,7 +141,7 @@ void Game::SetDungeonConfiguration( const GameConfig& type )
 }
 void Game::Reset( )
 {
-    _player = LoadPlayer( LoadAbilities( ) );
+    _player = LoadPlayerDefault( LoadAbilities( ) );
     _dungeonSystem.dungeons.clear( );
     _dungeonSystem.dungeons.emplace_back( _entityFactory, _dungeonSystem.config );
     _dungeonSystem.indexCurrent = 0;
