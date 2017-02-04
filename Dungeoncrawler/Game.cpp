@@ -59,7 +59,7 @@ void Game::Menu( )
             }
             case '3':
             {
-                SetDungeonConfiguration( GameConfig::Default );
+                _dungeonSystem.config = GetDungeonConfiguration( GameConfig::Default );
                 system( "CLS" );
                 std::cout << "Loading, please wait.";
                 Reset( );
@@ -69,7 +69,7 @@ void Game::Menu( )
             }
             case '4':
             {
-                SetDungeonConfiguration( GameConfig::Configure );
+                _dungeonSystem.config = GetDungeonConfiguration( GameConfig::Configure );
                 system( "CLS" );
                 std::cout << "Loading, please wait.";
                 Reset( );
@@ -89,56 +89,6 @@ bool Game::Exist( ) const
     return _dungeonSystem.dungeons.size( ) != 0;
 }
 
-void Game::SetDungeonConfiguration( const GameConfig& type )
-{
-    switch( type )
-    {
-        case GameConfig::Default:
-        {
-            _dungeonSystem.config = DungeonConfiguration( );
-
-            break;
-        }
-        case GameConfig::Configure:
-        {
-            auto ToBool = [] ( char input ) -> bool
-            {
-                return 
-                    input == 'Y' ||
-                    input == 'y';
-            };
-
-            std::cout << "\n";
-            _dungeonSystem.config.sizeDungeonFixed       = ToBool( GetChar( "Fixed dungeon size, [Y/N]: ",       { 'Y', 'N' }, std::toupper ) );
-            _dungeonSystem.config.generateDoors          = ToBool( GetChar( "Generate doors, [Y/N]: ",           { 'Y', 'N' }, std::toupper ) );
-            _dungeonSystem.config.generateOuterWalls     = ToBool( GetChar( "Generate outer walls, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
-            _dungeonSystem.config.generateHiddenPath     = ToBool( GetChar( "Generate hidden path, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
-            _dungeonSystem.config.generateSourceWalls    = ToBool( GetChar( "Generate source walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
-            _dungeonSystem.config.generateExtensionWalls = ToBool( GetChar( "Generate extension walls, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
-            _dungeonSystem.config.generateFillerWalls    = ToBool( GetChar( "Generate filler walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
-            _dungeonSystem.config.generateMonsters       = ToBool( GetChar( "Generate monsters, [Y/N]: ",        { 'Y', 'N' }, std::toupper ) );
-            std::cout << "\n";
-
-            if( _dungeonSystem.config.sizeDungeonFixed )
-            {
-                _dungeonSystem.config.sizeDungeon.x           = GetPositiveInteger( "Enter dungeon width: " );
-                _dungeonSystem.config.sizeDungeon.y           = GetPositiveInteger( "Enter dungeon height: " );
-            }
-            if( _dungeonSystem.config.generateDoors )
-                _dungeonSystem.config.amountDoors             = GetPositiveInteger( "Enter amount of doors: " );
-            if( _dungeonSystem.config.generateSourceWalls )
-                _dungeonSystem.config.amountSourceWalls       = GetPositiveInteger( "Enter amount of source walls: " );
-            if( _dungeonSystem.config.generateExtensionWalls )
-                _dungeonSystem.config.amountExtensionWalls    = GetPositiveInteger( "Enter amount of extension walls: " );
-            if( _dungeonSystem.config.generateFillerWalls )
-                _dungeonSystem.config.amountFillerWallsCycles = GetPositiveInteger( "Enter amount of filler wall cycles: " );
-            if( _dungeonSystem.config.generateMonsters )
-                _dungeonSystem.config.amountMonsters          = GetPositiveInteger( "Enter amount of monsters: " );
-
-            break;
-        }
-    }
-}
 void Game::Reset( )
 {
     _player = LoadPlayerDefault( LoadAbilities( ) );
@@ -165,10 +115,9 @@ void Game::Start( )
         }
     }
 }
-
 void Game::TurnPlayer( Dungeon& dungeon )
 {
-    static const std::map<char, Orientation::OrientationType> directions =
+    static const std::map<char, Orientation::Enum> directions =
     {
         { 'W', Orientation::North },
         { 'A', Orientation::West  },
@@ -206,8 +155,8 @@ void Game::TurnPlayer( Dungeon& dungeon )
             }
             case 'E':
             {
-                _status = GameStatus::Menu;
                 SaveDungeonSystem( _dungeonSystem );
+                _status = GameStatus::Menu;
                 done = true;
 
                 break;
@@ -249,7 +198,7 @@ void Game::DungeonLink( int indexCurrentDungeon )
         }
     }
 }
-void Game::DungeonRotate( int indexDungeon, const Orientation::OrientationType& orientation )
+void Game::DungeonRotate( int indexDungeon, const Orientation::Enum& orientation )
 {
     const Vector2<int> sizeOld = _dungeonSystem.dungeons[indexDungeon].GetSize( );
 
@@ -278,7 +227,7 @@ void Game::DungeonSwitch( )
             DungeonLink( indexNew );
             _dungeonSystem.indexCurrent = indexNew;
             _dungeonSystem.dungeons[indexNew].PlayerAdd( _dungeonSystem.dungeons[indexOld].links[i].exit );
-            DungeonRotate( indexNew, static_cast<Orientation::OrientationType>( (
+            DungeonRotate( indexNew, static_cast<Orientation::Enum>( (
                 _dungeonSystem.dungeons[indexOld].GetQuadrant( _dungeonSystem.dungeons[indexOld].GetPlayerPosition( ) ) -
                 _dungeonSystem.dungeons[indexNew].GetQuadrant( _dungeonSystem.dungeons[indexNew].GetPlayerPosition( ) ) + 2 ) % 4 ) );
 

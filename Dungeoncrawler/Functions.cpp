@@ -29,37 +29,36 @@ int RandomNumberGenerator( int min, int max )
 }
 int GetPositiveInteger( const std::string& context )
 {
-    std::string choice;
-
     while( true )
     {
+        std::string choice;
+
         std::cout << context;
         std::cin >> choice;
 
         if( choice.size( ) < 10 &&
             std::all_of( choice.begin( ), choice.end( ), ::isdigit ) )
         {
-            break;
+            return std::stoi( choice );
         }
     }
-
-    return std::stoi( choice );
 }
 char GetChar( const std::string& context, const std::vector<char>& valid, std::function<int(int)> modifier )
 {
-    char last;
-
-    do
+    while( true )
     {
         std::string choice;
+        char last;
 
         std::cout << context;
         std::cin >> choice;
         last = ( modifier != nullptr ) ? modifier( choice.back( ) ) : choice.back( );
-    }
-    while( std::find( valid.begin( ), valid.end( ), last ) == valid.end( ) );
 
-    return last;
+        if( std::find( valid.begin( ), valid.end( ), last ) != valid.end( ) )
+        {
+            return last;
+        }
+    }
 }
 void GetEnter( )
 {
@@ -67,63 +66,51 @@ void GetEnter( )
     std::cin.get( );
     std::cin.get( );
 }
-void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen )
+DungeonConfiguration GetDungeonConfiguration( const GameConfig& type )
 {
-    const Vector2<int> origoCamera = center - sizeScreen / 2;
-    const Vector2<int> iteratorBegin = origoCamera - 1;
-    const Vector2<int> iteratorEnd   = origoCamera + 1 + sizeScreen;
-    auto InsideVisionReach = [visionReach, center] ( const Vector2<int>& iterator ) -> bool
+    if( type == GameConfig::Configure )
     {
-        return
-            iterator >= center - visionReach &&
-            iterator <= center + visionReach;
-    };
-    Vector2<int> iterator;
-
-    for( iterator.y = iteratorBegin.y; iterator.y <= iteratorEnd.y; iterator.y++ )
-    {
-        for( iterator.x = iteratorBegin.x; iterator.x <= iteratorEnd.x; iterator.x++ )
+        DungeonConfiguration config;
+        auto ToBool = [] ( char input ) -> bool
         {
-            if( iterator.x == iteratorBegin.x ||
-                iterator.y == iteratorBegin.y ||
-                iterator.x == iteratorEnd.x ||
-                iterator.y == iteratorEnd.y )
-            {
-                std::cout << '\\';
-            }
-            else if( dungeon.InBounds( iterator ) &&
-                     InsideVisionReach( iterator ) )
-            {
-                std::cout << dungeon.GetTile( iterator ).icon;
-            }
-            else if( dungeon.InBounds( iterator ) &&
-                     dungeon.GetVision( iterator ) )
-            {
-                std::cout << ':';
-            }
-            else
-            {
-                std::cout << ' ';
-            }
+            return
+                input == 'Y' ||
+                input == 'y';
+        };
+
+        std::cout << "\n";
+        config.sizeDungeonFixed       = ToBool( GetChar( "Fixed dungeon size, [Y/N]: ",       { 'Y', 'N' }, std::toupper ) );
+        config.generateDoors          = ToBool( GetChar( "Generate doors, [Y/N]: ",           { 'Y', 'N' }, std::toupper ) );
+        config.generateOuterWalls     = ToBool( GetChar( "Generate outer walls, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
+        config.generateHiddenPath     = ToBool( GetChar( "Generate hidden path, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
+        config.generateSourceWalls    = ToBool( GetChar( "Generate source walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
+        config.generateExtensionWalls = ToBool( GetChar( "Generate extension walls, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
+        config.generateFillerWalls    = ToBool( GetChar( "Generate filler walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
+        config.generateMonsters       = ToBool( GetChar( "Generate monsters, [Y/N]: ",        { 'Y', 'N' }, std::toupper ) );
+        std::cout << "\n";
+
+        if( config.sizeDungeonFixed )
+        {
+            config.sizeDungeon.x           = GetPositiveInteger( "Enter dungeon width: " );
+            config.sizeDungeon.y           = GetPositiveInteger( "Enter dungeon height: " );
         }
+        if( config.generateDoors )
+            config.amountDoors             = GetPositiveInteger( "Enter amount of doors: " );
+        if( config.generateSourceWalls )
+            config.amountSourceWalls       = GetPositiveInteger( "Enter amount of source walls: " );
+        if( config.generateExtensionWalls )
+            config.amountExtensionWalls    = GetPositiveInteger( "Enter amount of extension walls: " );
+        if( config.generateFillerWalls )
+            config.amountFillerWallsCycles = GetPositiveInteger( "Enter amount of filler wall cycles: " );
+        if( config.generateMonsters )
+            config.amountMonsters          = GetPositiveInteger( "Enter amount of monsters: " );
 
-        std::cout << '\n';
+        return config;
     }
 
-    std::cout << '\n';
+    return DungeonConfiguration( );
 }
-void PrintHealth( const Character& combatant )
-{
-    std::cout << combatant.name << " HP: " << combatant.health << " (";
-
-    if( combatant.healthRegen > 0 )
-    {
-        std::cout << "+";
-    }
-
-    std::cout << combatant.healthRegen << ")\n";
-}
-Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& sizeOld, const Orientation::OrientationType& orientation )
+Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& sizeOld, const Orientation::Enum& orientation )
 {
     Vector2<int> positionRotation = position;
     Vector2<int> sizeRotation = sizeOld;
@@ -136,9 +123,9 @@ Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& s
 
     return positionRotation;
 }
-Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::OrientationType& orientation )
+Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation )
 {
-    static const std::map<Orientation::OrientationType, Vector2<int>> directions =
+    static const std::map<Orientation::Enum, Vector2<int>> directions =
     {
         { Orientation::North, {  0, -1 } },
         { Orientation::East,  {  1,  0 } },
@@ -251,6 +238,62 @@ std::string TurnAI( Character& player, Character& AI )
     const int number = RandomNumberGenerator( 0, AI.abilities.size( ) );
 
     return ( number == AI.abilities.size( ) ? UseWeapon( AI, player ) : UseAbility( AI.abilities[number], AI, player ) );
+}
+void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen )
+{
+    const Vector2<int> origoCamera = center - sizeScreen / 2;
+    const Vector2<int> iteratorBegin = origoCamera - 1;
+    const Vector2<int> iteratorEnd = origoCamera + 1 + sizeScreen;
+    auto InsideVisionReach = [visionReach, center] ( const Vector2<int>& iterator ) -> bool
+    {
+        return
+            iterator >= center - visionReach &&
+            iterator <= center + visionReach;
+    };
+    Vector2<int> iterator;
+
+    for( iterator.y = iteratorBegin.y; iterator.y <= iteratorEnd.y; iterator.y++ )
+    {
+        for( iterator.x = iteratorBegin.x; iterator.x <= iteratorEnd.x; iterator.x++ )
+        {
+            if( iterator.x == iteratorBegin.x ||
+                iterator.y == iteratorBegin.y ||
+                iterator.x == iteratorEnd.x ||
+                iterator.y == iteratorEnd.y )
+            {
+                std::cout << '\\';
+            }
+            else if( dungeon.InBounds( iterator ) &&
+                     InsideVisionReach( iterator ) )
+            {
+                std::cout << dungeon.GetTile( iterator ).icon;
+            }
+            else if( dungeon.InBounds( iterator ) &&
+                     dungeon.GetVision( iterator ) )
+            {
+                std::cout << ':';
+            }
+            else
+            {
+                std::cout << ' ';
+            }
+        }
+
+        std::cout << '\n';
+    }
+
+    std::cout << '\n';
+}
+void PrintHealth( const Character& combatant )
+{
+    std::cout << combatant.name << " HP: " << combatant.health << " (";
+
+    if( combatant.healthRegen > 0 )
+    {
+        std::cout << "+";
+    }
+
+    std::cout << combatant.healthRegen << ")\n";
 }
 void Combat( Character& player, Character& AI )
 {

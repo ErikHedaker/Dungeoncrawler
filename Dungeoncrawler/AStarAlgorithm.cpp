@@ -109,9 +109,7 @@ std::vector<Vector2<int>> AStarAlgorithm( const Vector2<int>& start, const Vecto
 
     /* Reconstruct path */
     Vector2<int> current = goal;
-    std::vector<Vector2<int>> path;
-
-    path.push_back( current );
+    std::vector<Vector2<int>> path { current };
 
     while( current != start )
     {

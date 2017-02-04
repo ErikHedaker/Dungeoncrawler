@@ -5,33 +5,33 @@
 EntityFactory::EntityFactory( Player& player ) :
     _entities( [&player] ( )
     {
-        std::map<std::pair<Category::CategoryType, int>, std::unique_ptr<Entity>> entities;
+        std::map<std::pair<EntityType::Enum, int>, std::unique_ptr<Entity>> entities;
         auto abilities = LoadAbilities( );
         auto characters = LoadCharacters( abilities );
         auto structures = LoadStructures( );
 
-        entities.emplace( std::make_pair( Category::PlayerEntity, 0 ), std::make_unique<PlayerLocal>( PlayerLocal( player ) ) );
+        entities.emplace( std::make_pair( EntityType::PlayerEntity, 0 ), std::make_unique<PlayerLocal>( PlayerLocal( player ) ) );
 
         for( unsigned int i = 0; i < abilities.size( ); i++ )
         {
-            entities.emplace( std::make_pair( Category::Ability, i ), std::make_unique<Ability>( abilities[i] ) );
+            entities.emplace( std::make_pair( EntityType::Ability, i ), std::make_unique<Ability>( abilities[i] ) );
         }
 
         for( unsigned int i = 0; i < characters.size( ); i++ )
         {
-            entities.emplace( std::make_pair( Category::Character, i ), std::make_unique<Character>( characters[i] ) );
+            entities.emplace( std::make_pair( EntityType::Character, i ), std::make_unique<Character>( characters[i] ) );
         }
 
         for( unsigned int i = 0; i < structures.size( ); i++ )
         {
-            entities.emplace( std::make_pair( Category::Structure, i ), std::make_unique<Structure>( structures[i] ) );
+            entities.emplace( std::make_pair( EntityType::Structure, i ), std::make_unique<Structure>( structures[i] ) );
         }
 
         return entities;
     }( ) )
 { }
 
-const std::unique_ptr<Entity>& EntityFactory::Get( const std::pair<Category::CategoryType, int>& id ) const
+const std::unique_ptr<Entity>& EntityFactory::Get( const std::pair<EntityType::Enum, int>& id ) const
 {
     return _entities.at( id );
 }
@@ -45,7 +45,7 @@ const std::unique_ptr<Entity>& EntityFactory::Get( const std::string& name ) con
         }
     }
 
-    throw;
+    throw std::exception( "Entity does not exist!" );
 }
 const std::unique_ptr<Entity>& EntityFactory::Get( char icon ) const
 {
@@ -57,5 +57,5 @@ const std::unique_ptr<Entity>& EntityFactory::Get( char icon ) const
         }
     }
 
-    throw;
+    throw std::exception( "Entity does not exist!" );
 }

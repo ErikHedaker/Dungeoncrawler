@@ -1,8 +1,8 @@
 #pragma once
 
-struct Category
+struct EntityType
 {
-    enum CategoryType
+    enum Enum
     {
         Ability      = 0,
         Character    = 1,
@@ -13,18 +13,19 @@ struct Category
 
 struct Attributes
 {
-    enum AttributesType
+    enum Enum
     {
         PassablePlayer = 1 << 0,
         PassableOthers = 1 << 1,
         MovementRandom = 1 << 2,
-        Combative      = 1 << 3
+        Combative      = 1 << 3,
+        Lootable       = 1 << 4
     };
 };
 
 struct Spells
 {
-    enum SpellsType
+    enum Enum
     {
         TouchOfDeath = 1 << 0,
         Fireball     = 1 << 1,
@@ -34,7 +35,7 @@ struct Spells
 
 struct States
 {
-    enum StatesType
+    enum Enum
     {
         Combat = 1 << 0,
         Switch = 1 << 1,
@@ -44,7 +45,7 @@ struct States
 
 struct Orientation
 {
-    enum OrientationType
+    enum Enum
     {
         North = 0,
         East  = 1,
@@ -55,7 +56,7 @@ struct Orientation
 
 struct Load
 {
-    enum LoadType
+    enum Enum
     {
         Default  = 0,
         Previous = 1
@@ -74,3 +75,8 @@ enum class GameConfig
     Configure
 };
 
+enum class ItemType
+{
+    Weapon,
+    Armour
+};

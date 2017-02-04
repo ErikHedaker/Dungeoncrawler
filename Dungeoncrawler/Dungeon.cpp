@@ -67,7 +67,7 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, 
     _indexPlayer( -1 )
 {
     Vector2<int> iterator;
-    std::pair<Category::CategoryType, int> entity;
+    std::pair<EntityType::Enum, int> entity;
 
     for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
     {
@@ -90,7 +90,7 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, 
     }
 }
 
-void Dungeon::Rotate( const Orientation::OrientationType& orientation )
+void Dungeon::Rotate( const Orientation::Enum& orientation )
 {
     const Vector2<int> sizeOld = _size;
 
@@ -162,12 +162,12 @@ void Dungeon::PlayerAdd( const Vector2<int>& position )
         EntityRemove( _indexPlayer );
     }
 
-    EntityAdd( positionPlayer, std::make_pair( Category::PlayerEntity, 0 ) );
+    EntityAdd( positionPlayer, std::make_pair( EntityType::PlayerEntity, 0 ) );
     _indexPlayer = _entities.size( ) - 1;
     UpdateVision( _entities[_indexPlayer]->position, static_cast<PlayerLocal*>( _entities[_indexPlayer].get( ) )->player.visionReach );
 }
 
-void Dungeon::MovementPlayer( const Orientation::OrientationType& orientation )
+void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
 {
     OccupantRemove( _indexPlayer );
     _entities[_indexPlayer]->positionPrevious = _entities[_indexPlayer]->position;
@@ -252,9 +252,9 @@ const Vector2<int>& Dungeon::GetPlayerPosition( ) const
 {
     return _entities[_indexPlayer]->position;
 }
-Orientation::OrientationType Dungeon::GetQuadrant( Vector2<int> position ) const
+Orientation::Enum Dungeon::GetQuadrant( Vector2<int> position ) const
 {
-    const std::map<std::pair<bool, bool>, Orientation::OrientationType> quadrant
+    const std::map<std::pair<bool, bool>, Orientation::Enum> quadrant
     {
         { { true,  false }, Orientation::North },
         { { true,  true  }, Orientation::East  },
@@ -277,7 +277,6 @@ bool Dungeon::GetVision( const Vector2<int>& position ) const
 {
     return _visionMap[( position.y * _size.x ) + position.x];
 }
-
 bool Dungeon::CheckTile( const Vector2<int>& position, int bitmask ) const
 {
     const auto& indexes = GetTile( position ).indexOccupants;
@@ -367,7 +366,7 @@ void Dungeon::UpdateTile( const Vector2<int>& position )
         tile.icon = _entities[i]->icon;
     }
 }
-void Dungeon::EntityAdd( const Vector2<int>& position, const std::pair<Category::CategoryType, int>& id )
+void Dungeon::EntityAdd( const Vector2<int>& position, const std::pair<EntityType::Enum, int>& id )
 {
     const int index = _entities.size( );
 
@@ -459,7 +458,7 @@ void Dungeon::GenerateDoors( bool generate, int amount )
         {
             const int index = RandomNumberGenerator( 0, valid.size( ) - 1 );
 
-            EntityAdd( valid[index], std::make_pair( Category::Structure, 3 ) );
+            EntityAdd( valid[index], std::make_pair( EntityType::Structure, 3 ) );
             links.push_back( { -1, -1, { -1, -1 }, valid[index] } );
             valid.erase( valid.begin( ) + index );
         }
@@ -482,7 +481,7 @@ void Dungeon::GenerateOuterWalls( bool generate )
                         iterator.x == _size.x - 1 ||
                         iterator.y == _size.y - 1 )
                     {
-                        EntityAdd( iterator, std::make_pair( Category::Structure, 2 ) );
+                        EntityAdd( iterator, std::make_pair( EntityType::Structure, 2 ) );
                     }
                 }
             }
@@ -512,7 +511,7 @@ void Dungeon::GenerateHiddenPath( bool generate )
             {
                 if( Unoccupied( position ) )
                 {
-                    EntityAdd( position, std::make_pair( Category::Structure, 1 ) );
+                    EntityAdd( position, std::make_pair( EntityType::Structure, 1 ) );
                 }
             }
         }
@@ -535,7 +534,7 @@ void Dungeon::GenerateSourceWalls( bool generate, int amount )
             if( Unoccupied( position ) &&
                 position != center )
             {
-                EntityAdd( position, std::make_pair( Category::Structure, 2 ) );
+                EntityAdd( position, std::make_pair( EntityType::Structure, 2 ) );
                 remaining--;
             }
         }
@@ -569,7 +568,7 @@ void Dungeon::GenerateExtensionWalls( bool generate, int amount )
                         Unoccupied( position ) &&
                         position != center )
                     {
-                        EntityAdd( position, std::make_pair( Category::Structure, 2 ) );
+                        EntityAdd( position, std::make_pair( EntityType::Structure, 2 ) );
                         remaining--;
                     }
                 }
@@ -595,7 +594,7 @@ void Dungeon::GenerateFillerWalls( bool generate, int amount )
                         Surrounded( iterator, 5 ) &&
                         iterator != center )
                     {
-                        EntityAdd( iterator, std::make_pair( Category::Structure, 2 ) );
+                        EntityAdd( iterator, std::make_pair( EntityType::Structure, 2 ) );
                     }
                 }
             }
@@ -625,7 +624,7 @@ void Dungeon::GenerateMonsters( bool generate, int amount )
                 {
                     std::vector<int> possibilities( { 0, 1, 2 } );
 
-                    EntityAdd( position, std::make_pair( Category::Character, possibilities[RandomNumberGenerator( 0, possibilities.size( ) - 1 )] ) );
+                    EntityAdd( position, std::make_pair( EntityType::Character, possibilities[RandomNumberGenerator( 0, possibilities.size( ) - 1 )] ) );
 
                     break;
                 }

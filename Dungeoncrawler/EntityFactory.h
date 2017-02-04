@@ -96,11 +96,6 @@ struct Player : public Character
         states( states )
     { }
 
-    virtual Player* Clone( ) const
-    {
-        return new Player( *this );
-    }
-
     int visionReach;
     int states;
 };
@@ -120,15 +115,29 @@ struct PlayerLocal : public Entity
     Player& player;
 };
 
+struct Item : public Entity
+{
+    Item( const std::string& name, char icon, int attributes ) :
+        Entity( name, icon, attributes )
+    { }
+    
+    virtual Item* Clone( ) const
+    {
+        return new Item( *this );
+    }
+
+    ItemType type;
+};
+
 class EntityFactory
 {
     public:
         EntityFactory( Player& player );
 
-        const std::unique_ptr<Entity>& Get( const std::pair<Category::CategoryType, int>& id ) const;
+        const std::unique_ptr<Entity>& Get( const std::pair<EntityType::Enum, int>& id ) const;
         const std::unique_ptr<Entity>& Get( const std::string& name ) const;
         const std::unique_ptr<Entity>& Get( char icon ) const;
 
     private:
-        const std::map<std::pair<Category::CategoryType, int>, std::unique_ptr<Entity>> _entities;
+        const std::map<std::pair<EntityType::Enum, int>, std::unique_ptr<Entity>> _entities;
 };

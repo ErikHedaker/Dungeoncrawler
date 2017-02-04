@@ -24,12 +24,10 @@ class Game
         EntityFactory _entityFactory;
         DungeonSystem _dungeonSystem;
 
-        void SetDungeonConfiguration( const GameConfig& type );
         void Reset( );
         void Start( );
-
         void TurnPlayer( Dungeon& dungeon );
         void DungeonLink( int indexDungeonCurrent );
-        void DungeonRotate( int indexDungeon, const Orientation::OrientationType& orientation );
+        void DungeonRotate( int indexDungeon, const Orientation::Enum& orientation );
         void DungeonSwitch( );
 };

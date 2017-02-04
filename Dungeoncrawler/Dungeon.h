@@ -52,19 +52,18 @@ class Dungeon
 
         std::vector<Link> links;
 
-        void Rotate( const Orientation::OrientationType& orientation );
+        void Rotate( const Orientation::Enum& orientation );
         void PlayerAdd( const Vector2<int>& position );
 
-        void MovementPlayer( const Orientation::OrientationType& orientation );
+        void MovementPlayer( const Orientation::Enum& orientation );
         void MovementRandom( );
         void Events( );
 
         const Vector2<int>& GetSize( ) const;
         const Vector2<int>& GetPlayerPosition( ) const;
-        Orientation::OrientationType GetQuadrant( Vector2<int> position ) const;
+        Orientation::Enum GetQuadrant( Vector2<int> position ) const;
         const Tile& GetTile( const Vector2<int>& position ) const;
         bool GetVision( const Vector2<int>& position ) const;
-
         bool CheckTile( const Vector2<int>& position, int bitmask ) const;
         bool InBounds( const Vector2<int>& position ) const;
         bool IsCorner( const Vector2<int>& position ) const;
@@ -83,7 +82,7 @@ class Dungeon
 
         void UpdateVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
-        void EntityAdd( const Vector2<int>& position, const std::pair<Category::CategoryType, int>& id );
+        void EntityAdd( const Vector2<int>& position, const std::pair<EntityType::Enum, int>& id );
         void EntityAdd( const Vector2<int>& position, const std::string& name );
         void EntityAdd( const Vector2<int>& position, char icon );
         void EntityRemove( int index );
