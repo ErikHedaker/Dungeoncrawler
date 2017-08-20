@@ -53,11 +53,11 @@ class Dungeon
         std::vector<Link> links;
 
         void Rotate( const Orientation::Enum& orientation );
-        void PlayerAdd( const Vector2<int>& position );
+        void PlayerAdd( const EntityFactory& entityFactory, const Vector2<int>& position );
 
         void MovementPlayer( const Orientation::Enum& orientation );
         void MovementRandom( );
-        void Events( );
+        void NextTurn( );
 
         const Vector2<int>& GetSize( ) const;
         const Vector2<int>& GetPlayerPosition( ) const;
@@ -71,7 +71,6 @@ class Dungeon
         bool Surrounded( const Vector2<int>& position, int threshold ) const;
 
     private:
-        const EntityFactory& _entityFactory;
         Vector2<int> _size;
         int _indexPlayer;
         std::vector<std::unique_ptr<Entity>> _entities;
@@ -82,18 +81,18 @@ class Dungeon
 
         void UpdateVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
-        void EntityAdd( const Vector2<int>& position, const std::pair<EntityType::Enum, int>& id );
-        void EntityAdd( const Vector2<int>& position, const std::string& name );
-        void EntityAdd( const Vector2<int>& position, char icon );
+        void EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, const std::pair<EntityType::Enum, int>& id );
+        void EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, const std::string& name );
+        void EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, char icon );
         void EntityRemove( int index );
         void OccupantAdd( int index );
         void OccupantRemove( int index );
 
-        void GenerateDoors( bool generate, int amount );
-        void GenerateOuterWalls( bool generate );
-        void GenerateHiddenPath( bool generate );
-        void GenerateSourceWalls( bool generate, int amount );
-        void GenerateExtensionWalls( bool generate, int amount );
-        void GenerateFillerWalls( bool generate, int amount );
-        void GenerateMonsters( bool generater, int amount );
+        void GenerateDoors( const EntityFactory& entityFactory, int amount );
+        void GenerateOuterWalls( const EntityFactory& entityFactory );
+        void GenerateHiddenPath( const EntityFactory& entityFactory );
+        void GenerateSourceWalls( const EntityFactory& entityFactory, int amount );
+        void GenerateExtensionWalls( const EntityFactory& entityFactory, int amount );
+        void GenerateFillerWalls( const EntityFactory& entityFactory, int amount );
+        void GenerateMonsters( const EntityFactory& entityFactory, int amount );
 };

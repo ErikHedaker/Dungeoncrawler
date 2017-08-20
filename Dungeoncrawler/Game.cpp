@@ -96,7 +96,7 @@ void Game::Reset( )
     _dungeonSystem.dungeons.emplace_back( _entityFactory, _dungeonSystem.config );
     _dungeonSystem.indexCurrent = 0;
     DungeonLink( 0 );
-    _dungeonSystem.dungeons[0].PlayerAdd( _dungeonSystem.dungeons[0].GetSize( ) / 2 );
+    _dungeonSystem.dungeons[0].PlayerAdd( _entityFactory, _dungeonSystem.dungeons[0].GetSize( ) / 2 );
 }
 void Game::Start( )
 {
@@ -105,7 +105,7 @@ void Game::Start( )
     {
         TurnPlayer( _dungeonSystem.dungeons[_dungeonSystem.indexCurrent] );
         _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].MovementRandom( );
-        _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].Events( );
+        _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].NextTurn( );
         _player.Update( );
 
         if( _player.states & States::Switch )
@@ -226,7 +226,7 @@ void Game::DungeonSwitch( )
 
             DungeonLink( indexNew );
             _dungeonSystem.indexCurrent = indexNew;
-            _dungeonSystem.dungeons[indexNew].PlayerAdd( _dungeonSystem.dungeons[indexOld].links[i].exit );
+            _dungeonSystem.dungeons[indexNew].PlayerAdd( _entityFactory, _dungeonSystem.dungeons[indexOld].links[i].exit );
             DungeonRotate( indexNew, static_cast<Orientation::Enum>( (
                 _dungeonSystem.dungeons[indexOld].GetQuadrant( _dungeonSystem.dungeons[indexOld].GetPlayerPosition( ) ) -
                 _dungeonSystem.dungeons[indexNew].GetQuadrant( _dungeonSystem.dungeons[indexNew].GetPlayerPosition( ) ) + 2 ) % 4 ) );
