@@ -110,18 +110,29 @@ DungeonConfiguration GetDungeonConfiguration( const GameConfig& type )
 
     return DungeonConfiguration( );
 }
-Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& sizeOld, const Orientation::Enum& orientation )
+Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& orientation )
 {
-    Vector2<int> positionRotation = position;
-    Vector2<int> sizeRotation = sizeOld;
-
-    for( int i = 0; i < orientation; i++ )
+    switch( orientation )
     {
-        std::swap( sizeRotation.x, sizeRotation.y );
-        positionRotation = { sizeRotation.x - positionRotation.y - 1, positionRotation.x };
+        case Orientation::North:
+        {
+            return position;
+        }
+        case Orientation::East:
+        {
+            return { size.y - position.y - 1, position.x };
+        }
+        case Orientation::South:
+        {
+            return { size.x - position.x - 1, size.y - position.y - 1 };
+        }
+        case Orientation::West:
+        {
+            return { position.y, size.x - position.x - 1 };
+        }
     }
 
-    return positionRotation;
+    return position;
 }
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation )
 {

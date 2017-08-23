@@ -15,7 +15,7 @@ int GetPositiveInteger( const std::string& context );
 char GetChar( const std::string& context, const std::vector<char>& valid, std::function<int(int)> modifier = nullptr );
 void GetEnter( );
 DungeonConfiguration GetDungeonConfiguration( const GameConfig& type = GameConfig::Default );
-Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& sizeOld, const Orientation::Enum& orientation );
+Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& orientation );
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation );
 Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, int west, int south, int east, int still );
 Ability GetAbility( const std::vector<Ability>& abilities );
