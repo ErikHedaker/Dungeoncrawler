@@ -58,10 +58,10 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const DungeonConfiguration
     if( config.generateFillerWalls ) GenerateFillerWalls( entityFactory, config.amountFillerWallsCycles );
     if( config.generateMonsters ) GenerateMonsters( entityFactory, config.amountMonsters );
 }
-Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap ) :
+Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& vision, const std::vector<char>& icons ) :
     _size( size ),
     _tiles( size.x * size.y ),
-    _vision( visionMap ),
+    _vision( vision ),
     _indexPlayer( -1 )
 {
     Vector2<int> iterator;
@@ -71,7 +71,7 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, 
     {
         for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
         {
-            char icon = iconMap[( iterator.y * size.x ) + iterator.x];
+            char icon = icons[( iterator.y * size.x ) + iterator.x];
 
             if( icon != '-' )
             {
@@ -94,8 +94,8 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
 
     for( int i = 0; i < orientation; i++ )
     {
-        auto tileMapRotated = _tiles;
-        auto visionMapRotated = _vision;
+        auto tilesRotated = _tiles;
+        auto visionRotated = _vision;
         Vector2<int> iterator;
 
         std::swap( _size.x, _size.y );
@@ -104,21 +104,21 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
         {
             for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
             {
-                tileMapRotated[( iterator.y * _size.x ) + iterator.x] = _tiles[( iterator.x * _size.y ) + iterator.y];
-                visionMapRotated[( iterator.y * _size.x ) + iterator.x] = _vision[( iterator.x * _size.y ) + iterator.y];
+                tilesRotated[( iterator.y * _size.x ) + iterator.x] = _tiles[( iterator.x * _size.y ) + iterator.y];
+                visionRotated[( iterator.y * _size.x ) + iterator.x] = _vision[( iterator.x * _size.y ) + iterator.y];
             }
 
-            auto& tileColoumBegin   = tileMapRotated.begin( )   + iterator.y * _size.x;
-            auto& tileColoumEnd     = tileMapRotated.begin( )   + iterator.y * _size.x + _size.x;
-            auto& visionColoumBegin = visionMapRotated.begin( ) + iterator.y * _size.x;
-            auto& visionColoumEnd   = visionMapRotated.begin( ) + iterator.y * _size.x + _size.x;
+            auto& tileColoumBegin = tilesRotated.begin( ) + iterator.y * _size.x;
+            auto& tileColoumEnd = tilesRotated.begin( ) + iterator.y * _size.x + _size.x;
+            auto& visionColoumBegin = visionRotated.begin( ) + iterator.y * _size.x;
+            auto& visionColoumEnd = visionRotated.begin( ) + iterator.y * _size.x + _size.x;
 
             std::reverse( tileColoumBegin, tileColoumEnd );
             std::reverse( visionColoumBegin, visionColoumEnd );
         }
 
-        _tiles   = tileMapRotated;
-        _vision = visionMapRotated;
+        _tiles = tilesRotated;
+        _vision = visionRotated;
     }
 
     for( auto& entity : _entities )
@@ -354,7 +354,7 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
 }
 void Dungeon::UpdateTile( const Vector2<int>& position )
 {
-    auto& tile = _tiles[( position.y * _size.x ) + position.x];
+    Tile& tile = _tiles[( position.y * _size.x ) + position.x];
 
     tile.icon = '-';
 
@@ -412,7 +412,7 @@ void Dungeon::EntityRemove( int index )
 void Dungeon::OccupantAdd( int index )
 {
     const Vector2<int> position = _entities[index]->position;
-    auto& indexes = _tiles[( position.y * _size.x ) + position.x].indexOccupants;
+    std::vector<int>& indexes = _tiles[( position.y * _size.x ) + position.x].indexOccupants;
 
     indexes.push_back( index );
     UpdateTile( position );
@@ -420,7 +420,7 @@ void Dungeon::OccupantAdd( int index )
 void Dungeon::OccupantRemove( int index )
 {
     const Vector2<int> position = _entities[index]->position;
-    auto& indexes = _tiles[( position.y * _size.x ) + position.x].indexOccupants;
+    std::vector<int>& indexes = _tiles[( position.y * _size.x ) + position.x].indexOccupants;
 
     indexes.erase( std::remove( indexes.begin( ), indexes.end( ), index ), indexes.end( ) );
     UpdateTile( position );

@@ -47,8 +47,8 @@ struct Tile
 class Dungeon
 {
     public:
-        Dungeon( const EntityFactory& entityLibrary, const DungeonConfiguration& config );
-        Dungeon( const EntityFactory& entityLibrary, const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap );
+        Dungeon( const EntityFactory& entityFactory, const DungeonConfiguration& config );
+        Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& vision, const std::vector<char>& icons );
 
         std::vector<Link> links;
 
