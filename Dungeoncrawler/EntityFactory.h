@@ -132,7 +132,7 @@ struct Item : public Entity
 class EntityFactory
 {
     public:
-        EntityFactory( Player& player );
+        EntityFactory( Player& player, const std::vector<Ability>& abilities, const std::vector<Character>& characters, const std::vector<Structure>& structures );
 
         const std::unique_ptr<Entity>& Get( const std::pair<EntityType::Enum, int>& id ) const;
         const std::unique_ptr<Entity>& Get( const std::string& name ) const;

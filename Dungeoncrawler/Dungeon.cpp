@@ -45,23 +45,23 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const DungeonConfiguration
         config.sizeDungeonFixed ? config.sizeDungeon.x : RandomNumberGenerator( 30, 50 ),
         config.sizeDungeonFixed ? config.sizeDungeon.y : RandomNumberGenerator( 30, 50 )
     } ),
-    _tileMap( _size.x * _size.y ),
-    _visionMap( _size.x * _size.y, false ),
+    _tiles( _size.x * _size.y ),
+    _vision( _size.x * _size.y, false ),
     _indexPlayer( -1 )
 
 {
-    if( config.generateDoors )          GenerateDoors(          entityFactory, config.amountDoors );
-    if( config.generateOuterWalls )     GenerateOuterWalls(     entityFactory );
-    if( config.generateHiddenPath )     GenerateHiddenPath(     entityFactory );
-    if( config.generateSourceWalls )    GenerateSourceWalls(    entityFactory, config.amountSourceWalls );
+    if( config.generateDoors ) GenerateDoors( entityFactory, config.amountDoors );
+    if( config.generateOuterWalls ) GenerateOuterWalls( entityFactory );
+    if( config.generateHiddenPath ) GenerateHiddenPath( entityFactory );
+    if( config.generateSourceWalls ) GenerateSourceWalls( entityFactory, config.amountSourceWalls );
     if( config.generateExtensionWalls ) GenerateExtensionWalls( entityFactory, config.amountExtensionWalls );
-    if( config.generateFillerWalls )    GenerateFillerWalls(    entityFactory, config.amountFillerWallsCycles );
-    if( config.generateMonsters )       GenerateMonsters(       entityFactory, config.amountMonsters );
+    if( config.generateFillerWalls ) GenerateFillerWalls( entityFactory, config.amountFillerWallsCycles );
+    if( config.generateMonsters ) GenerateMonsters( entityFactory, config.amountMonsters );
 }
 Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& visionMap, const std::vector<char>& iconMap ) :
     _size( size ),
-    _tileMap( size.x * size.y ),
-    _visionMap( visionMap ),
+    _tiles( size.x * size.y ),
+    _vision( visionMap ),
     _indexPlayer( -1 )
 {
     Vector2<int> iterator;
@@ -94,8 +94,8 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
 
     for( int i = 0; i < orientation; i++ )
     {
-        auto tileMapRotated = _tileMap;
-        auto visionMapRotated = _visionMap;
+        auto tileMapRotated = _tiles;
+        auto visionMapRotated = _vision;
         Vector2<int> iterator;
 
         std::swap( _size.x, _size.y );
@@ -104,8 +104,8 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
         {
             for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
             {
-                tileMapRotated[( iterator.y * _size.x ) + iterator.x] = _tileMap[( iterator.x * _size.y ) + iterator.y];
-                visionMapRotated[( iterator.y * _size.x ) + iterator.x] = _visionMap[( iterator.x * _size.y ) + iterator.y];
+                tileMapRotated[( iterator.y * _size.x ) + iterator.x] = _tiles[( iterator.x * _size.y ) + iterator.y];
+                visionMapRotated[( iterator.y * _size.x ) + iterator.x] = _vision[( iterator.x * _size.y ) + iterator.y];
             }
 
             auto& tileColoumBegin   = tileMapRotated.begin( )   + iterator.y * _size.x;
@@ -117,8 +117,8 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
             std::reverse( visionColoumBegin, visionColoumEnd );
         }
 
-        _tileMap   = tileMapRotated;
-        _visionMap = visionMapRotated;
+        _tiles   = tileMapRotated;
+        _vision = visionMapRotated;
     }
 
     for( auto& entity : _entities )
@@ -164,7 +164,6 @@ void Dungeon::PlayerAdd( const EntityFactory& entityFactory, const Vector2<int>&
     _indexPlayer = _entities.size( ) - 1;
     UpdateVision( _entities[_indexPlayer]->position, static_cast<PlayerLocal*>( _entities[_indexPlayer].get( ) )->player.visionReach );
 }
-
 void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
 {
     OccupantRemove( _indexPlayer );
@@ -211,7 +210,7 @@ void Dungeon::NextTurn( )
     }
     
     /* Engage combative entity on players position */
-    for( auto i : _tileMap[( _entities[_indexPlayer]->position.y * _size.x ) + _entities[_indexPlayer]->position.x].indexOccupants )
+    for( auto i : _tiles[( _entities[_indexPlayer]->position.y * _size.x ) + _entities[_indexPlayer]->position.x].indexOccupants )
     {
         if( _entities[i]->attributes & Attributes::Combative )
         {
@@ -252,7 +251,7 @@ const Vector2<int>& Dungeon::GetPlayerPosition( ) const
 }
 Orientation::Enum Dungeon::GetQuadrant( Vector2<int> position ) const
 {
-    const std::map<std::pair<bool, bool>, Orientation::Enum> quadrant
+    const std::map<std::pair<bool, bool>, Orientation::Enum> quadrants
     {
         { { true,  false }, Orientation::North },
         { { true,  true  }, Orientation::East  },
@@ -260,20 +259,20 @@ Orientation::Enum Dungeon::GetQuadrant( Vector2<int> position ) const
         { { false, false }, Orientation::West  }
     };
     const Vector2<float> positionf = position;
-    const Vector2<float> size = _size;
-    const Vector2<float> ratio = size / size.y;
-    const bool rightOfMainDiagonal = positionf.x > ( positionf.y * ratio.x );
-    const bool rightOfAntiDiagonal = positionf.x > ( size.x - positionf.y * ratio.x - 1 );
+    const Vector2<float> sizef = _size;
+    const Vector2<float> ratiof = sizef / sizef.y;
+    const bool rightOfMainDiagonal = positionf.x > ( positionf.y * ratiof.x );
+    const bool rightOfAntiDiagonal = positionf.x > ( sizef.x - positionf.y * ratiof.x - 1 );
 
-    return quadrant.at( { rightOfMainDiagonal, rightOfAntiDiagonal } );
+    return quadrants.at( { rightOfMainDiagonal, rightOfAntiDiagonal } );
 }
 const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
 {
-    return _tileMap[( position.y * _size.x ) + position.x];
+    return _tiles[( position.y * _size.x ) + position.x];
 }
 bool Dungeon::GetVision( const Vector2<int>& position ) const
 {
-    return _visionMap[( position.y * _size.x ) + position.x];
+    return _vision[( position.y * _size.x ) + position.x];
 }
 bool Dungeon::CheckTile( const Vector2<int>& position, int bitmask ) const
 {
@@ -306,7 +305,7 @@ bool Dungeon::IsCorner( const Vector2<int>& position ) const
 }
 bool Dungeon::Unoccupied( const Vector2<int>& position ) const
 {
-    return _tileMap[( position.y * _size.x ) + position.x].indexOccupants.empty( );
+    return _tiles[( position.y * _size.x ) + position.x].indexOccupants.empty( );
 }
 bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 {
@@ -348,14 +347,14 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
         {
             if( InBounds( iterator ) )
             {
-                _visionMap[( iterator.y * _size.x ) + iterator.x] = true;
+                _vision[( iterator.y * _size.x ) + iterator.x] = true;
             }
         }
     }
 }
 void Dungeon::UpdateTile( const Vector2<int>& position )
 {
-    auto& tile = _tileMap[( position.y * _size.x ) + position.x];
+    auto& tile = _tiles[( position.y * _size.x ) + position.x];
 
     tile.icon = '-';
 
@@ -413,7 +412,7 @@ void Dungeon::EntityRemove( int index )
 void Dungeon::OccupantAdd( int index )
 {
     const Vector2<int> position = _entities[index]->position;
-    auto& indexes = _tileMap[( position.y * _size.x ) + position.x].indexOccupants;
+    auto& indexes = _tiles[( position.y * _size.x ) + position.x].indexOccupants;
 
     indexes.push_back( index );
     UpdateTile( position );
@@ -421,7 +420,7 @@ void Dungeon::OccupantAdd( int index )
 void Dungeon::OccupantRemove( int index )
 {
     const Vector2<int> position = _entities[index]->position;
-    auto& indexes = _tileMap[( position.y * _size.x ) + position.x].indexOccupants;
+    auto& indexes = _tiles[( position.y * _size.x ) + position.x].indexOccupants;
 
     indexes.erase( std::remove( indexes.begin( ), indexes.end( ), index ), indexes.end( ) );
     UpdateTile( position );

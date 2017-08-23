@@ -13,7 +13,7 @@ struct DungeonSystem
 class Game
 {
     public:
-        Game( );
+        Game( const std::vector<Ability>& abilities, const std::vector<Character>& characters, const std::vector<Structure>& structures );
 
         void Menu( );
         bool Exist( ) const;

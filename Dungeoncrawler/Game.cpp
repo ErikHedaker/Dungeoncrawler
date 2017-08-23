@@ -4,10 +4,10 @@
 #include <map>
 #include <cctype>
 
-Game::Game( ) :
+Game::Game( const std::vector<Ability>& abilities, const std::vector<Character>& characters, const std::vector<Structure>& structures ) :
     _status( GameStatus::Menu ),
-    _player( LoadPlayerDefault( LoadAbilities( ) ) ),
-    _entityFactory( _player )
+    _player( LoadPlayerDefault( abilities ) ),
+    _entityFactory( _player, abilities, characters, structures )
 { }
 
 void Game::Menu( )

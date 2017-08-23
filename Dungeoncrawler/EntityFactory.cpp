@@ -2,13 +2,10 @@
 #include "Functions.h"
 #include <algorithm>
 
-EntityFactory::EntityFactory( Player& player ) :
-    _entities( [&player] ( )
+EntityFactory::EntityFactory( Player& player, const std::vector<Ability>& abilities, const std::vector<Character>& characters, const std::vector<Structure>& structures ) :
+    _entities( [&player, &abilities, &characters, &structures] ( )
     {
         std::map<std::pair<EntityType::Enum, int>, std::unique_ptr<Entity>> entities;
-        auto abilities = LoadAbilities( );
-        auto characters = LoadCharacters( abilities );
-        auto structures = LoadStructures( );
 
         entities.emplace( std::make_pair( EntityType::PlayerEntity, 0 ), std::make_unique<PlayerLocal>( PlayerLocal( player ) ) );
 

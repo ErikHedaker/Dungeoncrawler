@@ -54,7 +54,6 @@ class Dungeon
 
         void Rotate( const Orientation::Enum& orientation );
         void PlayerAdd( const EntityFactory& entityFactory, const Vector2<int>& position );
-
         void MovementPlayer( const Orientation::Enum& orientation );
         void MovementRandom( );
         void NextTurn( );
@@ -76,8 +75,8 @@ class Dungeon
         std::vector<std::unique_ptr<Entity>> _entities;
 
         /* 1D arrays interpreted as 2D arrays */
-        std::vector<Tile> _tileMap;
-        std::vector<bool> _visionMap;
+        std::vector<Tile> _tiles;
+        std::vector<bool> _vision;
 
         void UpdateVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
