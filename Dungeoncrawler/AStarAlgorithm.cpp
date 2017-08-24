@@ -18,7 +18,7 @@ bool Grid::Passable( const Vector2<int>& position ) const
 {
     return !_obstacles.count( position );
 }
-std::vector<Vector2<int>> Grid::GetNeighbors( const Vector2<int>& position ) const
+std::vector<Vector2<int>> Grid::GetNeighbours( const Vector2<int>& position ) const
 {
     const std::array<Vector2<int>, 4> directions =
     { {
@@ -59,56 +59,56 @@ bool NodeCompare::operator()( const Node& lhs, const Node& rhs ) const
     return lhs.priority > rhs.priority;
 }
 
-int Heuristic( const Vector2<int>& from, const Vector2<int>& to )
+int Heuristic( const Vector2<int>& start, const Vector2<int>& end )
 {
-    return abs( from.x - to.x ) + abs( from.y - to.y );
+    return abs( start.x - end.x ) + abs( start.y - end.y );
 }
 
-std::vector<Vector2<int>> AStarAlgorithm( const Vector2<int>& start, const Vector2<int>& goal, const Vector2<int>& sizeDungeon, const std::vector<Vector2<int>>& obstacles )
+std::vector<Vector2<int>> AStarAlgorithm( const Vector2<int>& start, const Vector2<int>& end, const Vector2<int>& size, const std::vector<Vector2<int>>& obstacles )
 {
     /*
         http://www.redblobgames.com/pathfinding/a-star/implementation.html
         My implementation of the A* algorithm is based on this article
     */
 
-    const Grid grid( sizeDungeon, obstacles );
-    std::priority_queue<Node, std::vector<Node>, NodeCompare> activeNodes;
+    const Grid grid( size, obstacles );
+    std::priority_queue<Node, std::vector<Node>, NodeCompare> nodesActive;
     std::unordered_map<Vector2<int>, Vector2<int>, HasherVector2<int>> positionCameFrom;
     std::unordered_map<Vector2<int>, int,          HasherVector2<int>> positionCost;
 
-    activeNodes.emplace( start, 0 );
+    nodesActive.emplace( start, 0 );
     positionCameFrom[start] = start;
     positionCost[start] = 0;
 
-    while( !activeNodes.empty( ) )
+    while( !nodesActive.empty( ) )
     {
-        const Node current = activeNodes.top( );
+        const Node current = nodesActive.top( );
 
-        activeNodes.pop( );
+        nodesActive.pop( );
 
-        if( current.position == goal )
+        if( current.position == end )
         {
             break;
         }
 
-        for( const auto& neighbor : grid.GetNeighbors( current.position ) )
+        for( const auto& neighbour : grid.GetNeighbours( current.position ) )
         {
             const int newCost = positionCost[current.position] + 1;
 
-            if( !positionCost.count( neighbor ) ||
-                newCost < positionCost[neighbor] )
+            if( !positionCost.count( neighbour ) ||
+                newCost < positionCost[neighbour] )
             {
-                const int priority = newCost + Heuristic( neighbor, goal );
+                const int priority = newCost + Heuristic( neighbour, end );
 
-                activeNodes.emplace( neighbor, priority );
-                positionCameFrom[neighbor] = current.position;
-                positionCost[neighbor] = newCost;
+                nodesActive.emplace( neighbour, priority );
+                positionCameFrom[neighbour] = current.position;
+                positionCost[neighbour] = newCost;
             }
         }
     }
 
     /* Reconstruct path */
-    Vector2<int> current = goal;
+    Vector2<int> current = end;
     std::vector<Vector2<int>> path { current };
 
     while( current != start )
