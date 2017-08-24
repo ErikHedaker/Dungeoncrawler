@@ -90,15 +90,11 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, 
 
 void Dungeon::Rotate( const Orientation::Enum& orientation )
 {
+    const Vector2<int> sizeOld = { _size.x, _size.y };
+    const Vector2<int> sizeNew = { ( orientation + 2 ) % 2 == 0 ? _size.x : _size.y,
+                                   ( orientation + 2 ) % 2 == 0 ? _size.y : _size.x };
     std::vector<Tile> transform = _tiles;
-    Vector2<int> sizeNew = { _size.y, _size.x };
-    Vector2<int> sizeOld = { _size.x, _size.y };
     Vector2<int> iterator;
-
-    if( ( orientation + 2 ) % 2 == 0 )
-    {
-        sizeNew = sizeOld;
-    }
 
     for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
     {
@@ -279,37 +275,19 @@ bool Dungeon::CheckTile( const Vector2<int>& position, int bitmask ) const
 
     return count == indexes.size( );
 }
-bool Dungeon::InBounds( const Vector2<int>& position ) const
-{
-    return
-        position.x >= 0 &&
-        position.y >= 0 &&
-        position.x < _size.x &&
-        position.y < _size.y;
-}
-bool Dungeon::IsCorner( const Vector2<int>& position ) const
-{
-    return
-        ( position.x == 0 || position.x == _size.x - 1 ) &&
-        ( position.y == 0 || position.y == _size.y - 1 );
-}
-bool Dungeon::Unoccupied( const Vector2<int>& position ) const
-{
-    return _tiles[( position.y * _size.x ) + position.x].indexOccupants.empty( );
-}
 bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 {
     static const std::array<Vector2<int>, 8> directions =
     { {
-        {  0, -1 },
-        {  1, -1 },
-        {  1,  0 },
-        {  1,  1 },
-        {  0,  1 },
+        { 0, -1 },
+        { 1, -1 },
+        { 1,  0 },
+        { 1,  1 },
+        { 0,  1 },
         { -1,  1 },
         { -1,  0 },
         { -1, -1 }
-    } };
+        } };
     int entities = 0;
 
     for( const auto& direction : directions )
@@ -323,6 +301,24 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
     }
 
     return entities >= threshold;
+}
+bool Dungeon::Unoccupied( const Vector2<int>& position ) const
+{
+    return _tiles[( position.y * _size.x ) + position.x].indexOccupants.empty( );
+}
+bool Dungeon::InBounds( const Vector2<int>& position ) const
+{
+    return
+        position.x >= 0 &&
+        position.y >= 0 &&
+        position.x < _size.x &&
+        position.y < _size.y;
+}
+bool Dungeon::IsCorner( const Vector2<int>& position ) const
+{
+    return
+        ( position.x == 0 || position.x == _size.x - 1 ) &&
+        ( position.y == 0 || position.y == _size.y - 1 );
 }
 
 void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )

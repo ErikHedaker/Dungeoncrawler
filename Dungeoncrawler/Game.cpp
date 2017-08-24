@@ -4,14 +4,16 @@
 #include <map>
 #include <cctype>
 
-Game::Game( const std::vector<Ability>& abilities, const std::vector<Character>& characters, const std::vector<Structure>& structures ) :
+Game::Game( ) :
     _status( GameStatus::Menu ),
-    _player( LoadPlayerDefault( abilities ) ),
-    _entityFactory( _player, abilities, characters, structures )
+    _player( LoadPlayerDefault( LoadAbilities( ) ) ),
+    _entityFactory( _player )
 { }
 
 void Game::Menu( )
 {
+    char choice;
+
     while( true )
     {
         system( "CLS" );
@@ -20,7 +22,7 @@ void Game::Menu( )
         std::cout << "[3] Build new game (Randomization)\n";
         std::cout << "[4] Build new game (Configuration)\n";
         std::cout << "[5] Exit\n\n";
-        const char choice = GetChar( "Enter choice: ", { '1', '2', '3', '4', '5' } );
+        choice = GetChar( "Enter choice: ", { '1', '2', '3', '4', '5' } );
         _status = GameStatus::Playing;
 
         switch( choice )
