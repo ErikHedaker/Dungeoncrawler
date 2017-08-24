@@ -46,7 +46,6 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const DungeonConfiguration
         config.sizeDungeonFixed ? config.sizeDungeon.y : RandomNumberGenerator( 30, 50 )
     } ),
     _tiles( _size.x * _size.y ),
-    _vision( _size.x * _size.y, false ),
     _indexPlayer( -1 )
 
 {
@@ -61,7 +60,6 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const DungeonConfiguration
 Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& vision, const std::vector<char>& icons ) :
     _size( size ),
     _tiles( size.x * size.y ),
-    _vision( vision ),
     _indexPlayer( -1 )
 {
     Vector2<int> iterator;
@@ -84,90 +82,44 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, 
                     EntityAdd( entityFactory, iterator, icon );
                 }
             }
+
+            _tiles[( iterator.y * size.x ) + iterator.x].visible = vision[( iterator.y * size.x ) + iterator.x];
         }
     }
 }
 
 void Dungeon::Rotate( const Orientation::Enum& orientation )
 {
-    //const Vector2<int> sizeOld = _size;
+    std::vector<Tile> transform = _tiles;
+    Vector2<int> sizeNew = { _size.y, _size.x };
+    Vector2<int> sizeOld = { _size.x, _size.y };
+    Vector2<int> iterator;
 
-    //for( int i = 0; i < orientation; i++ )
-    //{
-    //    auto tilesRotated = _tiles;
-    //    auto visionRotated = _vision;
-    //    Vector2<int> iterator;
+    if( ( orientation + 2 ) % 2 == 0 )
+    {
+        sizeNew = sizeOld;
+    }
 
-    //    std::swap( _size.x, _size.y );
+    for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
+    {
+        for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
+        {
+            const Vector2<int> rotation = PositionRotate( iterator, sizeOld, orientation );
+            const int indexOld = ( rotation.x * sizeNew.y ) + rotation.y;
+            const int indexNew = ( iterator.x * sizeOld.y ) + iterator.y;
 
-    //    for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
-    //    {
-    //        for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
-    //        {
-    //            tilesRotated[( iterator.y * _size.x ) + iterator.x] = _tiles[( iterator.x * _size.y ) + iterator.y];
-    //            visionRotated[( iterator.y * _size.x ) + iterator.x] = _vision[( iterator.x * _size.y ) + iterator.y];
-    //        }
-
-    //        auto& tileColoumBegin = tilesRotated.begin( ) + iterator.y * _size.x;
-    //        auto& tileColoumEnd = tilesRotated.begin( ) + iterator.y * _size.x + _size.x;
-    //        auto& visionColoumBegin = visionRotated.begin( ) + iterator.y * _size.x;
-    //        auto& visionColoumEnd = visionRotated.begin( ) + iterator.y * _size.x + _size.x;
-
-    //        std::reverse( tileColoumBegin, tileColoumEnd );
-    //        std::reverse( visionColoumBegin, visionColoumEnd );
-    //    }
-
-    //    _tiles = tilesRotated;
-    //    _vision = visionRotated;
-    //}
+            transform[indexNew] = _tiles[indexOld];
+        }
+    }
 
     for( auto& entity : _entities )
     {
-        entity->position = PositionRotate( entity->position, _size, orientation );
-        entity->positionPrevious = PositionRotate( entity->positionPrevious, _size, orientation );
+        entity->position = PositionRotate( entity->position, sizeOld, orientation );
+        entity->positionPrevious = PositionRotate( entity->positionPrevious, sizeOld, orientation );
     }
 
-    std::swap( _size.x, _size.y );
-    
-    switch( orientation )
-    {
-        case Orientation::North:
-        {
-            break;
-        }
-        case Orientation::East:
-        {
-            _tiles = Transpose( _tiles, _size );
-            _vision = Transpose( _vision, _size );
-            _tiles = ReverseRows( _tiles, _size );
-            _vision = ReverseRows( _vision, _size );
-
-            break;
-        }
-        case Orientation::South:
-        {
-            _tiles = ReverseRows( _tiles, _size );
-            _vision = ReverseRows( _vision, _size );
-            _tiles = ReverseColoums( _tiles, _size );
-            _vision = ReverseColoums( _vision, _size );
-
-            break;
-        }
-        case Orientation::West:
-        {
-            _tiles = ReverseRows( _tiles, _size );
-            _vision = ReverseRows( _vision, _size );
-            _tiles = Transpose( _tiles, _size );
-            _vision = Transpose( _vision, _size );
-
-            //_tiles = Transpose( _tiles, _size );
-            //_vision = Transpose( _vision, _size );
-            //_tiles = ReverseColoums( _tiles, _size );
-            //_vision = ReverseColoums( _vision, _size );
-
-            break;
-        }
-    }
+    _tiles = transform;
+    _size = sizeNew;
 }
 void Dungeon::PlayerAdd( const EntityFactory& entityFactory, const Vector2<int>& position )
 {
@@ -312,10 +264,6 @@ const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
 {
     return _tiles[( position.y * _size.x ) + position.x];
 }
-bool Dungeon::GetVision( const Vector2<int>& position ) const
-{
-    return _vision[( position.y * _size.x ) + position.x];
-}
 bool Dungeon::CheckTile( const Vector2<int>& position, int bitmask ) const
 {
     const auto& indexes = GetTile( position ).indexOccupants;
@@ -389,7 +337,7 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
         {
             if( InBounds( iterator ) )
             {
-                _vision[( iterator.y * _size.x ) + iterator.x] = true;
+                _tiles[( iterator.y * _size.x ) + iterator.x].visible = true;
             }
         }
     }

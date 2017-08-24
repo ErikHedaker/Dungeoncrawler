@@ -71,6 +71,17 @@ template<class T> std::vector<T> Transpose( const std::vector<T>& data, Vector2<
     }
 
     return transposed;
+
+    //std::vector<T> transpose( data.size( ) );
+    //Vector2<int> iterator;
+
+    //for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
+    //{
+    //    for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
+    //    {
+    //        transpose[( iterator.x * size.y ) + iterator.y] = data[( ( size.y - iterator.y - 1 ) * size.x ) + iterator.x]
+    //    }
+    //}
 }
 
 template<class T> std::vector<T> ReverseColoums( const std::vector<T>& data, Vector2<int> size )

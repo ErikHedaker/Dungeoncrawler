@@ -130,9 +130,11 @@ Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& s
         {
             return { position.y, size.x - position.x - 1 };
         }
+        default:
+        {
+            return position;
+        }
     }
-
-    return position;
 }
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation )
 {
@@ -280,7 +282,7 @@ void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector
                 std::cout << dungeon.GetTile( iterator ).icon;
             }
             else if( dungeon.InBounds( iterator ) &&
-                     dungeon.GetVision( iterator ) )
+                     dungeon.GetTile( iterator ).visible )
             {
                 std::cout << ':';
             }
@@ -387,7 +389,7 @@ void SaveDungeonSystem( const DungeonSystem& dungeonSystem )
                 }
                 else
                 {
-                    outFile << dungeon.GetVision( { iterator.x % size.x, iterator.y } );
+                    outFile << dungeon.GetTile( { iterator.x % size.x, iterator.y } ).visible;
                 }
             }
 

@@ -41,6 +41,7 @@ struct Link
 struct Tile
 {
     std::vector<int> indexOccupants;
+    bool visible = false;
     char icon = '-';
 };
 
@@ -62,7 +63,6 @@ class Dungeon
         const Vector2<int>& GetPlayerPosition( ) const;
         Orientation::Enum GetQuadrant( Vector2<int> position ) const;
         const Tile& GetTile( const Vector2<int>& position ) const;
-        bool GetVision( const Vector2<int>& position ) const;
         bool CheckTile( const Vector2<int>& position, int bitmask ) const;
         bool InBounds( const Vector2<int>& position ) const;
         bool IsCorner( const Vector2<int>& position ) const;
@@ -71,12 +71,9 @@ class Dungeon
 
     private:
         Vector2<int> _size;
-        int _indexPlayer;
-        std::vector<std::unique_ptr<Entity>> _entities;
-
-        /* 1D arrays interpreted as 2D arrays */
         std::vector<Tile> _tiles;
-        std::vector<bool> _vision;
+        std::vector<std::unique_ptr<Entity>> _entities;
+        int _indexPlayer;
 
         void UpdateVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
