@@ -59,3 +59,50 @@ class StringWrapper
     private:
         std::string data;   
 };
+
+template<class T> std::vector<T> Transpose( const std::vector<T>& data, Vector2<int> size )
+{
+    std::vector<T> transposed( data.size( ) );
+
+    for( int i = 0; i < size.x * size.y; i++ )
+    {
+        Vector2<int> iterator = { i / size.x, i % size.x };
+        transposed[i] = data[iterator.y * size.y + iterator.x];
+    }
+
+    return transposed;
+}
+
+template<class T> std::vector<T> ReverseColoums( const std::vector<T>& data, Vector2<int> size )
+{
+    std::vector<T> reversed = data;
+    Vector2<int> iterator;
+
+    for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
+    {
+        for( iterator.y = 0; iterator.y < size.y / 2; iterator.y++ )
+        {
+            auto& front = reversed[( iterator.y * size.x ) + iterator.x];
+            auto& back  = reversed[( ( size.y - iterator.y - 1 ) * size.x ) + iterator.x];
+
+            std::swap( front, back );
+        }
+    }
+
+    return reversed;
+}
+
+template<class T> std::vector<T> ReverseRows( const std::vector<T>& data, Vector2<int> size )
+{
+    std::vector<T> reversed = data;
+
+    for( int i = 0; i < size.y; i++ )
+    {
+        auto& first = reversed.begin( ) + i * size.x;
+        auto& last = reversed.begin( ) + i * size.x + size.x;
+
+        std::reverse( first, last );
+    }
+
+    return reversed;
+}

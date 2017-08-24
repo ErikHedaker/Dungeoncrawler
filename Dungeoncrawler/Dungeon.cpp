@@ -90,41 +90,83 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, 
 
 void Dungeon::Rotate( const Orientation::Enum& orientation )
 {
-    const Vector2<int> sizeOld = _size;
+    //const Vector2<int> sizeOld = _size;
 
-    for( int i = 0; i < orientation; i++ )
-    {
-        auto tilesRotated = _tiles;
-        auto visionRotated = _vision;
-        Vector2<int> iterator;
+    //for( int i = 0; i < orientation; i++ )
+    //{
+    //    auto tilesRotated = _tiles;
+    //    auto visionRotated = _vision;
+    //    Vector2<int> iterator;
 
-        std::swap( _size.x, _size.y );
+    //    std::swap( _size.x, _size.y );
 
-        for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
-        {
-            for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
-            {
-                tilesRotated[( iterator.y * _size.x ) + iterator.x] = _tiles[( iterator.x * _size.y ) + iterator.y];
-                visionRotated[( iterator.y * _size.x ) + iterator.x] = _vision[( iterator.x * _size.y ) + iterator.y];
-            }
+    //    for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
+    //    {
+    //        for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
+    //        {
+    //            tilesRotated[( iterator.y * _size.x ) + iterator.x] = _tiles[( iterator.x * _size.y ) + iterator.y];
+    //            visionRotated[( iterator.y * _size.x ) + iterator.x] = _vision[( iterator.x * _size.y ) + iterator.y];
+    //        }
 
-            auto& tileColoumBegin = tilesRotated.begin( ) + iterator.y * _size.x;
-            auto& tileColoumEnd = tilesRotated.begin( ) + iterator.y * _size.x + _size.x;
-            auto& visionColoumBegin = visionRotated.begin( ) + iterator.y * _size.x;
-            auto& visionColoumEnd = visionRotated.begin( ) + iterator.y * _size.x + _size.x;
+    //        auto& tileColoumBegin = tilesRotated.begin( ) + iterator.y * _size.x;
+    //        auto& tileColoumEnd = tilesRotated.begin( ) + iterator.y * _size.x + _size.x;
+    //        auto& visionColoumBegin = visionRotated.begin( ) + iterator.y * _size.x;
+    //        auto& visionColoumEnd = visionRotated.begin( ) + iterator.y * _size.x + _size.x;
 
-            std::reverse( tileColoumBegin, tileColoumEnd );
-            std::reverse( visionColoumBegin, visionColoumEnd );
-        }
+    //        std::reverse( tileColoumBegin, tileColoumEnd );
+    //        std::reverse( visionColoumBegin, visionColoumEnd );
+    //    }
 
-        _tiles = tilesRotated;
-        _vision = visionRotated;
-    }
+    //    _tiles = tilesRotated;
+    //    _vision = visionRotated;
+    //}
 
     for( auto& entity : _entities )
     {
-        entity->position = PositionRotate( entity->position, sizeOld, orientation );
-        entity->positionPrevious = PositionRotate( entity->positionPrevious, sizeOld, orientation );
+        entity->position = PositionRotate( entity->position, _size, orientation );
+        entity->positionPrevious = PositionRotate( entity->positionPrevious, _size, orientation );
+    }
+
+    std::swap( _size.x, _size.y );
+    
+    switch( orientation )
+    {
+        case Orientation::North:
+        {
+            break;
+        }
+        case Orientation::East:
+        {
+            _tiles = Transpose( _tiles, _size );
+            _vision = Transpose( _vision, _size );
+            _tiles = ReverseRows( _tiles, _size );
+            _vision = ReverseRows( _vision, _size );
+
+            break;
+        }
+        case Orientation::South:
+        {
+            _tiles = ReverseRows( _tiles, _size );
+            _vision = ReverseRows( _vision, _size );
+            _tiles = ReverseColoums( _tiles, _size );
+            _vision = ReverseColoums( _vision, _size );
+
+            break;
+        }
+        case Orientation::West:
+        {
+            _tiles = ReverseRows( _tiles, _size );
+            _vision = ReverseRows( _vision, _size );
+            _tiles = Transpose( _tiles, _size );
+            _vision = Transpose( _vision, _size );
+
+            //_tiles = Transpose( _tiles, _size );
+            //_vision = Transpose( _vision, _size );
+            //_tiles = ReverseColoums( _tiles, _size );
+            //_vision = ReverseColoums( _vision, _size );
+
+            break;
+        }
     }
 }
 void Dungeon::PlayerAdd( const EntityFactory& entityFactory, const Vector2<int>& position )

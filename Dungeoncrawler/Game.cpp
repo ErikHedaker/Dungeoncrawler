@@ -125,6 +125,7 @@ void Game::TurnPlayer( Dungeon& dungeon )
         { 'D', Orientation::East  },
     };
     bool done = false;
+    char choice;
 
     while( !done )
     {
@@ -136,10 +137,12 @@ void Game::TurnPlayer( Dungeon& dungeon )
         std::cout << "[A] Go West\n";
         std::cout << "[S] Go South\n";
         std::cout << "[D] Go East\n";
-        std::cout << "[E] Save and exit to meny\n";
-        std::cout << "[R] Exit to meny\n";
-        std::cout << "[F] Rotate dungeon\n";
-        const char choice = GetChar( "Enter choice: ", { 'W', 'A', 'S', 'D', 'E', 'R', 'F' }, std::toupper );
+        std::cout << "[E] Exit to meny while saving\n";
+        std::cout << "[R] Exit to meny without saving\n";
+        std::cout << "[F] Rotate dungeon 90'\n";
+        std::cout << "[G] Rotate dungeon 180'\n";
+        std::cout << "[H] Rotate dungeon 270'\n\n";
+        choice = GetChar( "Enter choice: ", { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
 
         switch( choice )
         {
@@ -171,6 +174,18 @@ void Game::TurnPlayer( Dungeon& dungeon )
             case 'F':
             {
                 DungeonRotate( _dungeonSystem.indexCurrent, Orientation::East );
+
+                break;
+            }
+            case 'G':
+            {
+                DungeonRotate( _dungeonSystem.indexCurrent, Orientation::South );
+
+                break;
+            }
+            case 'H':
+            {
+                DungeonRotate( _dungeonSystem.indexCurrent, Orientation::West );
 
                 break;
             }
