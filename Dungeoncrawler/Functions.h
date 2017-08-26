@@ -27,7 +27,7 @@ void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector
 void PrintHealth( const Character& character );
 void Combat( Character& player, Character& AI );
 void SaveDungeonSystem( const DungeonSystem& dungeonSystem );
-DungeonSystem LoadDungeonSystem( const EntityFactory& entityLibrary );
+DungeonSystem LoadDungeonSystem( PlayerPair& player, const EntityFactory& entityFactory );
 std::vector<Ability> LoadAbilities( );
 std::vector<Character> LoadCharacters( const std::vector<Ability>& abilitiesLibrary );
 std::vector<Structure> LoadStructures( );

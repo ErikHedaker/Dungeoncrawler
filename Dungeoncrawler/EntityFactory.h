@@ -20,6 +20,8 @@ struct Entity
     virtual ~Entity( ) { };
 
     virtual Entity* Clone( ) const = 0;
+    virtual void Update( )
+    { };
 
     std::string name;
     char icon;
@@ -45,11 +47,11 @@ struct Ability : public Entity
 
 struct Character : public Entity
 {
-    Character( const std::string& name, char icon, int attributes, int health, int healthMax, int healthRegen, float damage, const std::vector<Ability>& abilities ) :
+    Character( const std::string& name, char icon, int attributes, int health, int healthMax, int healthRegeneration, float damage, const std::vector<Ability>& abilities ) :
         Entity( name, icon, attributes ),
         health( health ),
         healthMax( healthMax ),
-        healthRegen( healthRegen ),
+        healthRegeneration( healthRegeneration ),
         damage( damage ),
         abilities( abilities )
     { }
@@ -58,10 +60,9 @@ struct Character : public Entity
     {
         return new Character( *this );
     }
-
-    void Update( )
+    void Update( ) override
     {
-        health += healthRegen;
+        health += healthRegeneration;
 
         if( health > healthMax )
         {
@@ -71,7 +72,7 @@ struct Character : public Entity
 
     int health;
     int healthMax;
-    int healthRegen;
+    int healthRegeneration;
     float damage;
     std::vector<Ability> abilities;
 };
@@ -100,21 +101,6 @@ struct Player : public Character
     int states;
 };
 
-struct PlayerLocal : public Entity
-{
-    PlayerLocal( Player& player ) :
-        Entity( player.name, player.icon, player.attributes ),
-        player( player )
-    { }
-
-    virtual PlayerLocal* Clone( ) const
-    {
-        return new PlayerLocal( *this );
-    }
-
-    Player& player;
-};
-
 struct Item : public Entity
 {
     Item( const std::string& name, char icon, int attributes ) :
@@ -129,10 +115,21 @@ struct Item : public Entity
     ItemType type;
 };
 
+struct PlayerPair
+{
+    PlayerPair::PlayerPair( const Player& player ) :
+        base( std::make_unique<Player>( player ) ),
+        real( dynamic_cast<Player*>( base.get( ) ) )
+    { }
+
+    std::unique_ptr<Entity> base;
+    Player* const real;
+};
+
 class EntityFactory
 {
     public:
-        EntityFactory( Player& player );
+        EntityFactory( );
 
         const std::unique_ptr<Entity>& Get( const std::pair<EntityType::Enum, int>& id ) const;
         const std::unique_ptr<Entity>& Get( const std::string& name ) const;

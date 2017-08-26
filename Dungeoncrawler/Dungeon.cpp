@@ -39,15 +39,14 @@ DungeonConfiguration::DungeonConfiguration( bool a, Vector2<int> b, bool c, bool
     amountMonsters( n )
 { }
 
-Dungeon::Dungeon( const EntityFactory& entityFactory, const DungeonConfiguration& config ) :
+Dungeon::Dungeon( PlayerPair& player, const EntityFactory& entityFactory, const DungeonConfiguration& config ) :
     _size
     ( {
         config.sizeDungeonFixed ? config.sizeDungeon.x : RandomNumberGenerator( 30, 50 ),
         config.sizeDungeonFixed ? config.sizeDungeon.y : RandomNumberGenerator( 30, 50 )
     } ),
     _tiles( _size.x * _size.y ),
-    _indexPlayer( -1 )
-
+    _player( player )
 {
     if( config.generateDoors ) GenerateDoors( entityFactory, config.amountDoors );
     if( config.generateOuterWalls ) GenerateOuterWalls( entityFactory );
@@ -57,10 +56,10 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const DungeonConfiguration
     if( config.generateFillerWalls ) GenerateFillerWalls( entityFactory, config.amountFillerWallsCycles );
     if( config.generateMonsters ) GenerateMonsters( entityFactory, config.amountMonsters );
 }
-Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& vision, const std::vector<char>& icons ) :
+Dungeon::Dungeon( PlayerPair& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& vision, const std::vector<char>& icons ) :
     _size( size ),
     _tiles( size.x * size.y ),
-    _indexPlayer( -1 )
+    _player( player )
 {
     Vector2<int> iterator;
     std::pair<EntityType::Enum, int> entity;
@@ -75,7 +74,7 @@ Dungeon::Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, 
             {
                 if( icon == '@' )
                 {
-                    PlayerAdd( entityFactory, iterator );
+                    PlayerPlace( iterator );
                 }
                 else
                 {
@@ -114,12 +113,14 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
         entity->positionPrevious = PositionRotate( entity->positionPrevious, sizeOld, orientation );
     }
 
+    _player.real->position = PositionRotate( _player.real->position, sizeOld, orientation );
+    _player.real->positionPrevious = PositionRotate( _player.real->positionPrevious, sizeOld, orientation );
     _tiles = transform;
     _size = sizeNew;
 }
-void Dungeon::PlayerAdd( const EntityFactory& entityFactory, const Vector2<int>& position )
+void Dungeon::PlayerPlace( const Vector2<int>& position )
 {
-    Vector2<int> positionPlayer = position;
+    _player.real->position = InBounds( position ) ? position : _size / 2;
 
     if( !CheckTile( position, Attributes::PassableOthers ) )
     {
@@ -138,77 +139,70 @@ void Dungeon::PlayerAdd( const EntityFactory& entityFactory, const Vector2<int>&
             if( InBounds( nearby ) &&
                 CheckTile( nearby, Attributes::PassableOthers ) )
             {
-                positionPlayer = nearby;
+                _player.real->position = nearby;
 
                 break;
             }
         }
     }
 
-    if( _indexPlayer >= 0 )
-    {
-        EntityRemove( _indexPlayer );
-    }
-
-    EntityAdd( entityFactory, positionPlayer, std::make_pair( EntityType::PlayerEntity, 0 ) );
-    _indexPlayer = _entities.size( ) - 1;
-    UpdateVision( _entities[_indexPlayer]->position, static_cast<PlayerLocal*>( _entities[_indexPlayer].get( ) )->player.visionReach );
+    OccupantAdd( _player.base, _player.real->position );
+    UpdateVision( _player.real->position, _player.real->visionReach );
 }
 void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
 {
-    OccupantRemove( _indexPlayer );
-    _entities[_indexPlayer]->positionPrevious = _entities[_indexPlayer]->position;
-    _entities[_indexPlayer]->position = PositionMove( _entities[_indexPlayer]->position, orientation );
-    OccupantAdd( _indexPlayer );
+    OccupantRemove( _player.base, _player.real->position );
+    _player.real->positionPrevious = _player.real->position;
+    _player.real->position = PositionMove( _player.real->position, orientation );
+    OccupantAdd( _player.base, _player.real->position );
 }
 void Dungeon::MovementRandom( )
 {
-    for( unsigned int i = 0; i < _entities.size( ); i++ )
+    for( auto& entity : _entities )
     {
-        if( _entities[i]->attributes & Attributes::MovementRandom )
+        if( entity->attributes & Attributes::MovementRandom )
         {
-            OccupantRemove( i );
-            _entities[i]->positionPrevious = _entities[i]->position;
-            _entities[i]->position = PositionMoveProbability( _entities[i]->position, 1, 1, 1, 1, 12 );
-            OccupantAdd( i );
+            OccupantRemove( entity, entity->position );
+            entity->positionPrevious = entity->position;
+            entity->position = PositionMoveProbability( entity->position, 1, 1, 1, 1, 12 );
+            OccupantAdd( entity, entity->position );
         }
     }
 }
 void Dungeon::NextTurn( )
 {
-    Player& player = static_cast<PlayerLocal*>( _entities[_indexPlayer].get( ) )->player;
-    std::vector<int> indexesEntityRemove;
+    std::vector<std::unique_ptr<Entity>*> entitiesRemove;
 
     /* Collision detection for player */
-    if( !CheckTile( _entities[_indexPlayer]->position, Attributes::PassablePlayer ) )
+    if( !CheckTile( _player.real->position, Attributes::PassablePlayer ) )
     {
-        OccupantRemove( _indexPlayer );
-        std::swap( _entities[_indexPlayer]->position, _entities[_indexPlayer]->positionPrevious );
-        OccupantAdd( _indexPlayer );
+        OccupantRemove( _player.base, _player.real->position );
+        std::swap( _player.real->position, _player.real->positionPrevious );
+        OccupantAdd( _player.base, _player.real->position );
     }
 
     /* Collision detection for other entities */
-    for( unsigned int i = 0; i < _entities.size( ); i++ )
+    for( auto& entity : _entities )
     {
-        if( _entities[i]->attributes & Attributes::MovementRandom &&
-            !CheckTile( _entities[i]->position, Attributes::PassableOthers ) )
+        if( entity->attributes & Attributes::MovementRandom &&
+            !CheckTile( entity->position, Attributes::PassableOthers ) )
         {
-            OccupantRemove( i );
-            std::swap( _entities[i]->position, _entities[i]->positionPrevious );
-            OccupantAdd( i );
+            OccupantRemove( entity, entity->position );
+            std::swap( entity->position, entity->positionPrevious );
+            OccupantAdd( entity, entity->position );
         }
     }
     
     /* Engage combative entity on players position */
-    for( auto i : _tiles[( _entities[_indexPlayer]->position.y * _size.x ) + _entities[_indexPlayer]->position.x].indexOccupants )
+    for( auto& occupant : _tiles[( _player.real->position.y * _size.x ) + _player.real->position.x].occupants )
     {
-        if( _entities[i]->attributes & Attributes::Combative )
+        if( (*occupant)->attributes & Attributes::Combative )
         {
-            Combat( player, *static_cast<Character*>( _entities[i].get( ) ) );
+            Combat( *_player.real, *dynamic_cast<Character*>( (*occupant).get( ) ) );
 
-            if( player.health > 0 )
+            if( _player.real->health > 0 )
             {
-                indexesEntityRemove.push_back( i );
+                entitiesRemove.push_back( &(*occupant) );
             }
         }
     }
@@ -216,28 +210,24 @@ void Dungeon::NextTurn( )
     /* Switch dungeon for player */
     for( const auto& link : links )
     {
-        if( _entities[_indexPlayer]->position == link.entry )
+        if( _player.real->position == link.entry )
         {
-            player.states |= States::Switch;
-            OccupantRemove( _indexPlayer );
+            _player.real->states |= States::Switch;
+            OccupantRemove( _player.base, _player.real->position );
         }
     }
 
-    for( auto i : indexesEntityRemove )
+    for( auto& entity : entitiesRemove )
     {
-        EntityRemove( i );
+        EntityRemove( *entity, (*entity)->position );
     }
 
-    UpdateVision( _entities[_indexPlayer]->position, player.visionReach );
+    UpdateVision( _player.real->position, _player.real->visionReach );
 }
 
 const Vector2<int>& Dungeon::GetSize( ) const
 {
     return _size;
-}
-const Vector2<int>& Dungeon::GetPlayerPosition( ) const
-{
-    return _entities[_indexPlayer]->position;
 }
 Orientation::Enum Dungeon::GetQuadrant( Vector2<int> position ) const
 {
@@ -262,32 +252,31 @@ const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
 }
 bool Dungeon::CheckTile( const Vector2<int>& position, int bitmask ) const
 {
-    const auto& indexes = GetTile( position ).indexOccupants;
     int count = 0;
 
-    for( auto i : indexes )
+    for( auto occupants : GetTile( position ).occupants )
     {
-        if( _entities[i]->attributes & bitmask )
+        if( (*occupants)->attributes & bitmask )
         {
             count++;
         }
     }
 
-    return count == indexes.size( );
+    return count == GetTile( position ).occupants.size( );
 }
 bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 {
     static const std::array<Vector2<int>, 8> directions =
     { {
-        { 0, -1 },
-        { 1, -1 },
-        { 1,  0 },
-        { 1,  1 },
-        { 0,  1 },
+        {  0, -1 },
+        {  1, -1 },
+        {  1,  0 },
+        {  1,  1 },
+        {  0,  1 },
         { -1,  1 },
         { -1,  0 },
         { -1, -1 }
-        } };
+    } };
     int entities = 0;
 
     for( const auto& direction : directions )
@@ -304,7 +293,7 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 }
 bool Dungeon::Unoccupied( const Vector2<int>& position ) const
 {
-    return _tiles[( position.y * _size.x ) + position.x].indexOccupants.empty( );
+    return _tiles[( position.y * _size.x ) + position.x].occupants.empty( );
 }
 bool Dungeon::InBounds( const Vector2<int>& position ) const
 {
@@ -344,71 +333,61 @@ void Dungeon::UpdateTile( const Vector2<int>& position )
 
     tile.icon = '-';
 
-    for( auto i : tile.indexOccupants )
+    for( const auto& occupant : tile.occupants )
     {
-        tile.icon = _entities[i]->icon;
+        tile.icon = (*occupant)->icon;
     }
 }
 void Dungeon::EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, const std::pair<EntityType::Enum, int>& id )
 {
-    const int index = _entities.size( );
-
     _entities.push_back( std::unique_ptr<Entity>( entityFactory.Get( id )->Clone( ) ) );
-    _entities[index]->position = position;
-    _entities[index]->positionPrevious = position;
-    OccupantAdd( index );
+    _entities.back( )->position = position;
+    _entities.back( )->positionPrevious = position;
+    OccupantAdd( _entities.back( ), position );
 }
 void Dungeon::EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, const std::string& name )
 {
     const int index = _entities.size( );
 
     _entities.push_back( std::unique_ptr<Entity>( entityFactory.Get( name )->Clone( ) ) );
-    _entities[index]->position = position;
-    _entities[index]->positionPrevious = position;
-    OccupantAdd( index );
+    _entities.back( )->position = position;
+    _entities.back( )->positionPrevious = position;
+    OccupantAdd( _entities.back( ), position );
 }
 void Dungeon::EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, char icon )
 {
     const int index = _entities.size( );
 
     _entities.push_back( std::unique_ptr<Entity>( entityFactory.Get( icon )->Clone( ) ) );
-    _entities[index]->position = position;
-    _entities[index]->positionPrevious = position;
-    OccupantAdd( index );
+    _entities.back( )->position = position;
+    _entities.back( )->positionPrevious = position;
+    OccupantAdd( _entities.back( ), position );
 }
-void Dungeon::EntityRemove( int index )
+void Dungeon::EntityRemove( std::unique_ptr<Entity>& entity, const Vector2<int>& position )
 {
-    const int indexLast = _entities.size( ) - 1;
-
-    OccupantRemove( indexLast );
-    OccupantRemove( index );
-    std::swap( _entities[index], _entities[indexLast] );
-    _entities.pop_back( );
-
-    if( index != indexLast )
+    for( auto it = _entities.begin( ); it != _entities.end( ); it++ )
     {
-        OccupantAdd( index );
-    }
+        if( *it == entity )
+        {
+            OccupantRemove( entity, position );
+            _entities.erase( it );
 
-    if( _indexPlayer == indexLast )
-    {
-        _indexPlayer = index;
+            break;
+        }
     }
 }
-void Dungeon::OccupantAdd( int index )
+void Dungeon::OccupantAdd( std::unique_ptr<Entity>& entity, const Vector2<int>& position )
 {
-    const Vector2<int> position = _entities[index]->position;
-    std::vector<int>& indexes = _tiles[( position.y * _size.x ) + position.x].indexOccupants;
+    std::vector<std::unique_ptr<Entity>*>& occupants = _tiles[( position.y * _size.x ) + position.x].occupants;
 
-    indexes.push_back( index );
+    occupants.push_back( &entity );
     UpdateTile( position );
 }
-void Dungeon::OccupantRemove( int index )
+void Dungeon::OccupantRemove( std::unique_ptr<Entity>& entity, const Vector2<int>& position )
 {
-    const Vector2<int> position = _entities[index]->position;
-    std::vector<int>& indexes = _tiles[( position.y * _size.x ) + position.x].indexOccupants;
+    std::vector<std::unique_ptr<Entity>*>& occupants = _tiles[( position.y * _size.x ) + position.x].occupants;
 
-    indexes.erase( std::remove( indexes.begin( ), indexes.end( ), index ), indexes.end( ) );
+    occupants.erase( std::remove_if( occupants.begin( ), occupants.end( ), [&entity]( auto& it ){ return entity.get( ) == it->get( ); } ), occupants.end( ) );
     UpdateTile( position );
 }
 
@@ -470,11 +449,11 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
     const Vector2<int> center = _size / 2;
     std::vector<Vector2<int>> obstacles;
 
-    for( unsigned int i = 0; i < _entities.size( ); i++ )
+    for( const auto& entity : _entities )
     {
-        if( !( _entities[i]->attributes & Attributes::PassablePlayer ) )
+        if( !( entity->attributes & Attributes::PassablePlayer ) )
         {
-            obstacles.push_back( _entities[i]->position );
+            obstacles.push_back( entity->position );
         }
     }
 
@@ -525,13 +504,13 @@ void Dungeon::GenerateExtensionWalls( const EntityFactory& entityFactory, int am
 
     while( remaining > 0 )
     {
-        for( unsigned int i = 0; i < _entities.size( ); i++ )
+        for( const auto& entity : _entities )
         {
-            if( !( _entities[i]->attributes & Attributes::PassablePlayer ) &&
-                !( _entities[i]->attributes & Attributes::PassableOthers ) )
+            if( !( entity->attributes & Attributes::PassablePlayer ) &&
+                !( entity->attributes & Attributes::PassableOthers ) )
             {
                 const int indexDirection = RandomNumberGenerator( 0, 3 );
-                const Vector2<int> position = _entities[i]->position + directions[indexDirection];
+                const Vector2<int> position = entity->position + directions[indexDirection];
 
                 if( InBounds( position ) &&
                     Unoccupied( position ) &&
@@ -542,7 +521,7 @@ void Dungeon::GenerateExtensionWalls( const EntityFactory& entityFactory, int am
                 }
             }
         }
-        }
+    }
 }
 void Dungeon::GenerateFillerWalls( const EntityFactory& entityFactory, int amount )
 {

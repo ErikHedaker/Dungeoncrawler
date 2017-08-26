@@ -6,8 +6,7 @@ struct EntityType
     {
         Ability      = 0,
         Character    = 1,
-        Structure    = 2,
-        PlayerEntity = 3
+        Structure    = 2
     };
 };
 

@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <memory>
+#include <list>
 
 struct DungeonConfiguration
 {
@@ -40,7 +41,7 @@ struct Link
 
 struct Tile
 {
-    std::vector<int> indexOccupants;
+    std::vector<std::unique_ptr<Entity>*> occupants;
     bool visible = false;
     char icon = '-';
 };
@@ -48,19 +49,18 @@ struct Tile
 class Dungeon
 {
     public:
-        Dungeon( const EntityFactory& entityFactory, const DungeonConfiguration& config );
-        Dungeon( const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& vision, const std::vector<char>& icons );
+        Dungeon( PlayerPair& player, const EntityFactory& entityFactory, const DungeonConfiguration& config );
+        Dungeon( PlayerPair& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& vision, const std::vector<char>& icons );
 
         std::vector<Link> links;
 
         void Rotate( const Orientation::Enum& orientation );
-        void PlayerAdd( const EntityFactory& entityFactory, const Vector2<int>& position );
+        void PlayerPlace( const Vector2<int>& position );
         void MovementPlayer( const Orientation::Enum& orientation );
         void MovementRandom( );
         void NextTurn( );
 
         const Vector2<int>& GetSize( ) const;
-        const Vector2<int>& GetPlayerPosition( ) const;
         Orientation::Enum GetQuadrant( Vector2<int> position ) const;
         const Tile& GetTile( const Vector2<int>& position ) const;
         bool CheckTile( const Vector2<int>& position, int bitmask ) const;
@@ -72,17 +72,17 @@ class Dungeon
     private:
         Vector2<int> _size;
         std::vector<Tile> _tiles;
-        std::vector<std::unique_ptr<Entity>> _entities;
-        int _indexPlayer;
+        std::list<std::unique_ptr<Entity>> _entities;
+        PlayerPair& _player;
 
         void UpdateVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
         void EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, const std::pair<EntityType::Enum, int>& id );
         void EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, const std::string& name );
         void EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, char icon );
-        void EntityRemove( int index );
-        void OccupantAdd( int index );
-        void OccupantRemove( int index );
+        void EntityRemove( std::unique_ptr<Entity>& entity, const Vector2<int>& position );
+        void OccupantAdd( std::unique_ptr<Entity>& entity, const Vector2<int>& position );
+        void OccupantRemove( std::unique_ptr<Entity>& entity, const Vector2<int>& position );
 
         void GenerateDoors( const EntityFactory& entityFactory, int amount );
         void GenerateOuterWalls( const EntityFactory& entityFactory );

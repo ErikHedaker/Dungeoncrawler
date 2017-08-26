@@ -301,12 +301,12 @@ void PrintHealth( const Character& combatant )
 {
     std::cout << combatant.name << " HP: " << combatant.health << " (";
 
-    if( combatant.healthRegen > 0 )
+    if( combatant.healthRegeneration > 0 )
     {
         std::cout << "+";
     }
 
-    std::cout << combatant.healthRegen << ")\n";
+    std::cout << combatant.healthRegeneration << ")\n";
 }
 void Combat( Character& player, Character& AI )
 {
@@ -409,7 +409,7 @@ void SaveDungeonSystem( const DungeonSystem& dungeonSystem )
         }
     }
 }
-DungeonSystem LoadDungeonSystem( const EntityFactory& entityLibrary )
+DungeonSystem LoadDungeonSystem( PlayerPair& player, const EntityFactory& entityFactory )
 {
     std::ifstream inFile( "Dungeoncrawler_Save_DungeonSystem.txt", std::ios::in );
     std::string line;
@@ -519,7 +519,7 @@ DungeonSystem LoadDungeonSystem( const EntityFactory& entityLibrary )
             }
         }
 
-        dungeonSystem.dungeons.emplace_back( entityLibrary, size, visionMap, iconMap );
+        dungeonSystem.dungeons.emplace_back( player, entityFactory, size, visionMap, iconMap );
         std::getline( inFile, line );
         linkAmount = std::stoi( line );
 

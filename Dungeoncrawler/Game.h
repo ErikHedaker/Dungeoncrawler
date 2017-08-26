@@ -19,8 +19,8 @@ class Game
         bool Exist( ) const;
 
     private:
+        PlayerPair _player;
         GameStatus _status;
-        Player _player;
         EntityFactory _entityFactory;
         DungeonSystem _dungeonSystem;
 

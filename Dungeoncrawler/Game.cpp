@@ -3,11 +3,12 @@
 #include <iostream>
 #include <map>
 #include <cctype>
+#include <memory>
 
 Game::Game( ) :
-    _status( GameStatus::Menu ),
     _player( LoadPlayerDefault( LoadAbilities( ) ) ),
-    _entityFactory( _player )
+    _status( GameStatus::Menu ),
+    _entityFactory( )
 { }
 
 void Game::Menu( )
@@ -43,7 +44,7 @@ void Game::Menu( )
 
                 try
                 {
-                    _dungeonSystem = LoadDungeonSystem( _entityFactory );
+                    _dungeonSystem = LoadDungeonSystem( _player, _entityFactory );
                 }
                 catch( const std::exception& e )
                 {
@@ -93,26 +94,26 @@ bool Game::Exist( ) const
 
 void Game::Reset( )
 {
-    _player = LoadPlayerDefault( LoadAbilities( ) );
+    *_player.real = LoadPlayerDefault( LoadAbilities( ) );
     _dungeonSystem.dungeons.clear( );
-    _dungeonSystem.dungeons.emplace_back( _entityFactory, _dungeonSystem.config );
+    _dungeonSystem.dungeons.emplace_back( _player, _entityFactory, _dungeonSystem.config );
     _dungeonSystem.indexCurrent = 0;
     DungeonLink( 0 );
-    _dungeonSystem.dungeons[0].PlayerAdd( _entityFactory, _dungeonSystem.dungeons[0].GetSize( ) / 2 );
+    _dungeonSystem.dungeons[0].PlayerPlace( _dungeonSystem.dungeons[0].GetSize( ) / 2 );
 }
 void Game::Start( )
 {
     while( _status == GameStatus::Playing &&
-           _player.health > 0  )
+           _player.real->health > 0  )
     {
         TurnPlayer( _dungeonSystem.dungeons[_dungeonSystem.indexCurrent] );
         _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].MovementRandom( );
         _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].NextTurn( );
-        _player.Update( );
+        _player.real->Update( );
 
-        if( _player.states & States::Switch )
+        if( _player.real->states & States::Switch )
         {
-            _player.states &= ~States::Switch;
+            _player.real->states &= ~States::Switch;
             DungeonSwitch( );
         }
     }
@@ -132,8 +133,8 @@ void Game::TurnPlayer( Dungeon& dungeon )
     while( !done )
     {
         system( "CLS" );
-        PrintDungeonCentered( dungeon, _player.visionReach, dungeon.GetPlayerPosition( ) );
-        PrintHealth( _player );
+        PrintDungeonCentered( dungeon, _player.real->visionReach, _player.real->position );
+        PrintHealth( *_player.real );
         std::cout << "\n";
         std::cout << "[W] Go North\n";
         std::cout << "[A] Go West\n";
@@ -203,7 +204,7 @@ void Game::DungeonLink( int indexCurrentDungeon )
         if( _dungeonSystem.dungeons[indexCurrentDungeon].links[indexCurrentLink].indexLink < 0 &&
             _dungeonSystem.dungeons[indexCurrentDungeon].links[indexCurrentLink].indexDungeon < 0 )
         {
-            _dungeonSystem.dungeons.emplace_back( _entityFactory, _dungeonSystem.config );
+            _dungeonSystem.dungeons.emplace_back( _player, _entityFactory, _dungeonSystem.config );
 
             const int indexPartnerLink = 0;
             const int indexPartnerDungeon = _dungeonSystem.dungeons.size( ) - 1;
@@ -235,18 +236,17 @@ void Game::DungeonSwitch( )
 
     for( int i = 0; i < amount; i++ )
     {
-        if( _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].links[i].entry ==
-            _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].GetPlayerPosition( ) )
+        if( _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].links[i].entry == _player.real->position )
         {
             const int indexOld = _dungeonSystem.indexCurrent;
             const int indexNew = _dungeonSystem.dungeons[_dungeonSystem.indexCurrent].links[i].indexDungeon;
 
             DungeonLink( indexNew );
             _dungeonSystem.indexCurrent = indexNew;
-            _dungeonSystem.dungeons[indexNew].PlayerAdd( _entityFactory, _dungeonSystem.dungeons[indexOld].links[i].exit );
+            _dungeonSystem.dungeons[indexNew].PlayerPlace( _dungeonSystem.dungeons[indexOld].links[i].exit );
             DungeonRotate( indexNew, static_cast<Orientation::Enum>( (
-                _dungeonSystem.dungeons[indexOld].GetQuadrant( _dungeonSystem.dungeons[indexOld].GetPlayerPosition( ) ) -
-                _dungeonSystem.dungeons[indexNew].GetQuadrant( _dungeonSystem.dungeons[indexNew].GetPlayerPosition( ) ) + 2 ) % 4 ) );
+                _dungeonSystem.dungeons[indexOld].GetQuadrant( _dungeonSystem.dungeons[indexOld].links[i].entry ) -
+                _dungeonSystem.dungeons[indexNew].GetQuadrant( _dungeonSystem.dungeons[indexOld].links[i].exit ) + 2 ) % 4 ) );
 
             break;
         }
