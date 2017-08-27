@@ -343,195 +343,6 @@ void Combat( Character& player, Character& AI )
         previousTurnAI = TurnAI( player, AI );
     }
 }
-void SaveDungeonSystem( const DungeonSystem& dungeonSystem )
-{
-    std::ofstream outFile( "Dungeoncrawler_Save_DungeonSystem.txt", std::ios::out | std::ios::trunc );
-
-    if( !outFile.is_open( ) )
-    {
-        return;
-    }
-
-    outFile << dungeonSystem.config.sizeDungeonFixed << ',';
-    outFile << dungeonSystem.config.sizeDungeon.x << ',';
-    outFile << dungeonSystem.config.sizeDungeon.x << ',';
-    outFile << dungeonSystem.config.generateDoors << ',';
-    outFile << dungeonSystem.config.generateOuterWalls << ',';
-    outFile << dungeonSystem.config.generateHiddenPath << ',';
-    outFile << dungeonSystem.config.generateSourceWalls << ',';
-    outFile << dungeonSystem.config.generateExtensionWalls << ',';
-    outFile << dungeonSystem.config.generateFillerWalls << ',';
-    outFile << dungeonSystem.config.generateMonsters << ',';
-    outFile << dungeonSystem.config.amountDoors << ',';
-    outFile << dungeonSystem.config.amountSourceWalls << ',';
-    outFile << dungeonSystem.config.amountExtensionWalls << ',';
-    outFile << dungeonSystem.config.amountFillerWallsCycles << ',';
-    outFile << dungeonSystem.config.amountMonsters << '\n';
-
-    outFile << dungeonSystem.indexCurrent << '\n';
-    outFile << dungeonSystem.dungeons.size( ) << '\n';
-
-    for( const auto& dungeon : dungeonSystem.dungeons )
-    {
-        const Vector2<int> size = dungeon.GetSize( );
-        Vector2<int> iterator;
-
-        outFile << size.x << ',';
-        outFile << size.y << '\n';
-
-        for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
-        {
-            for( iterator.x = 0; iterator.x < size.x * 2; iterator.x++ )
-            {
-                if( iterator.x < size.x )
-                {
-                    outFile << dungeon.GetTile( iterator ).icon;
-                }
-                else
-                {
-                    outFile << dungeon.GetTile( { iterator.x % size.x, iterator.y } ).visible;
-                }
-            }
-
-            outFile << '\n';
-        }
-
-        outFile << dungeon.links.size( ) << '\n';
-
-        for( const auto& link : dungeon.links )
-        {
-            outFile << link.indexDungeon << ',';
-            outFile << link.indexLink << ',';
-            outFile << link.exit.x << ',';
-            outFile << link.exit.y << ',';
-            outFile << link.entry.x << ',';
-            outFile << link.entry.y << '\n';
-        }
-    }
-}
-DungeonSystem LoadDungeonSystem( PlayerPair& player, const EntityFactory& entityFactory )
-{
-    std::ifstream inFile( "Dungeoncrawler_Save_DungeonSystem.txt", std::ios::in );
-    std::string line;
-    DungeonSystem dungeonSystem;
-    int dungeonAmount;
-    auto GetConfig = [] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        std::vector<int> values;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values.push_back( std::stoi( value ) );
-        }
-
-        return DungeonConfiguration
-        (
-            values[0] != 0,
-            { values[1], values[2] },
-            values[3] != 0,
-            values[4] != 0,
-            values[5] != 0,
-            values[6] != 0,
-            values[7] != 0,
-            values[8] != 0,
-            values[9] != 0,
-            values[10],
-            values[11],
-            values[12],
-            values[13],
-            values[14]
-        );
-    };
-    auto GetVector2 = [] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        Vector2<int> values;
-
-        std::getline( sstream, value, ',' );
-        values.x = std::stoi( value );
-        std::getline( sstream, value, ',' );
-        values.y = std::stoi( value );
-
-        return values;
-    };
-    auto GetLink = [] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        std::vector<int> values;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values.push_back( std::stoi( value ) );
-        }
-
-        return Link
-        {
-            values[0],
-            values[1],
-            { values[2], values[3] },
-            { values[4], values[5] }
-        };
-    };
-
-    if( !inFile.is_open( ) )
-    {
-        throw std::exception( "Missing save files!" );
-    }
-
-    std::getline( inFile, line );
-    dungeonSystem.config = GetConfig( line );
-    std::getline( inFile, line );
-    dungeonSystem.indexCurrent = std::stoi( line );
-    std::getline( inFile, line );
-    dungeonAmount = std::stoi( line );
-
-    for( int index = 0; index < dungeonAmount; index++ )
-    {
-        std::vector<char> iconMap;
-        std::vector<bool> visionMap;
-        Vector2<int> size;
-        Vector2<int> iterator;
-        int linkAmount;
-    
-        std::getline( inFile, line );
-        size = GetVector2( line );
-        iconMap.resize( size.x * size.y );
-        visionMap.resize( size.x * size.y );
-
-        for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
-        {
-            std::getline( inFile, line );
-
-            for( iterator.x = 0; iterator.x < size.x * 2; iterator.x++ )
-            {
-                if( iterator.x >= size.x )
-                {
-                    visionMap[( iterator.y * size.x ) + ( iterator.x % size.x )] = ( line[iterator.x] == '1' );
-                }
-                else
-                {
-                    iconMap[( iterator.y * size.x ) + iterator.x] = line[iterator.x];
-                }
-            }
-        }
-
-        dungeonSystem.dungeons.emplace_back( player, entityFactory, size, visionMap, iconMap );
-        std::getline( inFile, line );
-        linkAmount = std::stoi( line );
-
-        for( int indexLink = 0; indexLink < linkAmount; indexLink++ )
-        {
-            std::getline( inFile, line );
-            dungeonSystem.dungeons.back( ).links.push_back( GetLink( line ) );
-        }
-    }
-
-    return dungeonSystem;
-}
 std::vector<Ability> LoadAbilities( )
 {
     const int offset = 4;
@@ -695,4 +506,217 @@ Player LoadPlayerDefault( const std::vector<Ability>& abilities )
      GetAbilities( cacheFile[7] ),
         std::stoi( cacheFile[8] ),
        GetBitmask( cacheFile[9] ) );
+}
+void SaveGameConfig( const DungeonConfiguration& config )
+{
+    std::ofstream outFile( "Dungeoncrawler_Save_Config.txt", std::ios::out | std::ios::trunc );
+
+    if( !outFile.is_open( ) )
+    {
+        return;
+    }
+
+    outFile << config.sizeDungeonFixed << ',';
+    outFile << config.sizeDungeon.x << ',';
+    outFile << config.sizeDungeon.x << ',';
+    outFile << config.generateDoors << ',';
+    outFile << config.generateOuterWalls << ',';
+    outFile << config.generateHiddenPath << ',';
+    outFile << config.generateSourceWalls << ',';
+    outFile << config.generateExtensionWalls << ',';
+    outFile << config.generateFillerWalls << ',';
+    outFile << config.generateMonsters << ',';
+    outFile << config.amountDoors << ',';
+    outFile << config.amountSourceWalls << ',';
+    outFile << config.amountExtensionWalls << ',';
+    outFile << config.amountFillerWallsCycles << ',';
+    outFile << config.amountMonsters << '\n';
+}
+void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
+{
+    std::ofstream outFile( "Dungeoncrawler_Save_Dungeons.txt", std::ios::out | std::ios::trunc );
+
+    if( !outFile.is_open( ) )
+    {
+        return;
+    }
+
+    outFile << index << '\n';
+    outFile << dungeons.size( ) << '\n';
+
+    for( const auto& dungeon : dungeons )
+    {
+        const Vector2<int> size = dungeon.GetSize( );
+        Vector2<int> iterator;
+
+        outFile << size.x << ',';
+        outFile << size.y << '\n';
+
+        for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
+        {
+            for( iterator.x = 0; iterator.x < size.x * 2; iterator.x++ )
+            {
+                if( iterator.x < size.x )
+                {
+                    outFile << dungeon.GetTile( iterator ).icon;
+                }
+                else
+                {
+                    outFile << dungeon.GetTile( { iterator.x % size.x, iterator.y } ).visible;
+                }
+            }
+
+            outFile << '\n';
+        }
+
+        outFile << dungeon.links.size( ) << '\n';
+
+        for( const auto& link : dungeon.links )
+        {
+            outFile << link.indexDungeon << ',';
+            outFile << link.indexLink << ',';
+            outFile << link.exit.x << ',';
+            outFile << link.exit.y << ',';
+            outFile << link.entry.x << ',';
+            outFile << link.entry.y << '\n';
+        }
+    }
+}
+DungeonConfiguration LoadGameConfig( )
+{
+    std::ifstream inFile( "Dungeoncrawler_Save_Config.txt", std::ios::in );
+    std::string line;
+    auto GetConfig = [] ( const std::string& line )
+    {
+        std::stringstream sstream( line );
+        std::string value;
+        std::vector<int> values;
+
+        while( std::getline( sstream, value, ',' ) )
+        {
+            values.push_back( std::stoi( value ) );
+        }
+
+        return DungeonConfiguration
+            (
+                values[0] != 0,
+                {
+                    values[1],
+                    values[2]
+                },
+                values[3] != 0,
+                values[4] != 0,
+                values[5] != 0,
+                values[6] != 0,
+                values[7] != 0,
+                values[8] != 0,
+                values[9] != 0,
+                values[10],
+                values[11],
+                values[12],
+                values[13],
+                values[14]
+                );
+    };
+
+    if( !inFile.is_open( ) )
+    {
+        throw std::exception( "Missing save files!" );
+    }
+
+    std::getline( inFile, line );
+
+    return GetConfig( line );
+}
+std::vector<Dungeon> LoadGameDungeons( PlayerPair& player, const EntityFactory& entityFactory, int& index )
+{
+    std::ifstream inFile( "Dungeoncrawler_Save_Dungeons.txt", std::ios::in );
+    std::string line;
+    std::vector<Dungeon> dungeons;
+    int dungeonAmount;
+    auto GetVector2 = [] ( const std::string& line )
+    {
+        std::stringstream sstream( line );
+        std::string value;
+        Vector2<int> values;
+
+        std::getline( sstream, value, ',' );
+        values.x = std::stoi( value );
+        std::getline( sstream, value, ',' );
+        values.y = std::stoi( value );
+
+        return values;
+    };
+    auto GetLink = [] ( const std::string& line )
+    {
+        std::stringstream sstream( line );
+        std::string value;
+        std::vector<int> values;
+
+        while( std::getline( sstream, value, ',' ) )
+        {
+            values.push_back( std::stoi( value ) );
+        }
+
+        return Link
+        {
+            values[0],
+            values[1],
+            { values[2], values[3] },
+            { values[4], values[5] }
+        };
+    };
+
+    if( !inFile.is_open( ) )
+    {
+        throw std::exception( "Missing save files!" );
+    }
+
+    std::getline( inFile, line );
+    index = std::stoi( line );
+    std::getline( inFile, line );
+    dungeonAmount = std::stoi( line );
+
+    for( int index = 0; index < dungeonAmount; index++ )
+    {
+        std::vector<char> iconMap;
+        std::vector<bool> visionMap;
+        Vector2<int> size;
+        Vector2<int> iterator;
+        int linkAmount;
+
+        std::getline( inFile, line );
+        size = GetVector2( line );
+        iconMap.resize( size.x * size.y );
+        visionMap.resize( size.x * size.y );
+
+        for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
+        {
+            std::getline( inFile, line );
+
+            for( iterator.x = 0; iterator.x < size.x * 2; iterator.x++ )
+            {
+                if( iterator.x >= size.x )
+                {
+                    visionMap[( iterator.y * size.x ) + ( iterator.x % size.x )] = ( line[iterator.x] == '1' );
+                }
+                else
+                {
+                    iconMap[( iterator.y * size.x ) + iterator.x] = line[iterator.x];
+                }
+            }
+        }
+
+        dungeons.emplace_back( player, entityFactory, size, visionMap, iconMap );
+        std::getline( inFile, line );
+        linkAmount = std::stoi( line );
+
+        for( int indexLink = 0; indexLink < linkAmount; indexLink++ )
+        {
+            std::getline( inFile, line );
+            dungeons.back( ).links.push_back( GetLink( line ) );
+        }
+    }
+
+    return dungeons;
 }

@@ -3,13 +3,6 @@
 #include "Dungeon.h"
 #include "EntityFactory.h"
 
-struct DungeonSystem
-{
-    DungeonConfiguration config;
-    std::vector<Dungeon> dungeons;
-    int indexCurrent;
-};
-
 class Game
 {
     public:
@@ -19,10 +12,12 @@ class Game
         bool Exist( ) const;
 
     private:
+        const EntityFactory _entityFactory;
         PlayerPair _player;
         GameStatus _status;
-        EntityFactory _entityFactory;
-        DungeonSystem _dungeonSystem;
+        DungeonConfiguration _config;
+        std::vector<Dungeon> _dungeons;
+        int _index;
 
         void Reset( );
         void Start( );

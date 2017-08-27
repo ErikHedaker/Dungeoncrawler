@@ -90,8 +90,11 @@ Dungeon::Dungeon( PlayerPair& player, const EntityFactory& entityFactory, const 
 void Dungeon::Rotate( const Orientation::Enum& orientation )
 {
     const Vector2<int> sizeOld = { _size.x, _size.y };
-    const Vector2<int> sizeNew = { ( orientation + 2 ) % 2 == 0 ? _size.x : _size.y,
-                                   ( orientation + 2 ) % 2 == 0 ? _size.y : _size.x };
+    const Vector2<int> sizeNew =
+    {
+        ( orientation + 2 ) % 2 == 0 ? _size.x : _size.y,
+        ( orientation + 2 ) % 2 == 0 ? _size.y : _size.x
+    };
     std::vector<Tile> transform = _tiles;
     Vector2<int> iterator;
 
@@ -281,9 +284,9 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 
     for( const auto& direction : directions )
     {
-        const Vector2<int> neighbor = position + direction;
+        const Vector2<int> neighbour = position + direction;
 
-        if( !CheckTile( neighbor, Attributes::PassablePlayer ) )
+        if( !CheckTile( neighbour, Attributes::PassablePlayer ) )
         {
             entities++;
         }
@@ -331,12 +334,7 @@ void Dungeon::UpdateTile( const Vector2<int>& position )
 {
     Tile& tile = _tiles[( position.y * _size.x ) + position.x];
 
-    tile.icon = '-';
-
-    for( const auto& occupant : tile.occupants )
-    {
-        tile.icon = (*occupant)->icon;
-    }
+    tile.icon = tile.occupants.empty( ) ? '-' : (*tile.occupants.back( ))->icon;
 }
 void Dungeon::EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, const std::pair<EntityType::Enum, int>& id )
 {
@@ -347,8 +345,6 @@ void Dungeon::EntityAdd( const EntityFactory& entityFactory, const Vector2<int>&
 }
 void Dungeon::EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, const std::string& name )
 {
-    const int index = _entities.size( );
-
     _entities.push_back( std::unique_ptr<Entity>( entityFactory.Get( name )->Clone( ) ) );
     _entities.back( )->position = position;
     _entities.back( )->positionPrevious = position;
@@ -356,8 +352,6 @@ void Dungeon::EntityAdd( const EntityFactory& entityFactory, const Vector2<int>&
 }
 void Dungeon::EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, char icon )
 {
-    const int index = _entities.size( );
-
     _entities.push_back( std::unique_ptr<Entity>( entityFactory.Get( icon )->Clone( ) ) );
     _entities.back( )->position = position;
     _entities.back( )->positionPrevious = position;
@@ -387,7 +381,7 @@ void Dungeon::OccupantRemove( std::unique_ptr<Entity>& entity, const Vector2<int
 {
     std::vector<std::unique_ptr<Entity>*>& occupants = _tiles[( position.y * _size.x ) + position.x].occupants;
 
-    occupants.erase( std::remove_if( occupants.begin( ), occupants.end( ), [&entity]( auto& it ){ return entity.get( ) == it->get( ); } ), occupants.end( ) );
+    occupants.erase( std::remove_if( occupants.begin( ), occupants.end( ), [&entity]( const auto& it ){ return entity.get( ) == it->get( ); } ), occupants.end( ) );
     UpdateTile( position );
 }
 
@@ -477,10 +471,11 @@ void Dungeon::GenerateSourceWalls( const EntityFactory& entityFactory, int amoun
 
     while( remaining > 0 )
     {
-        Vector2<int> position;
-
-        position.x = RandomNumberGenerator( 1, _size.x - 2 );
-        position.y = RandomNumberGenerator( 1, _size.y - 2 );
+        const Vector2<int> position =
+        {
+            RandomNumberGenerator( 1, _size.x - 2 ),
+            RandomNumberGenerator( 1, _size.y - 2 )
+        };
 
         if( Unoccupied( position ) &&
             position != center )
@@ -509,8 +504,7 @@ void Dungeon::GenerateExtensionWalls( const EntityFactory& entityFactory, int am
             if( !( entity->attributes & Attributes::PassablePlayer ) &&
                 !( entity->attributes & Attributes::PassableOthers ) )
             {
-                const int indexDirection = RandomNumberGenerator( 0, 3 );
-                const Vector2<int> position = entity->position + directions[indexDirection];
+                const Vector2<int> position = entity->position + directions[RandomNumberGenerator( 0, directions.size( ) - 1 )];
 
                 if( InBounds( position ) &&
                     Unoccupied( position ) &&
@@ -550,23 +544,24 @@ void Dungeon::GenerateMonsters( const EntityFactory& entityFactory, int amount )
     const Vector2<int> center = _size / 2;
     const int min = static_cast<int>( sqrt( _size.x * _size.y ) / 3.0 );
     const int max = static_cast<int>( sqrt( _size.x * _size.y ) / 1.5 );
-    const int amountMonsters = amount ? amount : RandomNumberGenerator( min, max );
+    const int monstersAmount = amount ? amount : RandomNumberGenerator( min, max );
 
-    for( int i = 0; i < amountMonsters; i++ )
+    for( int i = 0; i < monstersAmount; i++ )
     {
         while( true )
         {
-            Vector2<int> position;
-
-            position.x = RandomNumberGenerator( 1, _size.x - 2 );
-            position.y = RandomNumberGenerator( 1, _size.y - 2 );
+            const Vector2<int> position
+            {
+                RandomNumberGenerator( 1, _size.x - 2 ),
+                RandomNumberGenerator( 1, _size.y - 2 )
+            };
 
             if( Unoccupied( position ) &&
                 position != center )
             {
-                std::vector<int> possibilities( { 0, 1, 2 } );
+                const std::array<int, 3> valid = { 0, 1, 2 };
 
-                EntityAdd( entityFactory, position, std::make_pair( EntityType::Character, possibilities[RandomNumberGenerator( 0, possibilities.size( ) - 1 )] ) );
+                EntityAdd( entityFactory, position, std::make_pair( EntityType::Character, valid[RandomNumberGenerator( 0, valid.size( ) - 1 )] ) );
 
                 break;
             }

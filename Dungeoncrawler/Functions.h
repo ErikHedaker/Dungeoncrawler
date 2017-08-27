@@ -26,12 +26,14 @@ std::string TurnAI( Character& player, Character& AI );
 void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen = { 40, 20 } );
 void PrintHealth( const Character& character );
 void Combat( Character& player, Character& AI );
-void SaveDungeonSystem( const DungeonSystem& dungeonSystem );
-DungeonSystem LoadDungeonSystem( PlayerPair& player, const EntityFactory& entityFactory );
 std::vector<Ability> LoadAbilities( );
 std::vector<Character> LoadCharacters( const std::vector<Ability>& abilitiesLibrary );
 std::vector<Structure> LoadStructures( );
 Player LoadPlayerDefault( const std::vector<Ability>& abilities );
+void SaveGameConfig( const DungeonConfiguration& config );
+void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index );
+DungeonConfiguration LoadGameConfig( );
+std::vector<Dungeon> LoadGameDungeons( PlayerPair& player, const EntityFactory& entityFactory, int& index );
 
 class StringWrapper
 {
