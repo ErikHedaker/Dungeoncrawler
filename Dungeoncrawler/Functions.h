@@ -33,7 +33,7 @@ Player LoadPlayerDefault( const std::vector<Ability>& abilities );
 void SaveGameConfig( const DungeonConfiguration& config );
 void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index );
 DungeonConfiguration LoadGameConfig( );
-std::vector<Dungeon> LoadGameDungeons( PlayerPair& player, const EntityFactory& entityFactory, int& index );
+std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& entityFactory, int& index );
 
 class StringWrapper
 {

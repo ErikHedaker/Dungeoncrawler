@@ -628,7 +628,7 @@ DungeonConfiguration LoadGameConfig( )
 
     return GetConfig( line );
 }
-std::vector<Dungeon> LoadGameDungeons( PlayerPair& player, const EntityFactory& entityFactory, int& index )
+std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& entityFactory, int& index )
 {
     std::ifstream inFile( "Dungeoncrawler_Save_Dungeons.txt", std::ios::in );
     std::string line;

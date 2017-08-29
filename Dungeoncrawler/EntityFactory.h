@@ -9,35 +9,23 @@
 
 struct Entity
 {
-    Entity( const std::string& name, char icon, int attributes ) :
-        name( name ),
-        icon( icon ),
-        attributes( attributes ),
-        position( { -1, -1 } ),
-        positionPrevious( { -1, -1 } )
-    { }
-
-    virtual ~Entity( ) { };
+    Entity( const std::string& name, char icon, int attributes );
+    virtual ~Entity( ) { }
 
     virtual Entity* Clone( ) const = 0;
-    virtual void Update( )
-    { };
+    virtual void Update( ) { }
 
     std::string name;
     char icon;
     int attributes;
     Vector2<int> position;
-    Vector2<int> positionPrevious;
 };
 
 struct Ability : public Entity
 {
-    Ability( const std::string& name, char icon, int attributes, float damage ) :
-        Entity( name, icon, attributes ),
-        damage( damage )
-    { }
+    Ability( const std::string& name, char icon, int attributes, float damage );
 
-    virtual Ability* Clone( ) const
+    Ability* Clone( ) const override
     {
         return new Ability( *this );
     }
@@ -47,16 +35,9 @@ struct Ability : public Entity
 
 struct Character : public Entity
 {
-    Character( const std::string& name, char icon, int attributes, int health, int healthMax, int healthRegeneration, float damage, const std::vector<Ability>& abilities ) :
-        Entity( name, icon, attributes ),
-        health( health ),
-        healthMax( healthMax ),
-        healthRegeneration( healthRegeneration ),
-        damage( damage ),
-        abilities( abilities )
-    { }
+    Character( const std::string& name, char icon, int attributes, int health, int healthMax, int healthRegeneration, float damage, const std::vector<Ability>& abilities );
 
-    virtual Character* Clone( ) const
+    Character* Clone( ) const override
     {
         return new Character( *this );
     }
@@ -79,35 +60,19 @@ struct Character : public Entity
 
 struct Structure : public Entity
 {
-    Structure( const std::string& name, char icon, int attributes ) :
-        Entity( name, icon, attributes )
-    { }
+    Structure( const std::string& name, char icon, int attributes );
 
-    virtual Structure* Clone( ) const
+    Structure* Clone( ) const override
     {
         return new Structure( *this );
     }
 };
 
-struct Player : public Character
-{
-    Player( const std::string& name, char icon, int attributes, int health, int healthMax, int healthRegen, float damage, const std::vector<Ability>& abilities, int visionReach, int states ) :
-        Character( name, icon, attributes, health, healthMax, healthRegen, damage, abilities ),
-        visionReach( visionReach ),
-        states( states )
-    { }
-
-    int visionReach;
-    int states;
-};
-
 struct Item : public Entity
 {
-    Item( const std::string& name, char icon, int attributes ) :
-        Entity( name, icon, attributes )
-    { }
-    
-    virtual Item* Clone( ) const
+    Item( const std::string& name, char icon, int attributes );
+
+    Item* Clone( ) const override
     {
         return new Item( *this );
     }
@@ -115,12 +80,17 @@ struct Item : public Entity
     ItemType type;
 };
 
-struct PlayerPair
+struct Player : public Character
 {
-    PlayerPair::PlayerPair( const Player& player ) :
-        base( std::make_unique<Player>( player ) ),
-        real( dynamic_cast<Player*>( base.get( ) ) )
-    { }
+    Player( const std::string& name, char icon, int attributes, int health, int healthMax, int healthRegen, float damage, const std::vector<Ability>& abilities, int visionReach, int states );
+
+    int visionReach;
+    int states;
+};
+
+struct PlayerType
+{
+    PlayerType( const Player& player );
 
     std::unique_ptr<Entity> base;
     Player* const real;

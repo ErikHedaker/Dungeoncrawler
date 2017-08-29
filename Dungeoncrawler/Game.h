@@ -13,7 +13,7 @@ class Game
 
     private:
         const EntityFactory _entityFactory;
-        PlayerPair _player;
+        PlayerType _player;
         GameStatus _status;
         DungeonConfiguration _config;
         std::vector<Dungeon> _dungeons;

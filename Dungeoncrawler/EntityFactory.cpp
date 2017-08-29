@@ -2,6 +2,39 @@
 #include "Functions.h"
 #include <algorithm>
 
+Entity::Entity( const std::string& name, char icon, int attributes ) :
+    name( name ),
+    icon( icon ),
+    attributes( attributes ),
+    position( { -1, -1 } )
+{ }
+Ability::Ability( const std::string& name, char icon, int attributes, float damage ) :
+    Entity( name, icon, attributes ),
+    damage( damage )
+{ }
+Character::Character( const std::string& name, char icon, int attributes, int health, int healthMax, int healthRegeneration, float damage, const std::vector<Ability>& abilities ) :
+    Entity( name, icon, attributes ),
+    health( health ),
+    healthMax( healthMax ),
+    healthRegeneration( healthRegeneration ),
+    damage( damage ),
+    abilities( abilities )
+{ }
+Structure::Structure( const std::string& name, char icon, int attributes ) :
+    Entity( name, icon, attributes )
+{ }
+Item::Item( const std::string& name, char icon, int attributes ) :
+    Entity( name, icon, attributes )
+{ }
+Player::Player( const std::string& name, char icon, int attributes, int health, int healthMax, int healthRegen, float damage, const std::vector<Ability>& abilities, int visionReach, int states ) :
+    Character( name, icon, attributes, health, healthMax, healthRegen, damage, abilities ),
+    visionReach( visionReach ),
+    states( states )
+{ }
+PlayerType::PlayerType( const Player& player ) :
+    base( std::make_unique<Player>( player ) ),
+    real( dynamic_cast<Player*>( base.get( ) ) )
+{ }
 EntityFactory::EntityFactory( ) :
     _entities( []( )
     {

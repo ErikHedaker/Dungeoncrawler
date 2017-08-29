@@ -234,6 +234,25 @@ void Game::DungeonRotate( int indexDungeon, const Orientation::Enum& orientation
 }
 void Game::DungeonSwitch( )
 {
+    const std::map<std::pair<Orientation::Enum, Orientation::Enum>, Orientation::Enum> rotations
+    {
+        { { Orientation::North, Orientation::South }, Orientation::North },
+        { { Orientation::East,  Orientation::West  }, Orientation::North },
+        { { Orientation::South, Orientation::North }, Orientation::North },
+        { { Orientation::West,  Orientation::East  }, Orientation::North },
+        { { Orientation::North, Orientation::East  }, Orientation::East  },
+        { { Orientation::East,  Orientation::South }, Orientation::East  },
+        { { Orientation::South, Orientation::West  }, Orientation::East  },
+        { { Orientation::West,  Orientation::North }, Orientation::East  },
+        { { Orientation::North, Orientation::North }, Orientation::South },
+        { { Orientation::East,  Orientation::East  }, Orientation::South },
+        { { Orientation::South, Orientation::South }, Orientation::South },
+        { { Orientation::West,  Orientation::West  }, Orientation::South },
+        { { Orientation::North, Orientation::West  }, Orientation::West  },
+        { { Orientation::East,  Orientation::North }, Orientation::West  },
+        { { Orientation::South, Orientation::East  }, Orientation::West  },
+        { { Orientation::West,  Orientation::South }, Orientation::West  },
+    };
     const int amount = _dungeons[_index].links.size( );
 
     for( int i = 0; i < amount; i++ )
@@ -242,13 +261,14 @@ void Game::DungeonSwitch( )
         {
             const int indexOld = _index;
             const int indexNew = _dungeons[_index].links[i].indexDungeon;
+            const Orientation::Enum rotation = rotations.at( std::make_pair(
+                _dungeons[indexOld].GetQuadrant( _dungeons[indexOld].links[i].entry ),
+                _dungeons[indexNew].GetQuadrant( _dungeons[indexOld].links[i].exit ) ) );
 
             DungeonLink( indexNew );
             _index = indexNew;
             _dungeons[indexNew].PlayerPlace( _dungeons[indexOld].links[i].exit );
-            DungeonRotate( indexNew, static_cast<Orientation::Enum>( (
-                _dungeons[indexOld].GetQuadrant( _dungeons[indexOld].links[i].entry ) -
-                _dungeons[indexNew].GetQuadrant( _dungeons[indexOld].links[i].exit ) + 2 ) % 4 ) );
+            DungeonRotate( indexNew, rotation );
 
             break;
         }
