@@ -11,24 +11,33 @@
 struct DungeonConfiguration
 {
     DungeonConfiguration( );
-    DungeonConfiguration( bool a, Vector2<int> b, bool c, bool d, bool e, bool f, bool g, bool h, bool i, int j, int k, int l, int m, int n );
+    DungeonConfiguration( std::vector<std::string> args );
+    
+    struct Size
+    {
+        bool determined;
+        Vector2<int> dungeon;
+    } size;
 
-    bool sizeDungeonFixed;
-    Vector2<int> sizeDungeon;
+    struct Generate
+    {
+        bool doors;
+        bool wallsOuter;
+        bool hiddenPath;
+        bool wallsParents;
+        bool wallsChildren;
+        bool wallsFiller;
+        bool monsters;
+    } generate;
 
-    bool generateDoors;
-    bool generateOuterWalls;
-    bool generateHiddenPath;
-    bool generateSourceWalls;
-    bool generateExtensionWalls;
-    bool generateFillerWalls;
-    bool generateMonsters;
-
-    int amountDoors;
-    int amountSourceWalls;
-    int amountExtensionWalls;
-    int amountFillerWallsCycles;
-    int amountMonsters;
+    struct Amount
+    {
+        int doors;
+        int wallsParents;
+        int wallsChildren;
+        int wallsFillerCycles;
+        int monsters;
+    } amount;
 };
 
 struct Link
@@ -58,16 +67,16 @@ class Dungeon
         void PlayerPlace( const Vector2<int>& position );
         void MovementPlayer( const Orientation::Enum& orientation );
         void MovementRandom( );
-        void NextTurn( );
+        void Events( );
 
         const Vector2<int>& GetSize( ) const;
-        Orientation::Enum GetQuadrant( Vector2<int> position ) const;
         const Tile& GetTile( const Vector2<int>& position ) const;
-        bool CheckTile( const Vector2<int>& position, int bitmask ) const;
-        bool Surrounded( const Vector2<int>& position, int threshold ) const;
-        bool Unoccupied( const Vector2<int>& position ) const;
+        Orientation::Enum GetQuadrant( Vector2<int> position ) const;
         bool InBounds( const Vector2<int>& position ) const;
         bool IsCorner( const Vector2<int>& position ) const;
+        bool Unoccupied( const Vector2<int>& position ) const;
+        bool Surrounded( const Vector2<int>& position, int threshold ) const;
+        bool CheckTile( const Vector2<int>& position, int bitmask ) const;
 
     private:
         Vector2<int> _size;
@@ -85,10 +94,10 @@ class Dungeon
         void OccupantRemove( std::unique_ptr<Entity>& entity, const Vector2<int>& position );
 
         void GenerateDoors( const EntityFactory& entityFactory, int amount );
-        void GenerateOuterWalls( const EntityFactory& entityFactory );
+        void GenerateWallsOuter( const EntityFactory& entityFactory );
         void GenerateHiddenPath( const EntityFactory& entityFactory );
-        void GenerateSourceWalls( const EntityFactory& entityFactory, int amount );
-        void GenerateExtensionWalls( const EntityFactory& entityFactory, int amount );
-        void GenerateFillerWalls( const EntityFactory& entityFactory, int amount );
+        void GenerateWallsParents( const EntityFactory& entityFactory, int amount );
+        void GenerateWallsChildren( const EntityFactory& entityFactory, int amount );
+        void GenerateWallsFiller( const EntityFactory& entityFactory, int amount );
         void GenerateMonsters( const EntityFactory& entityFactory, int amount );
 };

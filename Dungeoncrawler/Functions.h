@@ -14,7 +14,7 @@ int RandomNumberGenerator( int min, int max );
 int GetPositiveInteger( const std::string& context );
 char GetChar( const std::string& context, const std::vector<char>& valid, std::function<int(int)> modifier = nullptr );
 void GetEnter( );
-DungeonConfiguration GetDungeonConfiguration( const GameConfig& type = GameConfig::Default );
+DungeonConfiguration GetDungeonConfiguration( );
 Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& orientation );
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation );
 Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, int west, int south, int east, int still );
@@ -23,7 +23,7 @@ std::string UseAbility( const Ability& ability, Character& caster, Character& ta
 std::string UseWeapon( Character& attacker, Character& target );
 std::string TurnPlayer( Character& player, Character& AI );
 std::string TurnAI( Character& player, Character& AI );
-void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen = { 40, 20 } );
+void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen = { 40, 20 } );
 void PrintHealth( const Character& character );
 void Combat( Character& player, Character& AI );
 std::vector<Ability> LoadAbilities( );

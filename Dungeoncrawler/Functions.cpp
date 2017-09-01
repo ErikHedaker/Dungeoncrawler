@@ -66,49 +66,39 @@ void GetEnter( )
     std::cin.get( );
     std::cin.get( );
 }
-DungeonConfiguration GetDungeonConfiguration( const GameConfig& type )
+DungeonConfiguration GetDungeonConfiguration( )
 {
-    if( type == GameConfig::Configure )
+    DungeonConfiguration config;
+    auto ToBool = [] ( char input ) -> bool
     {
-        DungeonConfiguration config;
-        auto ToBool = [] ( char input ) -> bool
-        {
-            return
-                input == 'Y' ||
-                input == 'y';
-        };
+        return
+            input == 'Y' ||
+            input == 'y';
+    };
 
-        std::cout << "\n";
-        config.sizeDungeonFixed       = ToBool( GetChar( "Fixed dungeon size, [Y/N]: ",       { 'Y', 'N' }, std::toupper ) );
-        config.generateDoors          = ToBool( GetChar( "Generate doors, [Y/N]: ",           { 'Y', 'N' }, std::toupper ) );
-        config.generateOuterWalls     = ToBool( GetChar( "Generate outer walls, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
-        config.generateHiddenPath     = ToBool( GetChar( "Generate hidden path, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
-        config.generateSourceWalls    = ToBool( GetChar( "Generate source walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
-        config.generateExtensionWalls = ToBool( GetChar( "Generate extension walls, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
-        config.generateFillerWalls    = ToBool( GetChar( "Generate filler walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
-        config.generateMonsters       = ToBool( GetChar( "Generate monsters, [Y/N]: ",        { 'Y', 'N' }, std::toupper ) );
-        std::cout << "\n";
+    std::cout << "\n";
+    config.size.determined        = ToBool( GetChar( "Fixed dungeon size, [Y/N]: ",       { 'Y', 'N' }, std::toupper ) );
+    config.generate.doors         = ToBool( GetChar( "Generate doors, [Y/N]: ",           { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsOuter    = ToBool( GetChar( "Generate outer walls, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
+    config.generate.hiddenPath    = ToBool( GetChar( "Generate hidden path, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsParents  = ToBool( GetChar( "Generate parent walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsChildren = ToBool( GetChar( "Generate children walls, [Y/N]: ",  { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsFiller   = ToBool( GetChar( "Generate filler walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
+    config.generate.monsters      = ToBool( GetChar( "Generate monsters, [Y/N]: ",        { 'Y', 'N' }, std::toupper ) );
+    std::cout << "\n";
 
-        if( config.sizeDungeonFixed )
-        {
-            config.sizeDungeon.x           = GetPositiveInteger( "Enter dungeon width: " );
-            config.sizeDungeon.y           = GetPositiveInteger( "Enter dungeon height: " );
-        }
-        if( config.generateDoors )
-            config.amountDoors             = GetPositiveInteger( "Enter amount of doors: " );
-        if( config.generateSourceWalls )
-            config.amountSourceWalls       = GetPositiveInteger( "Enter amount of source walls: " );
-        if( config.generateExtensionWalls )
-            config.amountExtensionWalls    = GetPositiveInteger( "Enter amount of extension walls: " );
-        if( config.generateFillerWalls )
-            config.amountFillerWallsCycles = GetPositiveInteger( "Enter amount of filler wall cycles: " );
-        if( config.generateMonsters )
-            config.amountMonsters          = GetPositiveInteger( "Enter amount of monsters: " );
-
-        return config;
+    if( config.size.determined )
+    {
+        config.size.dungeon.x                                           = GetPositiveInteger( "Enter dungeon width: " );
+        config.size.dungeon.y                                           = GetPositiveInteger( "Enter dungeon height: " );
     }
+    if( config.generate.doors )         config.amount.doors             = GetPositiveInteger( "Enter amount of doors: " );
+    if( config.generate.wallsParents )  config.amount.wallsParents      = GetPositiveInteger( "Enter amount of parent walls: " );
+    if( config.generate.wallsChildren ) config.amount.wallsChildren     = GetPositiveInteger( "Enter amount of children walls: " );
+    if( config.generate.wallsFiller )   config.amount.wallsFillerCycles = GetPositiveInteger( "Enter amount of filler wall cycles: " );
+    if( config.generate.monsters )      config.amount.monsters          = GetPositiveInteger( "Enter amount of monsters: " );
 
-    return DungeonConfiguration( );
+    return config;
 }
 Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& orientation )
 {
@@ -252,7 +242,7 @@ std::string TurnAI( Character& player, Character& AI )
 
     return ( number == AI.abilities.size( ) ? UseWeapon( AI, player ) : UseAbility( AI.abilities[number], AI, player ) );
 }
-void PrintDungeonCentered( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen )
+void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen )
 {
     const Vector2<int> origoCamera = center - sizeScreen / 2;
     const Vector2<int> iteratorBegin = origoCamera - 1;
@@ -516,21 +506,21 @@ void SaveGameConfig( const DungeonConfiguration& config )
         return;
     }
 
-    outFile << config.sizeDungeonFixed << ',';
-    outFile << config.sizeDungeon.x << ',';
-    outFile << config.sizeDungeon.x << ',';
-    outFile << config.generateDoors << ',';
-    outFile << config.generateOuterWalls << ',';
-    outFile << config.generateHiddenPath << ',';
-    outFile << config.generateSourceWalls << ',';
-    outFile << config.generateExtensionWalls << ',';
-    outFile << config.generateFillerWalls << ',';
-    outFile << config.generateMonsters << ',';
-    outFile << config.amountDoors << ',';
-    outFile << config.amountSourceWalls << ',';
-    outFile << config.amountExtensionWalls << ',';
-    outFile << config.amountFillerWallsCycles << ',';
-    outFile << config.amountMonsters << '\n';
+    outFile << config.size.determined << '\n';
+    outFile << config.size.dungeon.x << '\n';
+    outFile << config.size.dungeon.y << '\n';
+    outFile << config.generate.doors << '\n';
+    outFile << config.generate.wallsOuter << '\n';
+    outFile << config.generate.hiddenPath << '\n';
+    outFile << config.generate.wallsParents << '\n';
+    outFile << config.generate.wallsChildren << '\n';
+    outFile << config.generate.wallsFiller << '\n';
+    outFile << config.generate.monsters << '\n';
+    outFile << config.amount.doors << '\n';
+    outFile << config.amount.wallsParents << '\n';
+    outFile << config.amount.wallsChildren << '\n';
+    outFile << config.amount.wallsFillerCycles << '\n';
+    outFile << config.amount.monsters << '\n';
 }
 void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
 {
@@ -585,55 +575,20 @@ void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
 DungeonConfiguration LoadGameConfig( )
 {
     std::ifstream inFile( "Dungeoncrawler_Save_Config.txt", std::ios::in );
-    std::string line;
-    auto GetConfig = [] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        std::vector<int> values;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values.push_back( std::stoi( value ) );
-        }
-
-        return DungeonConfiguration
-            (
-                values[0] != 0,
-                {
-                    values[1],
-                    values[2]
-                },
-                values[3] != 0,
-                values[4] != 0,
-                values[5] != 0,
-                values[6] != 0,
-                values[7] != 0,
-                values[8] != 0,
-                values[9] != 0,
-                values[10],
-                values[11],
-                values[12],
-                values[13],
-                values[14]
-                );
-    };
 
     if( !inFile.is_open( ) )
     {
         throw std::exception( "Missing save files!" );
     }
 
-    std::getline( inFile, line );
-
-    return GetConfig( line );
+    return DungeonConfiguration( std::vector<std::string> { std::istream_iterator<std::string>{ inFile }, {} } );
 }
 std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& entityFactory, int& index )
 {
     std::ifstream inFile( "Dungeoncrawler_Save_Dungeons.txt", std::ios::in );
     std::string line;
     std::vector<Dungeon> dungeons;
-    int dungeonAmount;
+    int amountDungeon;
     auto GetVector2 = [] ( const std::string& line )
     {
         std::stringstream sstream( line );
@@ -675,20 +630,20 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
     std::getline( inFile, line );
     index = std::stoi( line );
     std::getline( inFile, line );
-    dungeonAmount = std::stoi( line );
+    amountDungeon = std::stoi( line );
 
-    for( int index = 0; index < dungeonAmount; index++ )
+    for( int indexDungeon = 0; indexDungeon < amountDungeon; indexDungeon++ )
     {
-        std::vector<char> iconMap;
-        std::vector<bool> visionMap;
+        std::vector<char> icons;
+        std::vector<bool> vision;
         Vector2<int> size;
         Vector2<int> iterator;
-        int linkAmount;
+        int amountLink;
 
         std::getline( inFile, line );
         size = GetVector2( line );
-        iconMap.resize( size.x * size.y );
-        visionMap.resize( size.x * size.y );
+        icons.resize( size.x * size.y );
+        vision.resize( size.x * size.y );
 
         for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
         {
@@ -698,20 +653,20 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
             {
                 if( iterator.x >= size.x )
                 {
-                    visionMap[( iterator.y * size.x ) + ( iterator.x % size.x )] = ( line[iterator.x] == '1' );
+                    vision[( iterator.y * size.x ) + ( iterator.x % size.x )] = ( line[iterator.x] == '1' );
                 }
                 else
                 {
-                    iconMap[( iterator.y * size.x ) + iterator.x] = line[iterator.x];
+                    icons[( iterator.y * size.x ) + iterator.x] = line[iterator.x];
                 }
             }
         }
 
-        dungeons.emplace_back( player, entityFactory, size, visionMap, iconMap );
+        dungeons.emplace_back( player, entityFactory, size, vision, icons );
         std::getline( inFile, line );
-        linkAmount = std::stoi( line );
+        amountLink = std::stoi( line );
 
-        for( int indexLink = 0; indexLink < linkAmount; indexLink++ )
+        for( int indexLink = 0; indexLink < amountLink; indexLink++ )
         {
             std::getline( inFile, line );
             dungeons.back( ).links.push_back( GetLink( line ) );

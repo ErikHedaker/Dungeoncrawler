@@ -46,10 +46,10 @@ struct Orientation
 {
     enum Enum
     {
-        North = 0,
-        East  = 1,
-        South = 2,
-        West  = 3
+        North =  0,
+        East  =  1,
+        South =  2,
+        West  = -1
     };
 };
 
