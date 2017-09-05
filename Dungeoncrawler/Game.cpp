@@ -7,8 +7,7 @@
 
 Game::Game( ) :
     _player( LoadPlayerDefault( LoadAbilities( ) ) ),
-    _status( GameStatus::Menu ),
-    _entityFactory( )
+    _status( GameStatus::Menu )
 { }
 
 void Game::Menu( )

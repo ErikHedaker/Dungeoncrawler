@@ -11,7 +11,7 @@
 struct DungeonConfiguration
 {
     DungeonConfiguration( );
-    DungeonConfiguration( std::vector<std::string> args );
+    DungeonConfiguration( const std::vector<std::string>& data );
     
     struct Size
     {

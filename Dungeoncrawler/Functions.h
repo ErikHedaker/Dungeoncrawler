@@ -11,11 +11,12 @@
 
 double RandomNumberGenerator( double min, double max );
 int RandomNumberGenerator( int min, int max );
+int GetBitmask( const std::string& line );
 int GetPositiveInteger( const std::string& context );
 char GetChar( const std::string& context, const std::vector<char>& valid, std::function<int(int)> modifier = nullptr );
 void GetEnter( );
 DungeonConfiguration GetDungeonConfiguration( );
-Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& orientation );
+Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& rotation );
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation );
 Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, int west, int south, int east, int still );
 Ability GetAbility( const std::vector<Ability>& abilities );

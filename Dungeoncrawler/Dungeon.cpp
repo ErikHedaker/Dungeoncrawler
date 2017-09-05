@@ -11,24 +11,24 @@ DungeonConfiguration::DungeonConfiguration( ) :
     generate( { true, true, true, true, true, true, true } ),
     amount( { 0, 0, 0, 0, 0 } )
 { }
-DungeonConfiguration::DungeonConfiguration( std::vector<std::string> args )
+DungeonConfiguration::DungeonConfiguration( const std::vector<std::string>& data )
 {
     try
     {
-        size.determined          = std::stoi( args[0] ) != 0;
-        size.dungeon             = { std::stoi( args[1] ), std::stoi( args[2] ) };
-        generate.doors           = std::stoi( args[3] ) != 0;
-        generate.wallsOuter      = std::stoi( args[4] ) != 0;
-        generate.hiddenPath      = std::stoi( args[5] ) != 0;
-        generate.wallsParents    = std::stoi( args[6] ) != 0;
-        generate.wallsChildren   = std::stoi( args[7] ) != 0;
-        generate.wallsFiller     = std::stoi( args[8] ) != 0;
-        generate.monsters        = std::stoi( args[9] ) != 0;
-        amount.doors             = std::stoi( args[10] );
-        amount.wallsParents      = std::stoi( args[11] );
-        amount.wallsChildren     = std::stoi( args[12] );
-        amount.wallsFillerCycles = std::stoi( args[13] );
-        amount.monsters          = std::stoi( args[14] );
+        size.determined          = std::stoi( data[0] ) != 0;
+        size.dungeon             = { std::stoi( data[1] ), std::stoi( data[2] ) };
+        generate.doors           = std::stoi( data[3] ) != 0;
+        generate.wallsOuter      = std::stoi( data[4] ) != 0;
+        generate.hiddenPath      = std::stoi( data[5] ) != 0;
+        generate.wallsParents    = std::stoi( data[6] ) != 0;
+        generate.wallsChildren   = std::stoi( data[7] ) != 0;
+        generate.wallsFiller     = std::stoi( data[8] ) != 0;
+        generate.monsters        = std::stoi( data[9] ) != 0;
+        amount.doors             = std::stoi( data[10] );
+        amount.wallsParents      = std::stoi( data[11] );
+        amount.wallsChildren     = std::stoi( data[12] );
+        amount.wallsFillerCycles = std::stoi( data[13] );
+        amount.monsters          = std::stoi( data[14] );
     }
     catch( ... )
     {
@@ -147,8 +147,8 @@ void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
         CheckTile( move, Attributes::PassablePlayer ) )
     {
         OccupantRemove( _player.base, _player.real->position );
-        OccupantAdd( _player.base, move );
         _player.real->position = move;
+        OccupantAdd( _player.base, _player.real->position );
     }
 
     UpdateVision( _player.real->position, _player.real->visionReach );
@@ -167,8 +167,8 @@ void Dungeon::MovementRandom( )
                 CheckTile( move, Attributes::PassableOthers ) )
             {
                 OccupantRemove( entity, entity->position );
-                OccupantAdd( entity, move );
                 entity->position = move;
+                OccupantAdd( entity, entity->position );
             }
         }
     }
@@ -226,9 +226,9 @@ Orientation::Enum Dungeon::GetQuadrant( Vector2<int> position ) const
     const std::map<std::pair<bool, bool>, Orientation::Enum> quadrants
     {
         { { true,  false }, Orientation::North },
-        { { true,  true }, Orientation::East },
-        { { false, true }, Orientation::South },
-        { { false, false }, Orientation::West }
+        { { true,  true  }, Orientation::East  },
+        { { false, true  }, Orientation::South },
+        { { false, false }, Orientation::West  }
     };
     const Vector2<float> positionf = position;
     const Vector2<float> sizef = _size;
@@ -260,15 +260,15 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 {
     const std::array<Vector2<int>, 8> directions =
     { {
-        { 0, -1 },
-        { 1, -1 },
-        { 1,  0 },
-        { 1,  1 },
-        { 0,  1 },
+        {  0, -1 },
+        {  1, -1 },
+        {  1,  0 },
+        {  1,  1 },
+        {  0,  1 },
         { -1,  1 },
         { -1,  0 },
         { -1, -1 }
-        } };
+    } };
     int entities = 0;
 
     for( const auto& direction : directions )
@@ -289,7 +289,7 @@ bool Dungeon::CheckTile( const Vector2<int>& position, int bitmask ) const
 
     for( auto occupants : GetTile( position ).occupants )
     {
-        if( ( *occupants )->attributes & bitmask )
+        if( (*occupants)->attributes & bitmask )
         {
             count++;
         }

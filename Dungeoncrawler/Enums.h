@@ -44,7 +44,7 @@ struct States
 
 struct Orientation
 {
-    enum Enum
+    enum Enum : int
     {
         North =  0,
         East  =  1,

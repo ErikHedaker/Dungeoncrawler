@@ -27,19 +27,32 @@ int RandomNumberGenerator( int min, int max )
 
     return random( generator );
 }
+int GetBitmask( const std::string& line )
+{
+    std::stringstream sstream( line );
+    std::string value;
+    int values = 0;
+
+    while( std::getline( sstream, value, ',' ) )
+    {
+        values |= 1 << std::stoi( value );
+    }
+
+    return values;
+};
 int GetPositiveInteger( const std::string& context )
 {
     while( true )
     {
-        std::string choice;
+        std::string input;
 
         std::cout << context;
-        std::cin >> choice;
+        std::cin >> input;
 
-        if( choice.size( ) < 10 &&
-            std::all_of( choice.begin( ), choice.end( ), ::isdigit ) )
+        if( input.size( ) < 10 &&
+            std::all_of( input.begin( ), input.end( ), ::isdigit ) )
         {
-            return std::stoi( choice );
+            return std::stoi( input );
         }
     }
 }
@@ -47,12 +60,12 @@ char GetChar( const std::string& context, const std::vector<char>& valid, std::f
 {
     while( true )
     {
-        std::string choice;
+        std::string input;
         char last;
 
         std::cout << context;
-        std::cin >> choice;
-        last = ( modifier != nullptr ) ? modifier( choice.back( ) ) : choice.back( );
+        std::cin >> input;
+        last = ( modifier != nullptr ) ? modifier( input.back( ) ) : input.back( );
 
         if( std::find( valid.begin( ), valid.end( ), last ) != valid.end( ) )
         {
@@ -100,9 +113,9 @@ DungeonConfiguration GetDungeonConfiguration( )
 
     return config;
 }
-Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& orientation )
+Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& rotation )
 {
-    switch( orientation )
+    switch( rotation )
     {
         case Orientation::North:
         {
@@ -120,23 +133,33 @@ Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& s
         {
             return { position.y, size.x - position.x - 1 };
         }
-        default:
-        {
-            return position;
-        }
     }
+
+    return position;
 }
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation )
 {
-    static const std::map<Orientation::Enum, Vector2<int>> directions =
+    switch( orientation )
     {
-        { Orientation::North, {  0, -1 } },
-        { Orientation::East,  {  1,  0 } },
-        { Orientation::South, {  0,  1 } },
-        { Orientation::West,  { -1,  0 } },
-    };
+        case Orientation::North:
+        {
+            return position + Vector2<int>(  0, -1 );
+        }
+        case Orientation::East:
+        {
+            return position + Vector2<int>(  1,  0 );
+        }
+        case Orientation::South:
+        {
+            return position + Vector2<int>(  0,  1 );
+        }
+        case Orientation::West:
+        {
+            return position + Vector2<int>( -1,  0 );
+        }
+    }
 
-    return position + directions.at( orientation );
+    return position;
 }
 Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, int west, int south, int east, int still )
 {
@@ -336,33 +359,20 @@ void Combat( Character& player, Character& AI )
 std::vector<Ability> LoadAbilities( )
 {
     const int offset = 4;
-    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Abilities.txt", std::ios::in } }, { } };
+    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Abilities.txt", std::ios::in } }, { } };
     std::vector<Ability> abilities;
-    auto GetBitmask = [] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        int values = 0;
 
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values |= 1 << std::stoi( value );
-        }
-
-        return values;
-    };
-
-    if( cacheFile.empty( ) )
+    if( fileCache.empty( ) )
     {
         throw std::exception( "Missing important files!" );
     }
 
-    for( unsigned int i = 0; i < cacheFile.size( ); i += offset )
+    for( unsigned int i = 0; i < fileCache.size( ); i += offset )
     {
-        abilities.emplace_back( cacheFile[0 + i],
-                                cacheFile[1 + i].back( ),
-                    GetBitmask( cacheFile[2 + i] ),
-                     std::stof( cacheFile[3 + i] ) );
+        abilities.emplace_back( fileCache[0 + i],
+                                fileCache[1 + i].back( ),
+                    GetBitmask( fileCache[2 + i] ),
+                     std::stof( fileCache[3 + i] ) );
     }
 
     return abilities;
@@ -370,21 +380,8 @@ std::vector<Ability> LoadAbilities( )
 std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 {
     const int offset = 8;
-    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Characters.txt", std::ios::in } }, { } };
+    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Characters.txt", std::ios::in } }, { } };
     std::vector<Character> characters;
-    auto GetBitmask = [] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        int values = 0;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values |= 1 << std::stoi( value );
-        }
-
-        return values;
-    };
     auto GetAbilities = [&abilities] ( const std::string& line )
     {
         std::stringstream sstream( line );
@@ -399,21 +396,21 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
         return values;
     };
 
-    if( cacheFile.empty( ) )
+    if( fileCache.empty( ) )
     {
         throw std::exception( "Missing important files!" );
     }
 
-    for( unsigned int i = 0; i < cacheFile.size( ); i += offset )
+    for( unsigned int i = 0; i < fileCache.size( ); i += offset )
     {
-        characters.emplace_back( cacheFile[0 + i],
-                                 cacheFile[1 + i].back( ),
-                     GetBitmask( cacheFile[2 + i] ),
-                      std::stoi( cacheFile[3 + i] ),
-                      std::stoi( cacheFile[4 + i] ),
-                      std::stoi( cacheFile[5 + i] ),
-                      std::stof( cacheFile[6 + i] ),
-                   GetAbilities( cacheFile[7 + i] ) );
+        characters.emplace_back( fileCache[0 + i],
+                                 fileCache[1 + i].back( ),
+                     GetBitmask( fileCache[2 + i] ),
+                      std::stoi( fileCache[3 + i] ),
+                      std::stoi( fileCache[4 + i] ),
+                      std::stoi( fileCache[5 + i] ),
+                      std::stof( fileCache[6 + i] ),
+                   GetAbilities( fileCache[7 + i] ) );
     }
 
     return characters;
@@ -421,52 +418,26 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 std::vector<Structure> LoadStructures( )
 {
     const int offset = 3;
-    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Structures.txt", std::ios::in } }, { } };
+    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Structures.txt", std::ios::in } }, { } };
     std::vector<Structure> structures;
-    auto GetBitmask = [] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        int values = 0;
 
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values |= 1 << std::stoi( value );
-        }
-
-        return values;
-    };
-
-    if( cacheFile.empty( ) )
+    if( fileCache.empty( ) )
     {
         throw std::exception( "Missing important files!" );
     }
 
-    for( unsigned int i = 0; i < cacheFile.size( ); i += offset )
+    for( unsigned int i = 0; i < fileCache.size( ); i += offset )
     {
-        structures.emplace_back( cacheFile[0 + i],
-                                 cacheFile[1 + i].back( ),
-                     GetBitmask( cacheFile[2 + i] ) );
+        structures.emplace_back( fileCache[0 + i],
+                                 fileCache[1 + i].back( ),
+                     GetBitmask( fileCache[2 + i] ) );
     }
 
     return structures;
 }
 Player LoadPlayerDefault( const std::vector<Ability>& abilities )
 {
-    std::vector<std::string> cacheFile{ std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Player.txt", std::ios::in } }, { } };
-    auto GetBitmask = [] ( const std::string& line )
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        int values = 0;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values |= 1 << std::stoi( value );
-        }
-
-        return values;
-    };
+    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Player.txt", std::ios::in } }, { } };
     auto GetAbilities = [&abilities] ( const std::string& line )
     {
         std::stringstream sstream( line );
@@ -481,66 +452,66 @@ Player LoadPlayerDefault( const std::vector<Ability>& abilities )
         return values;
     };
 
-    if( cacheFile.empty( ) )
+    if( fileCache.empty( ) )
     {
         throw std::exception( "Missing important files!" );
     }
 
-    return Player( cacheFile[0],
-                   cacheFile[1].back( ),
-       GetBitmask( cacheFile[2] ),
-        std::stoi( cacheFile[3] ),
-        std::stoi( cacheFile[4] ),
-        std::stoi( cacheFile[5] ),
-        std::stof( cacheFile[6] ),
-     GetAbilities( cacheFile[7] ),
-        std::stoi( cacheFile[8] ),
-       GetBitmask( cacheFile[9] ) );
+    return Player( fileCache[0],
+                   fileCache[1].back( ),
+       GetBitmask( fileCache[2] ),
+        std::stoi( fileCache[3] ),
+        std::stoi( fileCache[4] ),
+        std::stoi( fileCache[5] ),
+        std::stof( fileCache[6] ),
+     GetAbilities( fileCache[7] ),
+        std::stoi( fileCache[8] ),
+       GetBitmask( fileCache[9] ) );
 }
 void SaveGameConfig( const DungeonConfiguration& config )
 {
-    std::ofstream outFile( "Dungeoncrawler_Save_Config.txt", std::ios::out | std::ios::trunc );
+    std::ofstream fileOut( "Dungeoncrawler_Save_Config.txt", std::ios::out | std::ios::trunc );
 
-    if( !outFile.is_open( ) )
+    if( !fileOut.is_open( ) )
     {
         return;
     }
 
-    outFile << config.size.determined << '\n';
-    outFile << config.size.dungeon.x << '\n';
-    outFile << config.size.dungeon.y << '\n';
-    outFile << config.generate.doors << '\n';
-    outFile << config.generate.wallsOuter << '\n';
-    outFile << config.generate.hiddenPath << '\n';
-    outFile << config.generate.wallsParents << '\n';
-    outFile << config.generate.wallsChildren << '\n';
-    outFile << config.generate.wallsFiller << '\n';
-    outFile << config.generate.monsters << '\n';
-    outFile << config.amount.doors << '\n';
-    outFile << config.amount.wallsParents << '\n';
-    outFile << config.amount.wallsChildren << '\n';
-    outFile << config.amount.wallsFillerCycles << '\n';
-    outFile << config.amount.monsters << '\n';
+    fileOut << config.size.determined << '\n';
+    fileOut << config.size.dungeon.x << '\n';
+    fileOut << config.size.dungeon.y << '\n';
+    fileOut << config.generate.doors << '\n';
+    fileOut << config.generate.wallsOuter << '\n';
+    fileOut << config.generate.hiddenPath << '\n';
+    fileOut << config.generate.wallsParents << '\n';
+    fileOut << config.generate.wallsChildren << '\n';
+    fileOut << config.generate.wallsFiller << '\n';
+    fileOut << config.generate.monsters << '\n';
+    fileOut << config.amount.doors << '\n';
+    fileOut << config.amount.wallsParents << '\n';
+    fileOut << config.amount.wallsChildren << '\n';
+    fileOut << config.amount.wallsFillerCycles << '\n';
+    fileOut << config.amount.monsters << '\n';
 }
 void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
 {
-    std::ofstream outFile( "Dungeoncrawler_Save_Dungeons.txt", std::ios::out | std::ios::trunc );
+    std::ofstream fileOut( "Dungeoncrawler_Save_Dungeons.txt", std::ios::out | std::ios::trunc );
 
-    if( !outFile.is_open( ) )
+    if( !fileOut.is_open( ) )
     {
         return;
     }
 
-    outFile << index << '\n';
-    outFile << dungeons.size( ) << '\n';
+    fileOut << index << '\n';
+    fileOut << dungeons.size( ) << '\n';
 
     for( const auto& dungeon : dungeons )
     {
         const Vector2<int> size = dungeon.GetSize( );
         Vector2<int> iterator;
 
-        outFile << size.x << ',';
-        outFile << size.y << '\n';
+        fileOut << size.x << ',';
+        fileOut << size.y << '\n';
 
         for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
         {
@@ -548,48 +519,48 @@ void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
             {
                 if( iterator.x < size.x )
                 {
-                    outFile << dungeon.GetTile( iterator ).icon;
+                    fileOut << dungeon.GetTile( iterator ).icon;
                 }
                 else
                 {
-                    outFile << dungeon.GetTile( { iterator.x % size.x, iterator.y } ).visible;
+                    fileOut << dungeon.GetTile( { iterator.x % size.x, iterator.y } ).visible;
                 }
             }
 
-            outFile << '\n';
+            fileOut << '\n';
         }
 
-        outFile << dungeon.links.size( ) << '\n';
+        fileOut << dungeon.links.size( ) << '\n';
 
         for( const auto& link : dungeon.links )
         {
-            outFile << link.indexDungeon << ',';
-            outFile << link.indexLink << ',';
-            outFile << link.exit.x << ',';
-            outFile << link.exit.y << ',';
-            outFile << link.entry.x << ',';
-            outFile << link.entry.y << '\n';
+            fileOut << link.indexDungeon << ',';
+            fileOut << link.indexLink << ',';
+            fileOut << link.exit.x << ',';
+            fileOut << link.exit.y << ',';
+            fileOut << link.entry.x << ',';
+            fileOut << link.entry.y << '\n';
         }
     }
 }
 DungeonConfiguration LoadGameConfig( )
 {
-    std::ifstream inFile( "Dungeoncrawler_Save_Config.txt", std::ios::in );
+    std::ifstream fileIn( "Dungeoncrawler_Save_Config.txt", std::ios::in );
 
-    if( !inFile.is_open( ) )
+    if( !fileIn.is_open( ) )
     {
         throw std::exception( "Missing save files!" );
     }
 
-    return DungeonConfiguration( std::vector<std::string> { std::istream_iterator<std::string>{ inFile }, {} } );
+    return DungeonConfiguration( std::vector<std::string> { std::istream_iterator<std::string>{ fileIn }, {} } );
 }
 std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& entityFactory, int& index )
 {
-    std::ifstream inFile( "Dungeoncrawler_Save_Dungeons.txt", std::ios::in );
+    std::ifstream fileIn( "Dungeoncrawler_Save_Dungeons.txt", std::ios::in );
     std::string line;
     std::vector<Dungeon> dungeons;
     int amountDungeon;
-    auto GetVector2 = [] ( const std::string& line )
+    auto GetVector2int = [] ( const std::string& line )
     {
         std::stringstream sstream( line );
         std::string value;
@@ -622,14 +593,14 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
         };
     };
 
-    if( !inFile.is_open( ) )
+    if( !fileIn.is_open( ) )
     {
         throw std::exception( "Missing save files!" );
     }
 
-    std::getline( inFile, line );
+    std::getline( fileIn, line );
     index = std::stoi( line );
-    std::getline( inFile, line );
+    std::getline( fileIn, line );
     amountDungeon = std::stoi( line );
 
     for( int indexDungeon = 0; indexDungeon < amountDungeon; indexDungeon++ )
@@ -640,14 +611,14 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
         Vector2<int> iterator;
         int amountLink;
 
-        std::getline( inFile, line );
-        size = GetVector2( line );
+        std::getline( fileIn, line );
+        size = GetVector2int( line );
         icons.resize( size.x * size.y );
         vision.resize( size.x * size.y );
 
         for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
         {
-            std::getline( inFile, line );
+            std::getline( fileIn, line );
 
             for( iterator.x = 0; iterator.x < size.x * 2; iterator.x++ )
             {
@@ -663,12 +634,12 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
         }
 
         dungeons.emplace_back( player, entityFactory, size, vision, icons );
-        std::getline( inFile, line );
+        std::getline( fileIn, line );
         amountLink = std::stoi( line );
 
         for( int indexLink = 0; indexLink < amountLink; indexLink++ )
         {
-            std::getline( inFile, line );
+            std::getline( fileIn, line );
             dungeons.back( ).links.push_back( GetLink( line ) );
         }
     }
