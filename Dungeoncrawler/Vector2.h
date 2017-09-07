@@ -4,15 +4,6 @@
 
 template<class T> struct Vector2
 {
-    Vector2( ) :
-        x( ),
-        y( )
-    { }
-    Vector2( const T& x, const T& y ) :
-        x( x ),
-        y( y )
-    { }
-
     T x;
     T y;
 

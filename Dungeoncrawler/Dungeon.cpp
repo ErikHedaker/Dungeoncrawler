@@ -37,7 +37,18 @@ DungeonConfiguration::DungeonConfiguration( const std::vector<std::string>& data
 }
 
 Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const DungeonConfiguration& config ) :
-    _size( config.size.determined ? config.size.dungeon : Vector2<int>( RandomNumberGenerator( 30, 50 ), RandomNumberGenerator( 30, 50 ) ) ),
+    _size( [&config] ( )
+    {
+        constexpr int min = 30;
+        constexpr int max = 50;
+        const Vector2<int> random
+        {
+            RandomNumberGenerator( min, max ),
+            RandomNumberGenerator( min, max )
+        };
+
+        return config.size.determined ? config.size.dungeon : random;
+    }( ) ),
     _tiles( _size.x * _size.y ),
     _player( player )
 {
@@ -55,13 +66,14 @@ Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const 
     _player( player )
 {
     Vector2<int> iterator;
-    std::pair<EntityType::Enum, int> entity;
 
     for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
     {
         for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
         {
             const char icon = icons[( iterator.y * size.x ) + iterator.x];
+
+            _tiles[( iterator.y * size.x ) + iterator.x].visible = vision[( iterator.y * size.x ) + iterator.x];
 
             if( icon != '-' )
             {
@@ -74,16 +86,15 @@ Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const 
                     EntityAdd( entityFactory, iterator, icon );
                 }
             }
-
-            _tiles[( iterator.y * size.x ) + iterator.x].visible = vision[( iterator.y * size.x ) + iterator.x];
         }
     }
 }
 
 void Dungeon::Rotate( const Orientation::Enum& orientation )
 {
+    const Vector2<int> sizeSwp = { _size.y, _size.x };
     const Vector2<int> sizeOld = { _size.x, _size.y };
-    const Vector2<int> sizeNew = ( orientation + 2 ) % 2 == 0 ? sizeOld : Vector2<int>( _size.y, _size.x );
+    const Vector2<int> sizeNew = ( orientation + 2 ) % 2 ? sizeSwp : sizeOld;
     std::vector<Tile> transform = _tiles;
     Vector2<int> iterator;
 
@@ -110,24 +121,24 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
 }
 void Dungeon::PlayerPlace( const Vector2<int>& position )
 {
+    static constexpr std::array<Vector2<int>, 4> directions
+    { {
+        {  0, -1 },
+        {  1,  0 },
+        {  0,  1 },
+        { -1,  0 }
+     } };
+
     _player.real->position = InBounds( position ) ? position : _size / 2;
 
-    if( !CheckTile( position, Attributes::PassableOthers ) )
+    if( !TileContains( position, Attributes::PassableOthers ) )
     {
-        const std::array<Vector2<int>, 4> directions =
-        { {
-            {  0, -1 },
-            {  1,  0 },
-            {  0,  1 },
-            { -1,  0 }
-        } };
-
         for( const auto& direction : directions )
         {
             const Vector2<int> nearby = position + direction;
 
             if( InBounds( nearby ) &&
-                CheckTile( nearby, Attributes::PassableOthers ) )
+                TileContains( nearby, Attributes::PassableOthers ) )
             {
                 _player.real->position = nearby;
 
@@ -144,7 +155,7 @@ void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
     const Vector2<int> move = PositionMove( _player.real->position, orientation );
 
     if( InBounds( move ) &&
-        CheckTile( move, Attributes::PassablePlayer ) )
+        TileContains( move, Attributes::PassablePlayer ) )
     {
         OccupantRemove( _player.base, _player.real->position );
         _player.real->position = move;
@@ -164,7 +175,7 @@ void Dungeon::MovementRandom( )
             const Vector2<int> move = PositionMoveProbability( entity->position, 1, 1, 1, 1, 12 );
 
             if( InBounds( move ) &&
-                CheckTile( move, Attributes::PassableOthers ) )
+                TileContains( move, Attributes::PassableOthers ) )
             {
                 OccupantRemove( entity, entity->position );
                 entity->position = move;
@@ -223,7 +234,7 @@ const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
 }
 Orientation::Enum Dungeon::GetQuadrant( Vector2<int> position ) const
 {
-    const std::map<std::pair<bool, bool>, Orientation::Enum> quadrants
+    static const std::map<Vector2<bool>, Orientation::Enum> quadrants
     {
         { { true,  false }, Orientation::North },
         { { true,  true  }, Orientation::East  },
@@ -231,8 +242,8 @@ Orientation::Enum Dungeon::GetQuadrant( Vector2<int> position ) const
         { { false, false }, Orientation::West  }
     };
     const Vector2<float> positionf = position;
-    const Vector2<float> sizef = _size;
-    const Vector2<float> ratiof = sizef / sizef.y;
+    const Vector2<float> sizef     = _size;
+    const Vector2<float> ratiof    = sizef / sizef.y;
     const bool rightOfMainDiagonal = positionf.x > ( positionf.y * ratiof.x );
     const bool rightOfAntiDiagonal = positionf.x > ( sizef.x - positionf.y * ratiof.x - 1 );
 
@@ -258,7 +269,7 @@ bool Dungeon::Unoccupied( const Vector2<int>& position ) const
 }
 bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 {
-    const std::array<Vector2<int>, 8> directions =
+    static constexpr std::array<Vector2<int>, 8> directions
     { {
         {  0, -1 },
         {  1, -1 },
@@ -275,7 +286,7 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
     {
         const Vector2<int> neighbour = position + direction;
 
-        if( !CheckTile( neighbour, Attributes::PassablePlayer ) )
+        if( !TileContains( neighbour, Attributes::PassablePlayer ) )
         {
             entities++;
         }
@@ -283,19 +294,17 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 
     return entities >= threshold;
 }
-bool Dungeon::CheckTile( const Vector2<int>& position, int bitmask ) const
+bool Dungeon::TileContains( const Vector2<int>& position, int bitmask ) const
 {
-    int count = 0;
-
     for( auto occupants : GetTile( position ).occupants )
     {
-        if( (*occupants)->attributes & bitmask )
+        if( !( (*occupants)->attributes & bitmask ) )
         {
-            count++;
+            return false;
         }
     }
 
-    return count == GetTile( position ).occupants.size( );
+    return true;
 }
 
 void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
@@ -469,14 +478,14 @@ void Dungeon::GenerateWallsParents( const EntityFactory& entityFactory, int amou
 }
 void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amount )
 {
-    const Vector2<int> center = _size / 2;
-    const std::array<Vector2<int>, 4> directions =
+    static constexpr std::array<Vector2<int>, 4> directions
     { {
         {  0, -1 },
         { -1,  0 },
         {  0,  1 },
         {  1,  0 }
     } };
+    const Vector2<int> center = _size / 2;
     int remaining = amount ? amount : ( _size.x * _size.y ) / 5;
 
     while( remaining > 0 )
@@ -524,6 +533,7 @@ void Dungeon::GenerateWallsFiller( const EntityFactory& entityFactory, int amoun
 }
 void Dungeon::GenerateMonsters( const EntityFactory& entityFactory, int amount )
 {
+    static const std::vector<Character> characters = LoadCharacters( LoadAbilities( ) );
     const Vector2<int> center = _size / 2;
     const int min = static_cast<int>( sqrt( _size.x * _size.y ) / 3.0 );
     const int max = static_cast<int>( sqrt( _size.x * _size.y ) / 1.5 );
@@ -542,14 +552,8 @@ void Dungeon::GenerateMonsters( const EntityFactory& entityFactory, int amount )
             if( Unoccupied( position ) &&
                 position != center )
             {
-                const std::vector<std::string> characters
-                {
-                    "Rotten Zombie",
-                    "Frozen Skeleton",
-                    "Burning Lunatic"
-                };
                 const int index = RandomNumberGenerator( 0, characters.size( ) - 1 );
-                const std::string random = characters[index];
+                const std::string random = characters[index].name;
 
                 EntityAdd( entityFactory, position, random );
 

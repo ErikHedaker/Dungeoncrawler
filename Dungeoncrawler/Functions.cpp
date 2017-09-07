@@ -10,6 +10,7 @@
 #include <iterator>
 #include <algorithm>
 #include <cctype>
+#include <limits>
 
 double RandomNumberGenerator( double min, double max )
 {
@@ -75,8 +76,7 @@ char GetChar( const std::string& context, const std::vector<char>& valid, std::f
 }
 void GetEnter( )
 {
-    /* First one doesn't wait for user input */
-    std::cin.get( );
+    std::cin.ignore( std::numeric_limits<std::streamsize>::max( ), '\n' );
     std::cin.get( );
 }
 DungeonConfiguration GetDungeonConfiguration( )
@@ -139,27 +139,15 @@ Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& s
 }
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation )
 {
-    switch( orientation )
+    static const std::map<Orientation::Enum, Vector2<int>> directions
     {
-        case Orientation::North:
-        {
-            return position + Vector2<int>(  0, -1 );
-        }
-        case Orientation::East:
-        {
-            return position + Vector2<int>(  1,  0 );
-        }
-        case Orientation::South:
-        {
-            return position + Vector2<int>(  0,  1 );
-        }
-        case Orientation::West:
-        {
-            return position + Vector2<int>( -1,  0 );
-        }
-    }
+        { Orientation::North, {  0, -1 } },
+        { Orientation::East,  {  1,  0 } },
+        { Orientation::South, {  0,  1 } },
+        { Orientation::West,  { -1,  0 } }
+    };
 
-    return position;
+    return position + directions.at( orientation );
 }
 Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, int west, int south, int east, int still )
 {
@@ -359,12 +347,13 @@ void Combat( Character& player, Character& AI )
 std::vector<Ability> LoadAbilities( )
 {
     const int offset = 4;
-    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Abilities.txt", std::ios::in } }, { } };
+    const std::string name = "Dungeoncrawler_Dependency_Abilities.txt";
+    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ name, std::ios::in } }, { } };
     std::vector<Ability> abilities;
 
     if( fileCache.empty( ) )
     {
-        throw std::exception( "Missing important files!" );
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
     }
 
     for( unsigned int i = 0; i < fileCache.size( ); i += offset )
@@ -380,7 +369,8 @@ std::vector<Ability> LoadAbilities( )
 std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 {
     const int offset = 8;
-    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Characters.txt", std::ios::in } }, { } };
+    const std::string name = "Dungeoncrawler_Dependency_Characters.txt";
+    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ name, std::ios::in } }, { } };
     std::vector<Character> characters;
     auto GetAbilities = [&abilities] ( const std::string& line )
     {
@@ -398,7 +388,7 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 
     if( fileCache.empty( ) )
     {
-        throw std::exception( "Missing important files!" );
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
     }
 
     for( unsigned int i = 0; i < fileCache.size( ); i += offset )
@@ -418,12 +408,13 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 std::vector<Structure> LoadStructures( )
 {
     const int offset = 3;
-    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Structures.txt", std::ios::in } }, { } };
+    const std::string name = "Dungeoncrawler_Dependency_Structures.txt";
+    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ name, std::ios::in } }, { } };
     std::vector<Structure> structures;
 
     if( fileCache.empty( ) )
     {
-        throw std::exception( "Missing important files!" );
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
     }
 
     for( unsigned int i = 0; i < fileCache.size( ); i += offset )
@@ -437,7 +428,8 @@ std::vector<Structure> LoadStructures( )
 }
 Player LoadPlayerDefault( const std::vector<Ability>& abilities )
 {
-    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ "Dungeoncrawler_Dependency_Player.txt", std::ios::in } }, { } };
+    const std::string name = "Dungeoncrawler_Dependency_Player.txt";
+    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ name, std::ios::in } }, { } };
     auto GetAbilities = [&abilities] ( const std::string& line )
     {
         std::stringstream sstream( line );
@@ -454,7 +446,7 @@ Player LoadPlayerDefault( const std::vector<Ability>& abilities )
 
     if( fileCache.empty( ) )
     {
-        throw std::exception( "Missing important files!" );
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
     }
 
     return Player( fileCache[0],
@@ -470,11 +462,12 @@ Player LoadPlayerDefault( const std::vector<Ability>& abilities )
 }
 void SaveGameConfig( const DungeonConfiguration& config )
 {
-    std::ofstream fileOut( "Dungeoncrawler_Save_Config.txt", std::ios::out | std::ios::trunc );
+    const std::string name = "Dungeoncrawler_Save_Config.txt";
+    std::ofstream fileOut( name, std::ios::out | std::ios::trunc );
 
     if( !fileOut.is_open( ) )
     {
-        return;
+        throw std::exception( std::string( "Unable to open file: " + name ).c_str( ) );
     }
 
     fileOut << config.size.determined << '\n';
@@ -495,11 +488,12 @@ void SaveGameConfig( const DungeonConfiguration& config )
 }
 void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
 {
-    std::ofstream fileOut( "Dungeoncrawler_Save_Dungeons.txt", std::ios::out | std::ios::trunc );
+    const std::string name = "Dungeoncrawler_Save_Dungeons.txt";
+    std::ofstream fileOut( name, std::ios::out | std::ios::trunc );
 
     if( !fileOut.is_open( ) )
     {
-        return;
+        throw std::exception( std::string( "Unable to open file: " + name ).c_str( ) );
     }
 
     fileOut << index << '\n';
@@ -545,18 +539,20 @@ void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
 }
 DungeonConfiguration LoadGameConfig( )
 {
-    std::ifstream fileIn( "Dungeoncrawler_Save_Config.txt", std::ios::in );
+    const std::string name = "Dungeoncrawler_Save_Config.txt";
+    std::ifstream fileIn( name, std::ios::in );
 
     if( !fileIn.is_open( ) )
     {
-        throw std::exception( "Missing save files!" );
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
     }
 
     return DungeonConfiguration( std::vector<std::string> { std::istream_iterator<std::string>{ fileIn }, {} } );
 }
 std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& entityFactory, int& index )
 {
-    std::ifstream fileIn( "Dungeoncrawler_Save_Dungeons.txt", std::ios::in );
+    const std::string name = "Dungeoncrawler_Save_Dungeons.txt";
+    std::ifstream fileIn( name, std::ios::in );
     std::string line;
     std::vector<Dungeon> dungeons;
     int amountDungeon;
@@ -595,7 +591,7 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
 
     if( !fileIn.is_open( ) )
     {
-        throw std::exception( "Missing save files!" );
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
     }
 
     std::getline( fileIn, line );

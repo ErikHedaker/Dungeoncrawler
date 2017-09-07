@@ -120,14 +120,14 @@ void Game::Start( )
 }
 void Game::TurnUser( Dungeon& dungeon )
 {
-    const std::map<char, Orientation::Enum> directions =
+    static const std::map<char, Orientation::Enum> directions
     {
         { 'W', Orientation::North },
         { 'A', Orientation::West  },
         { 'S', Orientation::South },
         { 'D', Orientation::East  },
     };
-    const std::map<char, Orientation::Enum> rotations =
+    static const std::map<char, Orientation::Enum> rotations
     {
         { 'F', Orientation::East  },
         { 'G', Orientation::South },
@@ -188,9 +188,9 @@ void Game::TurnUser( Dungeon& dungeon )
 }
 void Game::DungeonLink( int indexCurrentDungeon )
 {
-    const int amount = _dungeons[indexCurrentDungeon].links.size( );
+    const int limit = _dungeons[indexCurrentDungeon].links.size( );
 
-    for( int indexCurrentLink = 0; indexCurrentLink < amount; indexCurrentLink++ )
+    for( int indexCurrentLink = 0; indexCurrentLink < limit; indexCurrentLink++ )
     {
         if( _dungeons[indexCurrentDungeon].links[indexCurrentLink].indexLink < 0 &&
             _dungeons[indexCurrentDungeon].links[indexCurrentLink].indexDungeon < 0 )
@@ -199,8 +199,8 @@ void Game::DungeonLink( int indexCurrentDungeon )
 
             const int indexPartnerLink = 0;
             const int indexPartnerDungeon = _dungeons.size( ) - 1;
-            auto& partner = _dungeons[indexPartnerDungeon].links[indexPartnerLink];
-            auto& current = _dungeons[indexCurrentDungeon].links[indexCurrentLink];
+            Link& partner = _dungeons[indexPartnerDungeon].links[indexPartnerLink];
+            Link& current = _dungeons[indexCurrentDungeon].links[indexCurrentLink];
 
             partner = { indexCurrentDungeon, indexCurrentLink, current.entry, partner.entry };
             current = { indexPartnerDungeon, indexPartnerLink, partner.entry, current.entry };
@@ -213,7 +213,7 @@ void Game::DungeonRotate( int indexDungeon, const Orientation::Enum& orientation
 
     for( auto& current : _dungeons[indexDungeon].links )
     {
-        auto& partner = _dungeons[current.indexDungeon].links[current.indexLink];
+        Link& partner = _dungeons[current.indexDungeon].links[current.indexLink];
 
         current.entry = PositionRotate( current.entry, sizeOld, orientation );
         partner.exit  = PositionRotate( partner.exit,  sizeOld, orientation );
@@ -223,9 +223,9 @@ void Game::DungeonRotate( int indexDungeon, const Orientation::Enum& orientation
 }
 void Game::DungeonSwitch( )
 {
-    const int amount = _dungeons[_index].links.size( );
+    const int limit = _dungeons[_index].links.size( );
 
-    for( int i = 0; i < amount; i++ )
+    for( int i = 0; i < limit; i++ )
     {
         if( _dungeons[_index].links[i].entry == _player.real->position )
         {
