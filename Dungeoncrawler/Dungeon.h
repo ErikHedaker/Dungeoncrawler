@@ -86,12 +86,12 @@ class Dungeon
 
         void UpdateVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
-        void EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, const std::pair<EntityType::Enum, int>& id );
-        void EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, const std::string& name );
-        void EntityAdd( const EntityFactory& entityFactory, const Vector2<int>& position, char icon );
-        void EntityRemove( std::unique_ptr<Entity>& entity, const Vector2<int>& position );
-        void OccupantAdd( std::unique_ptr<Entity>& entity, const Vector2<int>& position );
-        void OccupantRemove( std::unique_ptr<Entity>& entity, const Vector2<int>& position );
+        void EntityAdd( const Vector2<int>& position, const EntityFactory& entityFactory, const std::pair<EntityType::Enum, int>& id );
+        void EntityAdd( const Vector2<int>& position, const EntityFactory& entityFactory, const std::string& name );
+        void EntityAdd( const Vector2<int>& position, const EntityFactory& entityFactory, char icon );
+        void EntityRemove( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
+        void OccupantAdd( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
+        void OccupantRemove( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
 
         void GenerateDoors( const EntityFactory& entityFactory, int amount );
         void GenerateWallsOuter( const EntityFactory& entityFactory );

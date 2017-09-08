@@ -11,12 +11,14 @@ template<class T> struct Vector2
     {
         x = x + rhs.x;
         y = y + rhs.y;
+
         return *this;
     }
     Vector2& operator-=( const Vector2& rhs )
     {
         x = x - rhs.x;
         y = y - rhs.y;
+
         return *this;
     }
     template<class Y> operator Vector2<Y>( ) const

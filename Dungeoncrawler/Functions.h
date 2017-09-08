@@ -20,7 +20,7 @@ Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& s
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation );
 Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, int west, int south, int east, int still );
 Ability GetAbility( const std::vector<Ability>& abilities );
-std::string UseAbility( const Ability& ability, Character& caster, Character& target );
+std::string UseAbility( Character& attacker, Character& target, const Ability& ability );
 std::string UseWeapon( Character& attacker, Character& target );
 std::string TurnPlayer( Character& player, Character& AI );
 std::string TurnAI( Character& player, Character& AI );

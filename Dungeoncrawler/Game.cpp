@@ -125,13 +125,13 @@ void Game::TurnUser( Dungeon& dungeon )
         { 'W', Orientation::North },
         { 'A', Orientation::West  },
         { 'S', Orientation::South },
-        { 'D', Orientation::East  },
+        { 'D', Orientation::East  }
     };
     static const std::map<char, Orientation::Enum> rotations
     {
         { 'F', Orientation::East  },
         { 'G', Orientation::South },
-        { 'H', Orientation::West  },
+        { 'H', Orientation::West  }
     };
     char input;
 
@@ -231,13 +231,14 @@ void Game::DungeonSwitch( )
         {
             const int indexOld = _index;
             const int indexNew = _dungeons[_index].links[i].indexDungeon;
-            const int rotation = ( ( _dungeons[indexOld].GetQuadrant( _dungeons[indexOld].links[i].entry ) -
-                                     _dungeons[indexNew].GetQuadrant( _dungeons[indexOld].links[i].exit  ) + 3 ) % 4 ) - 1;
+            const int exit = _dungeons[indexNew].GetQuadrant( _dungeons[indexOld].links[i].exit );
+            const int entry = _dungeons[indexOld].GetQuadrant( _dungeons[indexOld].links[i].entry );
+            const int align = ( ( entry - exit + 3 ) % 4 ) - 1;
 
             DungeonLink( indexNew );
             _index = indexNew;
             _dungeons[indexNew].PlayerPlace( _dungeons[indexOld].links[i].exit );
-            DungeonRotate( indexNew, static_cast<Orientation::Enum>( rotation ) );
+            DungeonRotate( indexNew, static_cast<Orientation::Enum>( align ) );
 
             break;
         }

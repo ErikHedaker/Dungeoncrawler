@@ -66,7 +66,7 @@ char GetChar( const std::string& context, const std::vector<char>& valid, std::f
 
         std::cout << context;
         std::cin >> input;
-        last = ( modifier != nullptr ) ? modifier( input.back( ) ) : input.back( );
+        last = modifier != nullptr ? modifier( input.back( ) ) : input.back( );
 
         if( std::find( valid.begin( ), valid.end( ), last ) != valid.end( ) )
         {
@@ -177,37 +177,41 @@ Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, i
 }
 Ability GetAbility( const std::vector<Ability>& abilities )
 {
-    std::map<char, Ability> abilitiesMap;
-    std::vector<char> choices;
-    char id = '1';
+    std::map<char, Ability> pairs;
+    std::vector<char> valid;
+    char key = '1';
     
     std::cout << "\nChoose an ability:\n";
 
     for( const auto& ability : abilities )
     {
-        abilitiesMap.emplace( id, ability );
-        choices.push_back( id );
-        std::cout << "[" << id << "] " << abilitiesMap.at( id ).name << "\n";
-        id++;
+        pairs.emplace( key, ability );
+        valid.push_back( key );
+        std::cout << "[" << key << "] " << pairs.at( key ).name << "\n";
+        key++;
     }
 
     std::cout << "\n";
     
-    return abilitiesMap.at( GetChar( "Enter choice: ", choices ) );
+    return pairs.at( GetChar( "Enter choice: ", valid ) );
 }
-std::string UseAbility( const Ability& ability, Character& caster, Character& target )
+std::string UseAbility( Character& attacker, Character& target, const Ability& ability )
 {
+    constexpr double min = 0.9;
+    constexpr double max = 1.1;
     const int healthOld = target.health;
 
-    target.health -= static_cast<int>( ability.damage * RandomNumberGenerator( 0.9, 1.1 ) );
+    target.health -= static_cast<int>( ability.damage * RandomNumberGenerator( min, max ) );
 
-    return std::string( caster.name + " casts " + ability.name + " on " + target.name + ", which dealt " + std::to_string( healthOld - target.health ) + " damage!" );
+    return std::string( attacker.name + " casts " + ability.name + " on " + target.name + ", which dealt " + std::to_string( healthOld - target.health ) + " damage!" );
 }
 std::string UseWeapon( Character& attacker, Character& target )
 {
+    constexpr double min = 0.9;
+    constexpr double max = 1.1;
     const int healthOld = target.health;
 
-    target.health -= static_cast<int>( attacker.damage * RandomNumberGenerator( 0.9, 1.1 ) );
+    target.health -= static_cast<int>( attacker.damage * RandomNumberGenerator( min, max ) );
 
     return std::string( attacker.name + " attacks " + target.name + " with a weapon, which dealt " + std::to_string( healthOld - target.health ) + " damage!" );
 }
@@ -236,7 +240,7 @@ std::string TurnPlayer( Character& player, Character& AI )
             {
                 if( player.abilities.size( ) > 0 )
                 {
-                    result = UseAbility( GetAbility( player.abilities ), player, AI );
+                    result = UseAbility( player, AI, GetAbility( player.abilities ) );
                     done = true;
                 }
 
@@ -251,14 +255,14 @@ std::string TurnAI( Character& player, Character& AI )
 {
     const int number = RandomNumberGenerator( 0, AI.abilities.size( ) );
 
-    return ( number == AI.abilities.size( ) ? UseWeapon( AI, player ) : UseAbility( AI.abilities[number], AI, player ) );
+    return number == AI.abilities.size( ) ? UseWeapon( AI, player ) : UseAbility( AI, player, AI.abilities[number] );
 }
 void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen )
 {
     const Vector2<int> origoCamera = center - sizeScreen / 2;
     const Vector2<int> iteratorBegin = origoCamera - 1;
     const Vector2<int> iteratorEnd = origoCamera + 1 + sizeScreen;
-    auto InsideVisionReach = [visionReach, center] ( const Vector2<int>& iterator ) -> bool
+    auto InsideVisionReach = [&visionReach, &center] ( const Vector2<int>& iterator ) -> bool
     {
         return
             iterator >= center - visionReach &&
@@ -346,9 +350,9 @@ void Combat( Character& player, Character& AI )
 }
 std::vector<Ability> LoadAbilities( )
 {
-    const int offset = 4;
+    constexpr int offset = 4;
     const std::string name = "Dungeoncrawler_Dependency_Abilities.txt";
-    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ name, std::ios::in } }, { } };
+    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper> { std::ifstream { name, std::ios::in } }, { } };
     std::vector<Ability> abilities;
 
     if( fileCache.empty( ) )
@@ -368,11 +372,11 @@ std::vector<Ability> LoadAbilities( )
 }
 std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 {
-    const int offset = 8;
+    constexpr int offset = 8;
     const std::string name = "Dungeoncrawler_Dependency_Characters.txt";
-    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ name, std::ios::in } }, { } };
+    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper> { std::ifstream { name, std::ios::in } }, { } };
     std::vector<Character> characters;
-    auto GetAbilities = [&abilities] ( const std::string& line )
+    auto GetAbilities = [&abilities] ( const std::string& line ) -> std::vector<Ability>
     {
         std::stringstream sstream( line );
         std::string value;
@@ -407,7 +411,7 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 }
 std::vector<Structure> LoadStructures( )
 {
-    const int offset = 3;
+    constexpr int offset = 3;
     const std::string name = "Dungeoncrawler_Dependency_Structures.txt";
     std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ name, std::ios::in } }, { } };
     std::vector<Structure> structures;
@@ -430,7 +434,7 @@ Player LoadPlayerDefault( const std::vector<Ability>& abilities )
 {
     const std::string name = "Dungeoncrawler_Dependency_Player.txt";
     std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ name, std::ios::in } }, { } };
-    auto GetAbilities = [&abilities] ( const std::string& line )
+    auto GetAbilities = [&abilities] ( const std::string& line ) -> std::vector<Ability>
     {
         std::stringstream sstream( line );
         std::string value;
@@ -547,7 +551,7 @@ DungeonConfiguration LoadGameConfig( )
         throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
     }
 
-    return DungeonConfiguration( std::vector<std::string> { std::istream_iterator<std::string>{ fileIn }, {} } );
+    return DungeonConfiguration( std::vector<std::string> { std::istream_iterator<std::string> { fileIn }, { } } );
 }
 std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& entityFactory, int& index )
 {
@@ -556,7 +560,7 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
     std::string line;
     std::vector<Dungeon> dungeons;
     int amountDungeon;
-    auto GetVector2int = [] ( const std::string& line )
+    auto GetVector2int = [] ( const std::string& line ) -> Vector2<int>
     {
         std::stringstream sstream( line );
         std::string value;
@@ -569,7 +573,7 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
 
         return values;
     };
-    auto GetLink = [] ( const std::string& line )
+    auto GetLink = [] ( const std::string& line ) -> Link
     {
         std::stringstream sstream( line );
         std::string value;
@@ -620,7 +624,7 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
             {
                 if( iterator.x >= size.x )
                 {
-                    vision[( iterator.y * size.x ) + ( iterator.x % size.x )] = ( line[iterator.x] == '1' );
+                    vision[( iterator.y * size.x ) + ( iterator.x % size.x )] = line[iterator.x] == '1';
                 }
                 else
                 {
