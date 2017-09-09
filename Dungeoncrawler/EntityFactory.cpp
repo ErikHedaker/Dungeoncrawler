@@ -62,6 +62,12 @@ EntityFactory::EntityFactory( ) :
     }( ) )
 { }
 
+void PlayerType::Reset( const Player& player )
+{
+    base.reset( new Player( player ) );
+    real = dynamic_cast<Player*>( base.get( ) );
+}
+
 const std::unique_ptr<Entity>& EntityFactory::Get( const std::pair<EntityType::Enum, int>& id ) const
 {
     return _entities.at( id );

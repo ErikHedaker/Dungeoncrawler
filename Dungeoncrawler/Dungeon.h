@@ -44,8 +44,8 @@ struct Link
 {
     int indexDungeon;
     int indexLink;
+    Vector2<int> entrance;
     Vector2<int> exit;
-    Vector2<int> entry;
 };
 
 struct Tile
@@ -72,8 +72,9 @@ class Dungeon
         const Vector2<int>& GetSize( ) const;
         const Tile& GetTile( const Vector2<int>& position ) const;
         Orientation::Enum GetQuadrant( Vector2<int> position ) const;
+        bool Exterior( const Vector2<int>& position, int layer = 0 ) const;
+        bool InCorner( const Vector2<int>& position, int sensitivity = 0 ) const;
         bool InBounds( const Vector2<int>& position ) const;
-        bool IsCorner( const Vector2<int>& position ) const;
         bool Unoccupied( const Vector2<int>& position ) const;
         bool Surrounded( const Vector2<int>& position, int threshold ) const;
         bool TileContains( const Vector2<int>& position, int bitmask ) const;
@@ -86,9 +87,7 @@ class Dungeon
 
         void UpdateVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
-        void EntityAdd( const Vector2<int>& position, const EntityFactory& entityFactory, const std::pair<EntityType::Enum, int>& id );
-        void EntityAdd( const Vector2<int>& position, const EntityFactory& entityFactory, const std::string& name );
-        void EntityAdd( const Vector2<int>& position, const EntityFactory& entityFactory, char icon );
+        void EntityAdd( const Vector2<int>& position, Entity* entity );
         void EntityRemove( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
         void OccupantAdd( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
         void OccupantRemove( const Vector2<int>& position, std::unique_ptr<Entity>& entity );

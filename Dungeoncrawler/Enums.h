@@ -36,9 +36,9 @@ struct States
 {
     enum Enum
     {
-        Combat = 1 << 0,
-        Switch = 1 << 1,
-        Loot   = 1 << 2
+        Fighting = 1 << 0,
+        Swapping = 1 << 1,
+        Looting  = 1 << 2
     };
 };
 
@@ -60,12 +60,6 @@ struct Load
         Default  = 0,
         Previous = 1
     };
-};
-
-enum class GameStatus
-{
-    Menu,
-    Playing
 };
 
 enum class GameConfig

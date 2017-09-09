@@ -313,7 +313,7 @@ void PrintHealth( const Character& combatant )
 
     std::cout << combatant.healthRegeneration << ")\n";
 }
-void Combat( Character& player, Character& AI )
+void Fight( Character& player, Character& AI )
 {
     std::string previousTurnPlayer;
     std::string previousTurnAI;
@@ -534,10 +534,10 @@ void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
         {
             fileOut << link.indexDungeon << ',';
             fileOut << link.indexLink << ',';
+            fileOut << link.entrance.x << ',';
+            fileOut << link.entrance.y << ',';
             fileOut << link.exit.x << ',';
-            fileOut << link.exit.y << ',';
-            fileOut << link.entry.x << ',';
-            fileOut << link.entry.y << '\n';
+            fileOut << link.exit.y << '\n';
         }
     }
 }

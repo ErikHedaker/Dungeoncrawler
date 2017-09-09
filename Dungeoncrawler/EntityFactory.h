@@ -17,7 +17,7 @@ struct Entity
 
     std::string name;
     char icon;
-    int attributes;
+    const int attributes;
     Vector2<int> position;
 };
 
@@ -43,7 +43,10 @@ struct Character : public Entity
     }
     void Update( ) override
     {
-        health += healthRegeneration;
+        if( health > 0 )
+        {
+            health += healthRegeneration;
+        }
 
         if( health > healthMax )
         {
@@ -92,8 +95,10 @@ struct PlayerType
 {
     PlayerType( const Player& player );
 
+    void Reset( const Player& player );
+
     std::unique_ptr<Entity> base;
-    Player* const real;
+    Player* real;
 };
 
 class EntityFactory

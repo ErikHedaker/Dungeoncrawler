@@ -26,7 +26,7 @@ std::string TurnPlayer( Character& player, Character& AI );
 std::string TurnAI( Character& player, Character& AI );
 void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen = { 40, 20 } );
 void PrintHealth( const Character& character );
-void Combat( Character& player, Character& AI );
+void Fight( Character& player, Character& AI );
 std::vector<Ability> LoadAbilities( );
 std::vector<Character> LoadCharacters( const std::vector<Ability>& abilitiesLibrary );
 std::vector<Structure> LoadStructures( );
