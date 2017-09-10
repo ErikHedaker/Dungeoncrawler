@@ -6,8 +6,7 @@
 #include <memory>
 
 Game::Game( ) :
-    _player( LoadPlayerDefault( LoadAbilities( ) ) ),
-    _playing( false )
+    _player( LoadPlayerDefault( LoadAbilities( ) ) )
 { }
 
 void Game::Menu( )
@@ -23,7 +22,6 @@ void Game::Menu( )
         std::cout << "[4] Build new game (Configuration)\n";
         std::cout << "[5] Exit\n\n";
         input = GetChar( "Enter choice: ", { '1', '2', '3', '4', '5' } );
-        _playing = true;
 
         switch( input )
         {
@@ -61,18 +59,9 @@ void Game::Menu( )
                 break;
             }
             case '3':
-            {
-                _config = DungeonConfiguration( );
-                system( "CLS" );
-                std::cout << "Loading, please wait.";
-                Reset( );
-                Start( );
-
-                break;
-            }
             case '4':
             {
-                _config = GetDungeonConfiguration( );
+                _config = input == '3' ? DungeonConfiguration( ) : GetDungeonConfiguration( );
                 system( "CLS" );
                 std::cout << "Loading, please wait.";
                 Reset( );
@@ -92,37 +81,7 @@ bool Game::Exist( ) const
     return _dungeons.size( ) != 0;
 }
 
-void Game::Reset( )
-{
-    _player.Reset( LoadPlayerDefault( LoadAbilities( ) ) );
-    _dungeons.clear( );
-    _dungeons.emplace_back( _player, _entityFactory, _config );
-    _index = 0;
-    DungeonLink( 0 );
-    _dungeons[0].PlayerPlace( _dungeons[0].GetSize( ) / 2 );
-}
-void Game::Start( )
-{
-    while( _playing && _player.real->health > 0 )
-    {
-        NextTurn( _dungeons[_index] );
-        _dungeons[_index].MovementRandom( );
-        _dungeons[_index].Events( );
-        _player.real->Update( );
-
-        if( _player.real->health < 0 )
-        {
-            _playing = !_playing;
-        }
-
-        if( _player.real->states & States::Swapping )
-        {
-            _player.real->states &= ~States::Swapping;
-            DungeonSwap( );
-        }
-    }
-}
-void Game::NextTurn( Dungeon& dungeon )
+bool Game::PlayerTurn( )
 {
     static const std::map<char, Orientation::Enum> directions
     {
@@ -139,54 +98,101 @@ void Game::NextTurn( Dungeon& dungeon )
     };
     char input;
 
-    AGAIN:
-    system( "CLS" );
-    PrintDungeon( dungeon, _player.real->visionReach, _player.real->position );
-    PrintHealth( *_player.real );
-    std::cout << "\n";
-    std::cout << "[W] Go North\n";
-    std::cout << "[A] Go West\n";
-    std::cout << "[S] Go South\n";
-    std::cout << "[D] Go East\n";
-    std::cout << "[E] Exit to meny while saving\n";
-    std::cout << "[R] Exit to meny without saving\n";
-    std::cout << "[F] Rotate dungeon 90'\n";
-    std::cout << "[G] Rotate dungeon 180'\n";
-    std::cout << "[H] Rotate dungeon 270'\n\n";
-    input = GetChar( "Enter choice: ", { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
-
-    switch( input )
+    while( true )
     {
-        case 'W':
-        case 'A':
-        case 'S':
-        case 'D':
+        system( "CLS" );
+        PrintDungeon( _dungeons[_index], _player.real->visionReach, _player.real->position );
+        PrintHealth( *_player.real );
+        std::cout << "\n";
+        std::cout << "[W] Go North\n";
+        std::cout << "[A] Go West\n";
+        std::cout << "[S] Go South\n";
+        std::cout << "[D] Go East\n";
+        std::cout << "[E] Exit to meny while saving\n";
+        std::cout << "[R] Exit to meny without saving\n";
+        std::cout << "[F] Rotate dungeon 90'\n";
+        std::cout << "[G] Rotate dungeon 180'\n";
+        std::cout << "[H] Rotate dungeon 270'\n\n";
+        input = GetChar( "Enter choice: ", { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
+
+        switch( input )
         {
-            dungeon.MovementPlayer( directions.at( input ) );
+            case 'W':
+            case 'A':
+            case 'S':
+            case 'D':
+            {
+                _dungeons[_index].MovementPlayer( directions.at( input ) );
+
+                return true;
+            }
+            case 'E':
+            case 'R':
+            {
+                if( input == 'E' )
+                {
+                    SaveGameConfig( _config );
+                    SaveGameDungeons( _dungeons, _index );
+                }
+
+                return false;
+            }
+            case 'F':
+            case 'G':
+            case 'H':
+            {
+                DungeonRotate( _index, rotations.at( input ) );
+
+                break;
+            }
+        }
+    }
+}
+void Game::Reset( )
+{
+    _player.Reset( LoadPlayerDefault( LoadAbilities( ) ) );
+    _dungeons.clear( );
+    _dungeons.emplace_back( _player, _entityFactory, _config );
+    _index = 0;
+    DungeonLink( 0 );
+    _dungeons[0].PlayerPlace( _dungeons[0].GetSize( ) / 2 );
+}
+void Game::Start( )
+{
+    while( _player.real->health > 0 &&
+           PlayerTurn( ) )
+    {
+        _dungeons[_index].MovementRandom( );
+        _dungeons[_index].Events( );
+        _player.real->Update( );
+
+        if( _player.real->states & States::Swapping )
+        {
+            _player.real->states &= ~States::Swapping;
+            DungeonSwap( );
+        }
+    }
+}
+void Game::DungeonSwap( )
+{
+    const int limit = _dungeons[_index].links.size( );
+
+    for( int i = 0; i < limit; i++ )
+    {
+        if( _dungeons[_index].links[i].entrance == _player.real->position )
+        {
+            const int indexPrev = _index;
+            const int indexNext = _dungeons[_index].links[i].indexDungeon;
+            const int entrance  = _dungeons[indexPrev].GetQuadrant( _dungeons[indexPrev].links[i].entrance );
+            const int exit      = _dungeons[indexNext].GetQuadrant( _dungeons[indexPrev].links[i].exit );
+            const int align     = ( ( ( entrance - exit ) + 3 ) % 4 ) - 1;
+
+            DungeonLink( indexNext );
+            _index = indexNext;
+            _dungeons[indexNext].PlayerPlace( _dungeons[indexPrev].links[i].exit );
+            DungeonRotate( indexNext, static_cast<Orientation::Enum>( align ) );
 
             break;
-        }
-        case 'E':
-        {
-            _playing = !_playing;
-            SaveGameConfig( _config );
-            SaveGameDungeons( _dungeons, _index );
-
-            break;
-        }
-        case 'R':
-        {
-            _playing = !_playing;
-
-            break;
-        }
-        case 'F':
-        case 'G':
-        case 'H':
-        {
-            DungeonRotate( _index, rotations.at( input ) );
-
-            goto AGAIN;
         }
     }
 }
@@ -224,27 +230,4 @@ void Game::DungeonRotate( int indexDungeon, const Orientation::Enum& orientation
     }
 
     _dungeons[indexDungeon].Rotate( orientation );
-}
-void Game::DungeonSwap( )
-{
-    const int limit = _dungeons[_index].links.size( );
-
-    for( int i = 0; i < limit; i++ )
-    {
-        if( _dungeons[_index].links[i].entrance == _player.real->position )
-        {
-            const int indexPrev = _index;
-            const int indexNext = _dungeons[_index].links[i].indexDungeon;
-            const int entrance = _dungeons[indexPrev].GetQuadrant( _dungeons[indexPrev].links[i].entrance );
-            const int exit = _dungeons[indexNext].GetQuadrant( _dungeons[indexPrev].links[i].exit );
-            const int align = ( ( ( entrance - exit ) + 3 ) % 4 ) - 1;
-
-            DungeonLink( indexNext );
-            _index = indexNext;
-            _dungeons[indexNext].PlayerPlace( _dungeons[indexPrev].links[i].exit );
-            DungeonRotate( indexNext, static_cast<Orientation::Enum>( align ) );
-
-            break;
-        }
-    }
 }

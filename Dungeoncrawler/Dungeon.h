@@ -51,7 +51,7 @@ struct Link
 struct Tile
 {
     std::vector<std::unique_ptr<Entity>*> occupants = { };
-    bool visible = false;
+    View::Enum vision = View::Shrouded;
     char icon = '-';
 };
 
@@ -59,7 +59,7 @@ class Dungeon
 {
     public:
         Dungeon( PlayerType& player, const EntityFactory& entityFactory, const DungeonConfiguration& config );
-        Dungeon( PlayerType& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& vision, const std::vector<char>& icons );
+        Dungeon( PlayerType& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<int>& view, const std::vector<char>& icons );
 
         std::vector<Link> links;
 

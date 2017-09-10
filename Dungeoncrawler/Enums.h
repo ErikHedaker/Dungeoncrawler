@@ -44,7 +44,7 @@ struct States
 
 struct Orientation
 {
-    enum Enum : int
+    enum Enum
     {
         North =  0,
         East  =  1,
@@ -53,19 +53,14 @@ struct Orientation
     };
 };
 
-struct Load
+struct View
 {
     enum Enum
     {
-        Default  = 0,
-        Previous = 1
+        Shrouded  = 0,
+        Observed  = 1,
+        Observing = 2
     };
-};
-
-enum class GameConfig
-{
-    Default,
-    Configure
 };
 
 enum class ItemType

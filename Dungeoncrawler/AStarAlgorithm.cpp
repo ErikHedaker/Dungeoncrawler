@@ -27,7 +27,7 @@ std::vector<Vector2<int>> Grid::GetNeighbours( const Vector2<int>& position ) co
         {  0,  1 },
         {  1,  0 }
     } };
-    std::vector<Vector2<int>> results;
+    std::vector<Vector2<int>> result;
 
     for( const auto& direction : directions )
     {
@@ -36,17 +36,17 @@ std::vector<Vector2<int>> Grid::GetNeighbours( const Vector2<int>& position ) co
         if( InBounds( neighbor ) &&
             Passable( neighbor ) )
         {
-            results.push_back( neighbor );
+            result.push_back( neighbor );
         }
 
         if( ( position.x + position.y ) % 2 == 0 )
         {
             /* Aesthetic improvement on square grids according to article author */
-            std::reverse( results.begin( ), results.end( ) );
+            std::reverse( result.begin( ), result.end( ) );
         }
     }
 
-    return results;
+    return result;
 }
 
 Node::Node( const Vector2<int>& position, int priority ) :

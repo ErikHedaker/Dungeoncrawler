@@ -60,7 +60,7 @@ Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const 
     if( config.generate.wallsFiller )   GenerateWallsFiller( entityFactory, config.amount.wallsFillerCycles );
     if( config.generate.monsters )      GenerateMonsters( entityFactory, config.amount.monsters );
 }
-Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<bool>& vision, const std::vector<char>& icons ) :
+Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<int>& view, const std::vector<char>& icons ) :
     _size( size ),
     _tiles( size.x * size.y ),
     _player( player )
@@ -72,8 +72,9 @@ Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const 
         for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
         {
             const char icon = icons[( iterator.y * size.x ) + iterator.x];
+            const View::Enum vision = static_cast<View::Enum>( view[( iterator.y * size.x ) + iterator.x] );
 
-            _tiles[( iterator.y * size.x ) + iterator.x].visible = vision[( iterator.y * size.x ) + iterator.x];
+            _tiles[( iterator.y * size.x ) + iterator.x].vision = vision;
 
             if( icon != '-' )
             {
@@ -127,7 +128,7 @@ void Dungeon::PlayerPlace( const Vector2<int>& position )
         {  1,  0 },
         {  0,  1 },
         { -1,  0 }
-     } };
+    } };
 
     _player.real->position = InBounds( position ) ? position : _size / 2;
 
@@ -317,17 +318,39 @@ bool Dungeon::TileContains( const Vector2<int>& position, int bitmask ) const
 
 void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
 {
-    const Vector2<int> iteratorBegin = position - visionReach;
-    const Vector2<int> iteratorEnd   = position + visionReach;
-    Vector2<int> iterator;
-
-    for( iterator.y = iteratorBegin.y; iterator.y <= iteratorEnd.y; iterator.y++ )
+    for( auto& tile : _tiles )
     {
-        for( iterator.x = iteratorBegin.x; iterator.x <= iteratorEnd.x; iterator.x++ )
+        if( tile.vision != View::Shrouded )
         {
-            if( InBounds( iterator ) )
+            tile.vision = View::Observed;
+        }
+    }
+
+    for( const auto& exterior : BresenhamCircle( position, visionReach ) )
+    {
+        const std::vector<Vector2<int>> line = BresenhamLine( _player.real->position, exterior, false );
+
+        for( auto it = line.begin( ); it != line.end( ); it++ )
+        {
+            if( !InBounds( *it ) )
             {
-                _tiles[( iterator.y * _size.x ) + iterator.x].visible = true;
+                break;
+            }
+
+            _tiles[( it->y * _size.x ) + it->x].vision = View::Observing;
+
+            if( !TileContains( *it, Attributes::PassablePlayer ) )
+            {
+                auto next = it + 1;
+
+                if( next != line.end( ) &&
+                    InBounds( *next ) &&
+                    !TileContains( *next, Attributes::PassablePlayer ) )
+                {
+                    _tiles[( next->y * _size.x ) + next->x].vision = View::Observing;
+                }
+
+                break;
             }
         }
     }

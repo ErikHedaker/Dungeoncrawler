@@ -262,12 +262,6 @@ void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& 
     const Vector2<int> origoCamera = center - sizeScreen / 2;
     const Vector2<int> iteratorBegin = origoCamera - 1;
     const Vector2<int> iteratorEnd = origoCamera + 1 + sizeScreen;
-    auto InsideVisionReach = [&visionReach, &center] ( const Vector2<int>& iterator ) -> bool
-    {
-        return
-            iterator >= center - visionReach &&
-            iterator <= center + visionReach;
-    };
     Vector2<int> iterator;
 
     for( iterator.y = iteratorBegin.y; iterator.y <= iteratorEnd.y; iterator.y++ )
@@ -282,12 +276,12 @@ void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& 
                 std::cout << '\\';
             }
             else if( dungeon.InBounds( iterator ) &&
-                     InsideVisionReach( iterator ) )
+                     dungeon.GetTile( iterator ).vision == View::Observing )
             {
                 std::cout << dungeon.GetTile( iterator ).icon;
             }
             else if( dungeon.InBounds( iterator ) &&
-                     dungeon.GetTile( iterator ).visible )
+                     dungeon.GetTile( iterator ).vision == View::Observed )
             {
                 std::cout << ':';
             }
@@ -521,7 +515,7 @@ void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
                 }
                 else
                 {
-                    fileOut << dungeon.GetTile( { iterator.x % size.x, iterator.y } ).visible;
+                    fileOut << static_cast<int>( dungeon.GetTile( { iterator.x % size.x, iterator.y } ).vision );
                 }
             }
 
@@ -606,7 +600,7 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
     for( int indexDungeon = 0; indexDungeon < amountDungeon; indexDungeon++ )
     {
         std::vector<char> icons;
-        std::vector<bool> vision;
+        std::vector<int> view;
         Vector2<int> size;
         Vector2<int> iterator;
         int amountLink;
@@ -614,7 +608,7 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
         std::getline( fileIn, line );
         size = GetVector2int( line );
         icons.resize( size.x * size.y );
-        vision.resize( size.x * size.y );
+        view.resize( size.x * size.y );
 
         for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
         {
@@ -622,18 +616,18 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
 
             for( iterator.x = 0; iterator.x < size.x * 2; iterator.x++ )
             {
-                if( iterator.x >= size.x )
+                if( iterator.x < size.x )
                 {
-                    vision[( iterator.y * size.x ) + ( iterator.x % size.x )] = line[iterator.x] == '1';
+                    icons[( iterator.y * size.x ) + iterator.x] = line[iterator.x];
                 }
                 else
                 {
-                    icons[( iterator.y * size.x ) + iterator.x] = line[iterator.x];
+                    view[( iterator.y * size.x ) + ( iterator.x % size.x )] = line[iterator.x] - '0';
                 }
             }
         }
 
-        dungeons.emplace_back( player, entityFactory, size, vision, icons );
+        dungeons.emplace_back( player, entityFactory, size, view, icons );
         std::getline( fileIn, line );
         amountLink = std::stoi( line );
 
@@ -645,4 +639,86 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
     }
 
     return dungeons;
+}
+std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector2<int>& end, bool allowDiagonal )
+{
+    const Vector2<int> delta 
+    {
+        std::abs( end.x - start.x ),
+        std::abs( end.y - start.y ) * ( -1 )
+    };
+    const Vector2<int> offset
+    {
+        start.x < end.x ? 1 : -1,
+        start.y < end.y ? 1 : -1
+    };
+    std::vector<Vector2<int>> result;
+    Vector2<int> current = start;
+    int error = delta.x + delta.y;
+
+    while( true )
+    {
+        const int temp = error * 2;
+
+        result.push_back( current );
+
+        if( current == end )
+        {
+            break;
+        }
+
+        if( temp >= delta.y )
+        {
+            error += delta.y;
+            current.x += offset.x;
+
+            if( !allowDiagonal )
+            {
+                continue;
+            }
+        }
+
+        if( temp <= delta.x )
+        {
+            error += delta.x;
+            current.y += offset.y;
+        }
+    }
+
+    return result;
+}
+std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radius )
+{
+    std::vector<Vector2<int>> result;
+    Vector2<int> current = { radius * ( -1 ), 0 };
+    int error = 2 - 2 * radius;
+
+    while( true )
+    {
+        const int temp = error;
+
+        result.push_back( { center.x - current.x, center.y + current.y } );
+        result.push_back( { center.x - current.y, center.y - current.x } );
+        result.push_back( { center.x + current.x, center.y - current.y } );
+        result.push_back( { center.x + current.y, center.y + current.x } );
+
+        if( temp <= current.y )
+        {
+            current.y++;
+            error += current.y * 2 + 1;
+        }
+
+        if( temp > current.x || error > current.y )
+        {
+            current.x++;
+            error += current.x * 2 + 1;
+        }
+
+        if( current.x >= 0 )
+        {
+            break;
+        }
+    }
+
+    return result;
 }

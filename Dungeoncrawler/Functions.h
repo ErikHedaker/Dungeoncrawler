@@ -35,6 +35,8 @@ void SaveGameConfig( const DungeonConfiguration& config );
 void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index );
 DungeonConfiguration LoadGameConfig( );
 std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& entityFactory, int& index );
+std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector2<int>& end, bool allowDiagonal );
+std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radius );
 
 class StringWrapper
 {

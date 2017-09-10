@@ -13,16 +13,15 @@ class Game
 
     private:
         const EntityFactory _entityFactory;
-        DungeonConfiguration _config;
         std::vector<Dungeon> _dungeons;
+        DungeonConfiguration _config;
         PlayerType _player;
-        bool _playing;
         int _index;
 
+        bool PlayerTurn( );
         void Reset( );
         void Start( );
-        void NextTurn( Dungeon& dungeon );
+        void DungeonSwap( );
         void DungeonLink( int indexDungeonCurrent );
         void DungeonRotate( int indexDungeon, const Orientation::Enum& orientation );
-        void DungeonSwap( );
 };
