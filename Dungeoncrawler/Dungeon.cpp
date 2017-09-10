@@ -340,12 +340,12 @@ void Dungeon::LineOfSight( const std::vector<Vector2<int>>& line )
 void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
 {
     static constexpr std::array<int, 2> polarity { 1, -1 };
-    static constexpr std::array<Vector2<int>, 4> directions
+    static constexpr std::array<std::pair<Vector2<int>, std::pair<Vector2<int>, Vector2<int>>>, 4> neighbours
     { {
-        {  0, -1 },
-        { -1,  0 },
-        {  0,  1 },
-        {  1,  0 }
+        { {  0, -1 }, { { -1, -1 }, {  1, -1 } } },
+        { {  1,  0 }, { {  1, -1 }, {  1,  1 } } },
+        { {  0,  1 }, { {  1,  1 }, { -1,  1 } } },
+        { { -1,  0 }, { { -1,  1 }, { -1, -1 } } }
     } };
 
     vision.clear( );
@@ -356,8 +356,34 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
         LineOfSight( BresenhamLine(         position, endpoint ) );
     }
 
-    for( const auto& direction : directions )
+    /* Fix vision artifacts */
+    for( const auto& position : vision )
     {
+        for( const auto& neighbour : neighbours )
+        {
+            if( InBounds( position + neighbour.first ) &&
+                vision.find( position + neighbour.first ) == vision.end( ) )
+            {
+                const Vector2<int> neighbourOne = position + neighbour.second.first;
+                const Vector2<int> neighbourTwo = position + neighbour.second.second;
+
+                if( InBounds( neighbourOne ) &&
+                    InBounds( neighbourTwo ) &&
+                    TileContains( neighbourOne, Attributes::PassablePlayer ) &&
+                    TileContains( neighbourTwo, Attributes::PassablePlayer ) &&
+                    vision.find( neighbourOne ) != vision.end( ) &&
+                    vision.find( neighbourTwo ) != vision.end( ) )
+                {
+                    vision.insert( position + neighbour.first );
+                }
+            }
+        }
+    }
+
+    /* Fix vision artificats */
+    for( const auto& neighbour : neighbours )
+    {
+        const Vector2<int> direction = neighbour.first;
         const std::vector<Vector2<int>> line = BresenhamLine( position, position + direction * visionReach );
 
         for( auto polar : polarity )
@@ -532,9 +558,9 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
     static constexpr std::array<Vector2<int>, 4> directions
     { {
         {  0, -1 },
-        { -1,  0 },
+        {  1,  0 },
         {  0,  1 },
-        {  1,  0 }
+        { -1,  0 }
     } };
     const Vector2<int> center = _size / 2;
     int remaining = amount ? amount : ( _size.x * _size.y ) / 4;
