@@ -5,6 +5,7 @@
 #include <random>
 #include <cmath>
 #include <map>
+#include <set>
 
 DungeonConfiguration::DungeonConfiguration( ) :
     size( { false, { 0, 0 } } ),
@@ -316,8 +317,34 @@ bool Dungeon::TileContains( const Vector2<int>& position, int bitmask ) const
     return true;
 }
 
+void Dungeon::LineOfSight( const std::vector<Vector2<int>>& line )
+{
+    for( auto& current : line )
+    {
+        if( !InBounds( current ) )
+        {
+            break;
+        }
+
+        _tiles[( current.y * _size.x ) + current.x].vision = View::Observing;
+
+        if( !TileContains( current, Attributes::PassablePlayer ) )
+        {
+            break;
+        }
+    }
+}
 void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
 {
+    static constexpr std::array<int, 2> polarity { 1, -1 };
+    static constexpr std::array<Vector2<int>, 4> directions
+    { {
+        {  0, -1 },
+        { -1,  0 },
+        {  0,  1 },
+        {  1,  0 }
+    } };
+
     for( auto& tile : _tiles )
     {
         if( tile.vision != View::Shrouded )
@@ -326,31 +353,39 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
         }
     }
 
-    for( const auto& exterior : BresenhamCircle( position, visionReach ) )
+    for( const auto& endpoint : BresenhamCircle( position, visionReach ) )
     {
-        const std::vector<Vector2<int>> line = BresenhamLine( _player.real->position, exterior, false );
+        LineOfSight( BresenhamLineDiagonal( position, endpoint ) );
+        LineOfSight( BresenhamLine(         position, endpoint ) );
+    }
 
-        for( auto it = line.begin( ); it != line.end( ); it++ )
+    for( const auto& direction : directions )
+    {
+        const std::vector<Vector2<int>> line = BresenhamLine( position, position + direction * visionReach );
+
+        for( auto polar : polarity )
         {
-            if( !InBounds( *it ) )
+            for( const auto& current : line )
             {
-                break;
-            }
+                const Vector2<int> flip = { direction.y, direction.x };
+                const Vector2<int> adjacent = current + flip * polar;
 
-            _tiles[( it->y * _size.x ) + it->x].vision = View::Observing;
-
-            if( !TileContains( *it, Attributes::PassablePlayer ) )
-            {
-                auto next = it + 1;
-
-                if( next != line.end( ) &&
-                    InBounds( *next ) &&
-                    !TileContains( *next, Attributes::PassablePlayer ) )
+                if( current == position ||
+                    !InBounds( current ) ||
+                    !InBounds( adjacent ) )
                 {
-                    _tiles[( next->y * _size.x ) + next->x].vision = View::Observing;
+                    continue;
                 }
 
-                break;
+                if( !TileContains( adjacent, Attributes::PassablePlayer ) )
+                {
+                    _tiles[( adjacent.y * _size.x ) + adjacent.x].vision = View::Observing;
+                }
+
+                if( !TileContains( current, Attributes::PassablePlayer ) )
+                {
+                    break;
+                }
             }
         }
     }
@@ -478,7 +513,7 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
 void Dungeon::GenerateWallsParents( const EntityFactory& entityFactory, int amount )
 {
     const Vector2<int> center = _size / 2;
-    int remaining = amount ? amount : ( _size.x * _size.y ) / 20;
+    int remaining = amount ? amount : ( _size.x * _size.y ) / 14;
 
     while( remaining > 0 )
     {
@@ -506,7 +541,7 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
         {  1,  0 }
     } };
     const Vector2<int> center = _size / 2;
-    int remaining = amount ? amount : ( _size.x * _size.y ) / 5;
+    int remaining = amount ? amount : ( _size.x * _size.y ) / 4;
 
     while( remaining > 0 )
     {
@@ -532,10 +567,10 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
 void Dungeon::GenerateWallsFiller( const EntityFactory& entityFactory, int amount )
 {
     const Vector2<int> center = _size / 2;
-    const int walls = amount ? amount : 5;
+    const int cycles = amount ? amount : 6;
     Vector2<int> iterator;
 
-    for( int i = 0; i < walls; i++ )
+    for( int i = 0; i < cycles; i++ )
     {
         for( iterator.y = 1; iterator.y < _size.y - 1; iterator.y++ )
         {

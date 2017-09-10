@@ -85,6 +85,7 @@ class Dungeon
         std::list<std::unique_ptr<Entity>> _entities;
         PlayerType& _player;
 
+        void LineOfSight( const std::vector<Vector2<int>>& line );
         void UpdateVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
         void EntityAdd( const Vector2<int>& position, Entity* entity );

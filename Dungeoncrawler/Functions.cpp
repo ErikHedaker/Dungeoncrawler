@@ -280,11 +280,11 @@ void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& 
             {
                 std::cout << dungeon.GetTile( iterator ).icon;
             }
-            else if( dungeon.InBounds( iterator ) &&
-                     dungeon.GetTile( iterator ).vision == View::Observed )
-            {
-                std::cout << ':';
-            }
+            //else if( dungeon.InBounds( iterator ) &&
+            //         dungeon.GetTile( iterator ).vision == View::Observed )
+            //{
+            //    std::cout << ':';
+            //}
             else
             {
                 std::cout << ' ';
@@ -640,53 +640,6 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
 
     return dungeons;
 }
-std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector2<int>& end, bool allowDiagonal )
-{
-    const Vector2<int> delta 
-    {
-        std::abs( end.x - start.x ),
-        std::abs( end.y - start.y ) * ( -1 )
-    };
-    const Vector2<int> offset
-    {
-        start.x < end.x ? 1 : -1,
-        start.y < end.y ? 1 : -1
-    };
-    std::vector<Vector2<int>> result;
-    Vector2<int> current = start;
-    int error = delta.x + delta.y;
-
-    while( true )
-    {
-        const int temp = error * 2;
-
-        result.push_back( current );
-
-        if( current == end )
-        {
-            break;
-        }
-
-        if( temp >= delta.y )
-        {
-            error += delta.y;
-            current.x += offset.x;
-
-            if( !allowDiagonal )
-            {
-                continue;
-            }
-        }
-
-        if( temp <= delta.x )
-        {
-            error += delta.x;
-            current.y += offset.y;
-        }
-    }
-
-    return result;
-}
 std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radius )
 {
     std::vector<Vector2<int>> result;
@@ -717,6 +670,89 @@ std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radiu
         if( current.x >= 0 )
         {
             break;
+        }
+    }
+
+    return result;
+}
+std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector2<int>& end )
+{
+    const Vector2<int> delta
+    {
+        std::abs( end.x - start.x ),
+        std::abs( end.y - start.y ) * ( -1 )
+    };
+    const Vector2<int> offset
+    {
+        start.x < end.x ? 1 : -1,
+        start.y < end.y ? 1 : -1
+    };
+    std::vector<Vector2<int>> result;
+    Vector2<int> current = start;
+    int error = delta.x + delta.y;
+
+    while( true )
+    {
+        const int temp = error * 2;
+
+        result.push_back( current );
+
+        if( current == end )
+        {
+            break;
+        }
+
+        if( temp >= delta.y )
+        {
+            error += delta.y;
+            current.x += offset.x;
+        }
+        else if( temp <= delta.x )
+        {
+            error += delta.x;
+            current.y += offset.y;
+        }
+    }
+
+    return result;
+}
+std::vector<Vector2<int>> BresenhamLineDiagonal( const Vector2<int>& start, const Vector2<int>& end )
+{
+    const Vector2<int> delta
+    {
+        std::abs( end.x - start.x ),
+        std::abs( end.y - start.y ) * ( -1 )
+    };
+    const Vector2<int> offset
+    {
+        start.x < end.x ? 1 : -1,
+        start.y < end.y ? 1 : -1
+    };
+    std::vector<Vector2<int>> result;
+    Vector2<int> current = start;
+    int error = delta.x + delta.y;
+
+    while( true )
+    {
+        const int temp = error * 2;
+
+        result.push_back( current );
+
+        if( current == end )
+        {
+            break;
+        }
+
+        if( temp >= delta.y )
+        {
+            error += delta.y;
+            current.x += offset.x;
+        }
+
+        if( temp <= delta.x )
+        {
+            error += delta.x;
+            current.y += offset.y;
         }
     }
 
