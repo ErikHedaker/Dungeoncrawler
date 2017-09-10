@@ -5,7 +5,6 @@
 #include <random>
 #include <cmath>
 #include <map>
-#include <set>
 
 DungeonConfiguration::DungeonConfiguration( ) :
     size( { false, { 0, 0 } } ),
@@ -61,7 +60,7 @@ Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const 
     if( config.generate.wallsFiller )   GenerateWallsFiller( entityFactory, config.amount.wallsFillerCycles );
     if( config.generate.monsters )      GenerateMonsters( entityFactory, config.amount.monsters );
 }
-Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<int>& view, const std::vector<char>& icons ) :
+Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<char>& icons ) :
     _size( size ),
     _tiles( size.x * size.y ),
     _player( player )
@@ -73,9 +72,6 @@ Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const 
         for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
         {
             const char icon = icons[( iterator.y * size.x ) + iterator.x];
-            const View::Enum vision = static_cast<View::Enum>( view[( iterator.y * size.x ) + iterator.x] );
-
-            _tiles[( iterator.y * size.x ) + iterator.x].vision = vision;
 
             if( icon != '-' )
             {
@@ -97,7 +93,8 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
     const Vector2<int> sizeSwap = { _size.y, _size.x };
     const Vector2<int> sizePrev = { _size.x, _size.y };
     const Vector2<int> sizeNext = ( orientation + 2 ) % 2 ? sizeSwap : sizePrev;
-    std::vector<Tile> transform = _tiles;
+    std::unordered_set<Vector2<int>, HasherVector2<int>> rotateVision;
+    std::vector<Tile> rotateTiles = _tiles;
     Vector2<int> iterator;
 
     for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
@@ -108,7 +105,7 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
             const int indexPrev = ( rotation.x * sizeNext.y ) + rotation.y;
             const int indexNext = ( iterator.x * sizePrev.y ) + iterator.y;
 
-            transform[indexNext] = _tiles[indexPrev];
+            rotateTiles[indexNext] = _tiles[indexPrev];
         }
     }
 
@@ -117,9 +114,15 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
         entity->position = PositionRotate( entity->position, sizePrev, orientation );
     }
 
+    for( const auto& position : vision )
+    {
+        rotateVision.insert( PositionRotate( position, sizePrev, orientation ) );
+    }
+
     _player.real->position = PositionRotate( _player.real->position, sizePrev, orientation );
-    _tiles = transform;
     _size = sizeNext;
+    _tiles = rotateTiles;
+    vision = rotateVision;
 }
 void Dungeon::PlayerPlace( const Vector2<int>& position )
 {
@@ -326,7 +329,7 @@ void Dungeon::LineOfSight( const std::vector<Vector2<int>>& line )
             break;
         }
 
-        _tiles[( current.y * _size.x ) + current.x].vision = View::Observing;
+        vision.insert( current );
 
         if( !TileContains( current, Attributes::PassablePlayer ) )
         {
@@ -345,13 +348,7 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
         {  1,  0 }
     } };
 
-    for( auto& tile : _tiles )
-    {
-        if( tile.vision != View::Shrouded )
-        {
-            tile.vision = View::Observed;
-        }
-    }
+    vision.clear( );
 
     for( const auto& endpoint : BresenhamCircle( position, visionReach ) )
     {
@@ -370,8 +367,7 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
                 const Vector2<int> flip = { direction.y, direction.x };
                 const Vector2<int> adjacent = current + flip * polar;
 
-                if( current == position ||
-                    !InBounds( current ) ||
+                if( !InBounds( current ) ||
                     !InBounds( adjacent ) )
                 {
                     continue;
@@ -379,7 +375,7 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
 
                 if( !TileContains( adjacent, Attributes::PassablePlayer ) )
                 {
-                    _tiles[( adjacent.y * _size.x ) + adjacent.x].vision = View::Observing;
+                    vision.insert( adjacent );
                 }
 
                 if( !TileContains( current, Attributes::PassablePlayer ) )

@@ -53,16 +53,6 @@ struct Orientation
     };
 };
 
-struct View
-{
-    enum Enum
-    {
-        Shrouded  = 0,
-        Observed  = 1,
-        Observing = 2
-    };
-};
-
 enum class ItemType
 {
     Weapon,

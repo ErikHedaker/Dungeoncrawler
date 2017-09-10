@@ -276,15 +276,10 @@ void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& 
                 std::cout << '\\';
             }
             else if( dungeon.InBounds( iterator ) &&
-                     dungeon.GetTile( iterator ).vision == View::Observing )
+                     dungeon.vision.find( iterator ) != dungeon.vision.end( ) )
             {
                 std::cout << dungeon.GetTile( iterator ).icon;
             }
-            //else if( dungeon.InBounds( iterator ) &&
-            //         dungeon.GetTile( iterator ).vision == View::Observed )
-            //{
-            //    std::cout << ':';
-            //}
             else
             {
                 std::cout << ' ';
@@ -507,19 +502,20 @@ void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
 
         for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
         {
-            for( iterator.x = 0; iterator.x < size.x * 2; iterator.x++ )
+            for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
             {
-                if( iterator.x < size.x )
-                {
-                    fileOut << dungeon.GetTile( iterator ).icon;
-                }
-                else
-                {
-                    fileOut << static_cast<int>( dungeon.GetTile( { iterator.x % size.x, iterator.y } ).vision );
-                }
+                fileOut << dungeon.GetTile( iterator ).icon;
             }
 
             fileOut << '\n';
+        }
+
+        fileOut << dungeon.vision.size( ) << '\n';
+
+        for( const auto& position : dungeon.vision )
+        {
+            fileOut << position.x << ',';
+            fileOut << position.y << '\n';
         }
 
         fileOut << dungeon.links.size( ) << '\n';
@@ -600,34 +596,36 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
     for( int indexDungeon = 0; indexDungeon < amountDungeon; indexDungeon++ )
     {
         std::vector<char> icons;
-        std::vector<int> view;
         Vector2<int> size;
         Vector2<int> iterator;
+        int amountVision;
         int amountLink;
 
         std::getline( fileIn, line );
         size = GetVector2int( line );
         icons.resize( size.x * size.y );
-        view.resize( size.x * size.y );
 
         for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
         {
             std::getline( fileIn, line );
 
-            for( iterator.x = 0; iterator.x < size.x * 2; iterator.x++ )
+            for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
             {
-                if( iterator.x < size.x )
-                {
-                    icons[( iterator.y * size.x ) + iterator.x] = line[iterator.x];
-                }
-                else
-                {
-                    view[( iterator.y * size.x ) + ( iterator.x % size.x )] = line[iterator.x] - '0';
-                }
+                icons[( iterator.y * size.x ) + iterator.x] = line[iterator.x];
             }
         }
 
-        dungeons.emplace_back( player, entityFactory, size, view, icons );
+        dungeons.emplace_back( player, entityFactory, size, icons );
+
+        std::getline( fileIn, line );
+        amountVision = std::stoi( line );
+
+        for( int indexVision = 0; indexVision < amountVision; indexVision++ )
+        {
+            std::getline( fileIn, line );
+            dungeons.back( ).vision.insert( GetVector2int( line ) );
+        }
+
         std::getline( fileIn, line );
         amountLink = std::stoi( line );
 

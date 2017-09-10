@@ -7,6 +7,7 @@
 #include <utility>
 #include <memory>
 #include <list>
+#include <unordered_set>
 
 struct DungeonConfiguration
 {
@@ -51,7 +52,6 @@ struct Link
 struct Tile
 {
     std::vector<std::unique_ptr<Entity>*> occupants = { };
-    View::Enum vision = View::Shrouded;
     char icon = '-';
 };
 
@@ -59,8 +59,9 @@ class Dungeon
 {
     public:
         Dungeon( PlayerType& player, const EntityFactory& entityFactory, const DungeonConfiguration& config );
-        Dungeon( PlayerType& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<int>& view, const std::vector<char>& icons );
+        Dungeon( PlayerType& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<char>& icons );
 
+        std::unordered_set<Vector2<int>, HasherVector2<int>> vision;
         std::vector<Link> links;
 
         void Rotate( const Orientation::Enum& orientation );
