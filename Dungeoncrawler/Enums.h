@@ -14,11 +14,11 @@ struct Attributes
 {
     enum Enum
     {
-        PassablePlayer = 1 << 0,
-        PassableOthers = 1 << 1,
-        MovementRandom = 1 << 2,
-        Combative      = 1 << 3,
-        Lootable       = 1 << 4
+        AllowPlayer = 1 << 0,
+        Obstacle    = 1 << 1,
+        Movement    = 1 << 2,
+        Combative   = 1 << 3,
+        Lootable    = 1 << 4
     };
 };
 

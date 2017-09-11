@@ -136,14 +136,14 @@ void Dungeon::PlayerPlace( const Vector2<int>& position )
 
     _player.real->position = InBounds( position ) ? position : _size / 2;
 
-    if( !TileContains( position, Attributes::PassableOthers ) )
+    if( !TileLacking( position, Attributes::Obstacle ) )
     {
         for( const auto& direction : directions )
         {
             const Vector2<int> nearby = position + direction;
 
             if( InBounds( nearby ) &&
-                TileContains( nearby, Attributes::PassableOthers ) )
+                TileLacking( nearby, Attributes::Obstacle ) )
             {
                 _player.real->position = nearby;
 
@@ -160,7 +160,8 @@ void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
     const Vector2<int> moving = PositionMove( _player.real->position, orientation );
 
     if( InBounds( moving ) &&
-        TileContains( moving, Attributes::PassablePlayer ) )
+        ( TileLacking( moving, Attributes::Obstacle ) ||
+          !TileLacking( moving, Attributes::AllowPlayer ) ) )
     {
         OccupantRemove(_player.real->position, _player.base );
         _player.real->position = moving;
@@ -175,12 +176,12 @@ void Dungeon::MovementRandom( )
     {
         std::unique_ptr<Entity>& entity = *it;
 
-        if( entity->attributes & Attributes::MovementRandom )
+        if( entity->attributes & Attributes::Movement )
         {
             const Vector2<int> moving = PositionMoveProbability( entity->position, 1, 1, 1, 1, 12 );
 
             if( InBounds( moving ) &&
-                TileContains( moving, Attributes::PassableOthers ) )
+                TileLacking( moving, Attributes::Obstacle ) )
             {
                 OccupantRemove( entity->position, entity );
                 entity->position = moving;
@@ -299,7 +300,7 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
     {
         const Vector2<int> neighbour = position + direction;
 
-        if( !TileContains( neighbour, Attributes::PassablePlayer ) )
+        if( !TileLacking( neighbour, Attributes::Obstacle ) )
         {
             entities++;
         }
@@ -307,11 +308,11 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 
     return entities >= threshold;
 }
-bool Dungeon::TileContains( const Vector2<int>& position, int bitmask ) const
+bool Dungeon::TileLacking( const Vector2<int>& position, int bitmask ) const
 {
-    for( auto occupants : GetTile( position ).occupants )
+    for( const auto& occupant : GetTile( position ).occupants )
     {
-        if( !( (*occupants)->attributes & bitmask ) )
+        if( (*occupant)->attributes & bitmask )
         {
             return false;
         }
@@ -331,7 +332,7 @@ void Dungeon::LineOfSight( const std::vector<Vector2<int>>& line )
 
         vision.insert( current );
 
-        if( !TileContains( current, Attributes::PassablePlayer ) )
+        if( !TileLacking( current, Attributes::Obstacle ) )
         {
             break;
         }
@@ -369,8 +370,8 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
 
                 if( InBounds( neighbourOne ) &&
                     InBounds( neighbourTwo ) &&
-                    TileContains( neighbourOne, Attributes::PassablePlayer ) &&
-                    TileContains( neighbourTwo, Attributes::PassablePlayer ) &&
+                    TileLacking( neighbourOne, Attributes::Obstacle ) &&
+                    TileLacking( neighbourTwo, Attributes::Obstacle ) &&
                     vision.find( neighbourOne ) != vision.end( ) &&
                     vision.find( neighbourTwo ) != vision.end( ) )
                 {
@@ -386,25 +387,21 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
         const Vector2<int> direction = neighbour.first;
         const std::vector<Vector2<int>> line = BresenhamLine( position, position + direction * visionReach );
 
-        for( auto polar : polarity )
+        for( const auto& polar : polarity )
         {
             for( const auto& current : line )
             {
                 const Vector2<int> flip = { direction.y, direction.x };
                 const Vector2<int> adjacent = current + flip * polar;
 
-                if( !InBounds( current ) ||
-                    !InBounds( adjacent ) )
-                {
-                    continue;
-                }
-
-                if( !TileContains( adjacent, Attributes::PassablePlayer ) )
+                if( InBounds( adjacent ) &&
+                    !TileLacking( adjacent, Attributes::Obstacle ) )
                 {
                     vision.insert( adjacent );
                 }
 
-                if( !TileContains( current, Attributes::PassablePlayer ) )
+                if( InBounds( current ) &&
+                    !TileLacking( current, Attributes::Obstacle ) )
                 {
                     break;
                 }
@@ -513,7 +510,8 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
 
     for( const auto& entity : _entities )
     {
-        if( !( entity->attributes & Attributes::PassablePlayer ) )
+        if( entity->attributes & Attributes::Obstacle &&
+            entity->name != "Door" )
         {
             obstacles.push_back( entity->position );
         }
@@ -569,8 +567,7 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
     {
         for( const auto& entity : _entities )
         {
-            if( !( entity->attributes & Attributes::PassablePlayer ) &&
-                !( entity->attributes & Attributes::PassableOthers ) )
+            if( entity->attributes & Attributes::Obstacle )
             {
                 const int index = RandomNumberGenerator( 0, directions.size( ) - 1 );
                 const Vector2<int> position = entity->position + directions[index];

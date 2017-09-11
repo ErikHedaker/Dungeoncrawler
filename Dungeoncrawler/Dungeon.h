@@ -78,7 +78,7 @@ class Dungeon
         bool InBounds( const Vector2<int>& position ) const;
         bool Unoccupied( const Vector2<int>& position ) const;
         bool Surrounded( const Vector2<int>& position, int threshold ) const;
-        bool TileContains( const Vector2<int>& position, int bitmask ) const;
+        bool TileLacking( const Vector2<int>& position, int bitmask ) const;
 
     private:
         Vector2<int> _size;
