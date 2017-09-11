@@ -238,23 +238,6 @@ const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
 {
     return _tiles[( position.y * _size.x ) + position.x];
 }
-Orientation::Enum Dungeon::GetQuadrant( Vector2<int> position ) const
-{
-    static const std::map<std::pair<bool, bool>, Orientation::Enum> quadrants
-    {
-        { { true,  false }, Orientation::North },
-        { { true,  true  }, Orientation::East  },
-        { { false, true  }, Orientation::South },
-        { { false, false }, Orientation::West  }
-    };
-    const Vector2<float> positionf = position;
-    const Vector2<float> sizef     = _size;
-    const Vector2<float> ratiof    = sizef / sizef.y;
-    const bool rightOfMainDiagonal = positionf.x > ( positionf.y * ratiof.x );
-    const bool rightOfAntiDiagonal = positionf.x > ( sizef.x - positionf.y * ratiof.x - 1 );
-
-    return quadrants.at( { rightOfMainDiagonal, rightOfAntiDiagonal } );
-}
 bool Dungeon::Unoccupied( const Vector2<int>& position ) const
 {
     return _tiles[( position.y * _size.x ) + position.x].occupants.empty( );
@@ -443,7 +426,7 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
             if( OnBorder( iterator, _size ) &&
                 !InCorner( iterator, _size, sensitivity ) )
             {
-                sides[GetQuadrant( iterator )].push_back( iterator );
+                sides[Quadrant( iterator, _size )].push_back( iterator );
             }
         }
     }
@@ -497,9 +480,7 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
 
     for( const auto& link : links )
     {
-        const std::vector<Vector2<int>> path = AStarAlgorithm( link.entrance, center, _size, obstacles );
-
-        for( const auto& position : path )
+        for( const auto& position : AStarAlgorithm( link.entrance, center, _size, obstacles ) )
         {
             if( Unoccupied( position ) )
             {
@@ -515,7 +496,7 @@ void Dungeon::GenerateWallsParents( const EntityFactory& entityFactory, int amou
 
     while( remaining > 0 )
     {
-        const Vector2<int> position =
+        const Vector2<int> position
         {
             RandomNumberGenerator( 1, _size.x - 2 ),
             RandomNumberGenerator( 1, _size.y - 2 )

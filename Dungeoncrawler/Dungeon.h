@@ -72,7 +72,6 @@ class Dungeon
 
         const Vector2<int>& GetSize( ) const;
         const Tile& GetTile( const Vector2<int>& position ) const;
-        Orientation::Enum GetQuadrant( Vector2<int> position ) const;
         bool Unoccupied( const Vector2<int>& position ) const;
         bool Surrounded( const Vector2<int>& position, int threshold ) const;
         bool TileLacking( const Vector2<int>& position, int bitmask ) const;

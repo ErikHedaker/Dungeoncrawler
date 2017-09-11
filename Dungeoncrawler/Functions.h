@@ -15,6 +15,7 @@ int GetBitmask( const std::string& line );
 int GetPositiveInteger( const std::string& context );
 char GetChar( const std::string& context, const std::vector<char>& valid, std::function<int(int)> modifier = nullptr );
 void GetEnter( );
+void ClearScreen( );
 DungeonConfiguration GetDungeonConfiguration( );
 Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& rotation );
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation );
@@ -38,9 +39,10 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
 std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radius );
 std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector2<int>& end );
 std::vector<Vector2<int>> BresenhamLineDiagonal( const Vector2<int>& start, const Vector2<int>& end );
-bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, int layerFrom = 0, int layerTo = 0 );
+bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vector2<int>& origo = { 0, 0 }, int layerFrom = 0, int layerTo = 0 );
 bool InCorner( const Vector2<int>& position, const Vector2<int>& size, int sensitivity = 0 );
 bool InBounds( const Vector2<int>& position, const Vector2<int>& size );
+Orientation::Enum Quadrant( const Vector2<int>& position, const Vector2<int>& size );
 
 class StringWrapper
 {

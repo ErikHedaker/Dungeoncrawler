@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cctype>
 #include <limits>
+#include <cstdlib>
 
 double RandomNumberGenerator( double min, double max )
 {
@@ -78,6 +79,14 @@ void GetEnter( )
 {
     std::cin.ignore( std::numeric_limits<std::streamsize>::max( ), '\n' );
     std::cin.get( );
+}
+void ClearScreen( )
+{
+    #ifdef _WIN32
+        std::system( "CLS" );
+    #else
+        std::system( "clear" );
+    #endif
 }
 DungeonConfiguration GetDungeonConfiguration( )
 {
@@ -261,17 +270,14 @@ void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& 
 {
     const Vector2<int> origoCamera = center - sizeScreen / 2;
     const Vector2<int> iteratorBegin = origoCamera - 1;
-    const Vector2<int> iteratorEnd = origoCamera + 1 + sizeScreen;
+    const Vector2<int> iteratorEnd = origoCamera + 2 + sizeScreen;
     Vector2<int> iterator;
 
-    for( iterator.y = iteratorBegin.y; iterator.y <= iteratorEnd.y; iterator.y++ )
+    for( iterator.y = iteratorBegin.y; iterator.y < iteratorEnd.y; iterator.y++ )
     {
-        for( iterator.x = iteratorBegin.x; iterator.x <= iteratorEnd.x; iterator.x++ )
+        for( iterator.x = iteratorBegin.x; iterator.x < iteratorEnd.x; iterator.x++ )
         {
-            if( iterator.x == iteratorBegin.x ||
-                iterator.y == iteratorBegin.y ||
-                iterator.x == iteratorEnd.x ||
-                iterator.y == iteratorEnd.y )
+            if( OnBorder( iterator, iteratorEnd, iteratorBegin ) )
             {
                 std::cout << '\\';
             }
@@ -309,7 +315,7 @@ void Fight( Character& player, Character& AI )
 
     while( true )
     {
-        system( "CLS" );
+        ClearScreen( );
         std::cout << "You've been engaged in combat with a " << AI.name << "!\n";
         std::cout << "\n-----\n\n";
 
@@ -644,7 +650,7 @@ std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radiu
     Vector2<int> current = { radius * ( -1 ), 0 };
     int error = 2 - 2 * radius;
 
-    while( true )
+    while( current.x < 0 )
     {
         const int temp = error;
 
@@ -663,11 +669,6 @@ std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radiu
         {
             current.x++;
             error += current.x * 2 + 1;
-        }
-
-        if( current.x >= 0 )
-        {
-            break;
         }
     }
 
@@ -756,13 +757,13 @@ std::vector<Vector2<int>> BresenhamLineDiagonal( const Vector2<int>& start, cons
 
     return result;
 }
-bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, int layerFrom, int layerTo )
+bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vector2<int>& origo, int layerFrom, int layerTo )
 {
     return
-        position.x + layerTo <= layerFrom ||
-        position.y + layerTo <= layerFrom ||
-        position.x - layerTo >= size.x - layerFrom - 1 ||
-        position.y - layerTo >= size.y - layerFrom - 1;
+        position.x + layerTo <= origo.x + layerFrom ||
+        position.y + layerTo <= origo.y + layerFrom ||
+        position.x - layerTo >= size.x  - layerFrom - 1 ||
+        position.y - layerTo >= size.y  - layerFrom - 1;
 }
 bool InCorner( const Vector2<int>& position, const Vector2<int>& size, int sensitivity )
 {
@@ -777,4 +778,21 @@ bool InBounds( const Vector2<int>& position, const Vector2<int>& size )
         position.y >= 0 &&
         position.x < size.x &&
         position.y < size.y;
+}
+Orientation::Enum Quadrant( const Vector2<int>& position, const Vector2<int>& size )
+{
+    static const std::map<std::pair<bool, bool>, Orientation::Enum> quadrants
+    {
+        { { true,  false }, Orientation::North },
+        { { true,  true  }, Orientation::East },
+        { { false, true  }, Orientation::South },
+        { { false, false }, Orientation::West }
+    };
+    const Vector2<float> positionf = position;
+    const Vector2<float> sizef     = size;
+    const Vector2<float> ratiof    = sizef / sizef.y;
+    const bool rightOfMainDiagonal = positionf.x > ( positionf.y * ratiof.x );
+    const bool rightOfAntiDiagonal = positionf.x > ( sizef.x - positionf.y * ratiof.x - 1 );
+
+    return quadrants.at( { rightOfMainDiagonal, rightOfAntiDiagonal } );
 }

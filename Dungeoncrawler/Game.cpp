@@ -12,6 +12,7 @@ class Stopwatch
         Stopwatch( ) :
             _FPS( { 0 } )
         { }
+
         void Start( )
         {
             _start = std::chrono::high_resolution_clock::now( );
@@ -41,9 +42,7 @@ class Stopwatch
         std::chrono::time_point<std::chrono::steady_clock> _start;
         std::chrono::time_point<std::chrono::steady_clock> _stop;
         std::vector<double> _FPS;
-};
-
-Stopwatch stopwatchLogic;
+} stopwatch;
 
 Game::Game( ) :
     _player( LoadPlayerDefault( LoadAbilities( ) ) )
@@ -55,7 +54,7 @@ void Game::Menu( )
 
     while( true )
     {
-        system( "CLS" );
+        ClearScreen( );
         std::cout << "[1] Continue current game\n";
         std::cout << "[2] Load game from file\n";
         std::cout << "[3] Build new game (Randomization)\n";
@@ -76,7 +75,7 @@ void Game::Menu( )
             }
             case '2':
             {
-                system( "CLS" );
+                ClearScreen( );
                 std::cout << "Loading, please wait.";
 
                 try
@@ -102,7 +101,7 @@ void Game::Menu( )
             case '4':
             {
                 _config = input == '3' ? DungeonConfiguration( ) : GetDungeonConfiguration( );
-                system( "CLS" );
+                ClearScreen( );
                 std::cout << "Loading, please wait.";
                 Reset( );
                 Start( );
@@ -140,10 +139,9 @@ bool Game::PlayerTurn( )
 
     while( true )
     {
-        system( "CLS" );
+        ClearScreen( );
         PrintDungeon( _dungeons[_index], _player.real->visionReach, _player.real->position );
-        std::cout << "Logic current FPS: " << stopwatchLogic.CurrentFPS( ) << "\n";
-        std::cout << "Logic average FPS: " << stopwatchLogic.AverageFPS( ) << "\n\n";
+        std::cout << "Sample logic FPS: " << stopwatch.CurrentFPS( ) << "\n\n";
         PrintHealth( *_player.real );
         std::cout << "\n";
         std::cout << "[W] Go North\n";
@@ -164,9 +162,9 @@ bool Game::PlayerTurn( )
             case 'S':
             case 'D':
             {
-                stopwatchLogic.Start( );
+                stopwatch.Start( );
                 _dungeons[_index].MovementPlayer( directions.at( input ) );
-                stopwatchLogic.Stop( );
+                stopwatch.Stop( );
 
                 return true;
             }
@@ -227,8 +225,8 @@ void Game::DungeonSwap( )
         {
             const int indexPrev = _index;
             const int indexNext = _dungeons[_index].links[i].indexDungeon;
-            const int entrance  = _dungeons[indexPrev].GetQuadrant( _dungeons[indexPrev].links[i].entrance );
-            const int exit      = _dungeons[indexNext].GetQuadrant( _dungeons[indexPrev].links[i].exit );
+            const int entrance  = Quadrant( _dungeons[indexPrev].links[i].entrance, _dungeons[indexPrev].GetSize( ) );
+            const int exit      = Quadrant( _dungeons[indexPrev].links[i].exit,     _dungeons[indexNext].GetSize( ) );
             const int align     = ( ( ( entrance - exit ) + 3 ) % 4 ) - 1;
 
             DungeonLink( indexNext );
