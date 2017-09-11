@@ -275,7 +275,7 @@ void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& 
             {
                 std::cout << '\\';
             }
-            else if( dungeon.InBounds( iterator ) &&
+            else if( InBounds( iterator, dungeon.GetSize( ) ) &&
                      dungeon.vision.find( iterator ) != dungeon.vision.end( ) )
             {
                 std::cout << dungeon.GetTile( iterator ).icon;
@@ -755,4 +755,26 @@ std::vector<Vector2<int>> BresenhamLineDiagonal( const Vector2<int>& start, cons
     }
 
     return result;
+}
+bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, int layerFrom, int layerTo )
+{
+    return
+        position.x + layerTo <= layerFrom ||
+        position.y + layerTo <= layerFrom ||
+        position.x - layerTo >= size.x - layerFrom - 1 ||
+        position.y - layerTo >= size.y - layerFrom - 1;
+}
+bool InCorner( const Vector2<int>& position, const Vector2<int>& size, int sensitivity )
+{
+    return
+        ( position.x <= sensitivity || position.x >= size.x - sensitivity - 1 ) &&
+        ( position.y <= sensitivity || position.y >= size.y - sensitivity - 1 );
+}
+bool InBounds( const Vector2<int>& position, const Vector2<int>& size )
+{
+    return
+        position.x >= 0 &&
+        position.y >= 0 &&
+        position.x < size.x &&
+        position.y < size.y;
 }

@@ -4,6 +4,46 @@
 #include <map>
 #include <cctype>
 #include <memory>
+#include <chrono>
+
+class Stopwatch
+{
+    public:
+        Stopwatch( ) :
+            _FPS( { 0 } )
+        { }
+        void Start( )
+        {
+            _start = std::chrono::high_resolution_clock::now( );
+        }
+        void Stop( )
+        {
+            _stop = std::chrono::high_resolution_clock::now( );
+            _FPS.push_back( 1.0 / ( static_cast<double>( std::chrono::duration_cast<std::chrono::microseconds>( _stop - _start ).count( ) ) / 1000000.0 ) );
+        }
+        double CurrentFPS( )
+        {
+            return _FPS.back( );
+        }
+        double AverageFPS( )
+        {
+            double total = 0.0;
+
+            for( unsigned int i = 1; i < _FPS.size( ); i++ )
+            {
+                total += _FPS[i];
+            }
+
+            return total / static_cast<double>( _FPS.size( ) );
+        }
+
+    private:
+        std::chrono::time_point<std::chrono::steady_clock> _start;
+        std::chrono::time_point<std::chrono::steady_clock> _stop;
+        std::vector<double> _FPS;
+};
+
+Stopwatch stopwatchLogic;
 
 Game::Game( ) :
     _player( LoadPlayerDefault( LoadAbilities( ) ) )
@@ -102,6 +142,8 @@ bool Game::PlayerTurn( )
     {
         system( "CLS" );
         PrintDungeon( _dungeons[_index], _player.real->visionReach, _player.real->position );
+        std::cout << "Logic current FPS: " << stopwatchLogic.CurrentFPS( ) << "\n";
+        std::cout << "Logic average FPS: " << stopwatchLogic.AverageFPS( ) << "\n\n";
         PrintHealth( *_player.real );
         std::cout << "\n";
         std::cout << "[W] Go North\n";
@@ -122,7 +164,9 @@ bool Game::PlayerTurn( )
             case 'S':
             case 'D':
             {
+                stopwatchLogic.Start( );
                 _dungeons[_index].MovementPlayer( directions.at( input ) );
+                stopwatchLogic.Stop( );
 
                 return true;
             }

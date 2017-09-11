@@ -134,7 +134,7 @@ void Dungeon::PlayerPlace( const Vector2<int>& position )
         { -1,  0 }
     } };
 
-    _player.real->position = InBounds( position ) ? position : _size / 2;
+    _player.real->position = InBounds( position, _size ) ? position : _size / 2;
 
     if( !TileLacking( position, Attributes::Obstacle ) )
     {
@@ -142,7 +142,7 @@ void Dungeon::PlayerPlace( const Vector2<int>& position )
         {
             const Vector2<int> nearby = position + direction;
 
-            if( InBounds( nearby ) &&
+            if( InBounds( nearby, _size ) &&
                 TileLacking( nearby, Attributes::Obstacle ) )
             {
                 _player.real->position = nearby;
@@ -159,7 +159,7 @@ void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
 {
     const Vector2<int> moving = PositionMove( _player.real->position, orientation );
 
-    if( InBounds( moving ) &&
+    if( InBounds( moving, _size ) &&
         ( TileLacking( moving, Attributes::Obstacle ) ||
           !TileLacking( moving, Attributes::AllowPlayer ) ) )
     {
@@ -180,7 +180,7 @@ void Dungeon::MovementRandom( )
         {
             const Vector2<int> moving = PositionMoveProbability( entity->position, 1, 1, 1, 1, 12 );
 
-            if( InBounds( moving ) &&
+            if( InBounds( moving, _size ) &&
                 TileLacking( moving, Attributes::Obstacle ) )
             {
                 OccupantRemove( entity->position, entity );
@@ -255,35 +255,13 @@ Orientation::Enum Dungeon::GetQuadrant( Vector2<int> position ) const
 
     return quadrants.at( { rightOfMainDiagonal, rightOfAntiDiagonal } );
 }
-bool Dungeon::Exterior( const Vector2<int>& position, int layer ) const
-{
-    return
-        position.x == layer ||
-        position.y == layer ||
-        position.x == _size.x - layer - 1 ||
-        position.y == _size.y - layer - 1;
-}
-bool Dungeon::InCorner( const Vector2<int>& position, int sensitivity ) const
-{
-    return
-        ( position.x <= sensitivity || position.x >= _size.x - sensitivity - 1 ) &&
-        ( position.y <= sensitivity || position.y >= _size.y - sensitivity - 1 );
-}
-bool Dungeon::InBounds( const Vector2<int>& position ) const
-{
-    return
-        position.x >= 0 &&
-        position.y >= 0 &&
-        position.x < _size.x &&
-        position.y < _size.y;
-}
 bool Dungeon::Unoccupied( const Vector2<int>& position ) const
 {
     return _tiles[( position.y * _size.x ) + position.x].occupants.empty( );
 }
 bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 {
-    static constexpr std::array<Vector2<int>, 8> directions
+    constexpr std::array<Vector2<int>, 8> directions
     { {
         {  0, -1 },
         {  1, -1 },
@@ -325,7 +303,7 @@ void Dungeon::LineOfSight( const std::vector<Vector2<int>>& line )
 {
     for( auto& current : line )
     {
-        if( !InBounds( current ) )
+        if( !InBounds( current, _size ) )
         {
             break;
         }
@@ -362,14 +340,14 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
     {
         for( const auto& neighbour : neighbours )
         {
-            if( InBounds( position + neighbour.first ) &&
+            if( InBounds( position + neighbour.first, _size ) &&
                 vision.find( position + neighbour.first ) == vision.end( ) )
             {
                 const Vector2<int> neighbourOne = position + neighbour.second.first;
                 const Vector2<int> neighbourTwo = position + neighbour.second.second;
 
-                if( InBounds( neighbourOne ) &&
-                    InBounds( neighbourTwo ) &&
+                if( InBounds( neighbourOne, _size ) &&
+                    InBounds( neighbourTwo, _size ) &&
                     TileLacking( neighbourOne, Attributes::Obstacle ) &&
                     TileLacking( neighbourTwo, Attributes::Obstacle ) &&
                     vision.find( neighbourOne ) != vision.end( ) &&
@@ -394,13 +372,13 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
                 const Vector2<int> flip = { direction.y, direction.x };
                 const Vector2<int> adjacent = current + flip * polar;
 
-                if( InBounds( adjacent ) &&
+                if( InBounds( adjacent, _size ) &&
                     !TileLacking( adjacent, Attributes::Obstacle ) )
                 {
                     vision.insert( adjacent );
                 }
 
-                if( InBounds( current ) &&
+                if( InBounds( current, _size ) &&
                     !TileLacking( current, Attributes::Obstacle ) )
                 {
                     break;
@@ -462,8 +440,8 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
     {
         for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
         {
-            if( Exterior( iterator ) &&
-                !InCorner( iterator, sensitivity ) )
+            if( OnBorder( iterator, _size ) &&
+                !InCorner( iterator, _size, sensitivity ) )
             {
                 sides[GetQuadrant( iterator )].push_back( iterator );
             }
@@ -495,7 +473,7 @@ void Dungeon::GenerateWallsOuter( const EntityFactory& entityFactory )
     {
         for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
         {
-            if( Exterior( iterator ) &&
+            if( OnBorder( iterator, _size ) &&
                 Unoccupied( iterator ) )
             {
                 EntityAdd( iterator, entityFactory.Get( "Wall" )->Clone( ) );
@@ -572,7 +550,7 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
                 const int index = RandomNumberGenerator( 0, directions.size( ) - 1 );
                 const Vector2<int> position = entity->position + directions[index];
 
-                if( InBounds( position ) &&
+                if( InBounds( position, _size ) &&
                     Unoccupied( position ) &&
                     position != center )
                 {
