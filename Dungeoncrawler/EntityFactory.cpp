@@ -3,10 +3,11 @@
 #include <algorithm>
 
 Entity::Entity( const std::string& name, char icon, int attributes ) :
+    active( true ),
+    position( { -1, -1 } ),
     name( name ),
     icon( icon ),
-    attributes( attributes ),
-    position( { -1, -1 } )
+    attributes( attributes )
 { }
 Ability::Ability( const std::string& name, char icon, int attributes, float damage ) :
     Entity( name, icon, attributes ),

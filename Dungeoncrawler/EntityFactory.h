@@ -15,10 +15,11 @@ struct Entity
     virtual Entity* Clone( ) const = 0;
     virtual void Update( ) { }
 
+    bool active;
+    Vector2<int> position;
     std::string name;
     char icon;
     const int attributes;
-    Vector2<int> position;
 };
 
 struct Ability : public Entity

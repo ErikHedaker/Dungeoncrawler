@@ -38,7 +38,6 @@ DungeonConfiguration LoadGameConfig( );
 std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& entityFactory, int& index );
 std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radius );
 std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector2<int>& end );
-std::vector<Vector2<int>> BresenhamLineDiagonal( const Vector2<int>& start, const Vector2<int>& end );
 bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vector2<int>& origo = { 0, 0 }, int layerFrom = 0, int layerTo = 0 );
 bool InCorner( const Vector2<int>& position, const Vector2<int>& size, int sensitivity = 0 );
 bool InBounds( const Vector2<int>& position, const Vector2<int>& size );

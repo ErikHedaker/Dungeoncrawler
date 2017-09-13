@@ -23,12 +23,12 @@ DungeonConfiguration::DungeonConfiguration( const std::vector<std::string>& data
         generate.wallsParents    = std::stoi( data[6] ) != 0;
         generate.wallsChildren   = std::stoi( data[7] ) != 0;
         generate.wallsFiller     = std::stoi( data[8] ) != 0;
-        generate.monsters        = std::stoi( data[9] ) != 0;
+        generate.enemies         = std::stoi( data[9] ) != 0;
         amount.doors             = std::stoi( data[10] );
         amount.wallsParents      = std::stoi( data[11] );
         amount.wallsChildren     = std::stoi( data[12] );
         amount.wallsFillerCycles = std::stoi( data[13] );
-        amount.monsters          = std::stoi( data[14] );
+        amount.enemies           = std::stoi( data[14] );
     }
     catch( ... )
     {
@@ -58,7 +58,7 @@ Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const 
     if( config.generate.wallsParents )  GenerateWallsParents( entityFactory, config.amount.wallsParents );
     if( config.generate.wallsChildren ) GenerateWallsChildren( entityFactory, config.amount.wallsChildren );
     if( config.generate.wallsFiller )   GenerateWallsFiller( entityFactory, config.amount.wallsFillerCycles );
-    if( config.generate.monsters )      GenerateMonsters( entityFactory, config.amount.monsters );
+    if( config.generate.enemies )       GenerateEnemies( entityFactory, config.amount.enemies );
 }
 Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<char>& icons ) :
     _size( size ),
@@ -192,28 +192,23 @@ void Dungeon::MovementRandom( )
 }
 void Dungeon::Events( )
 {
-    std::vector<std::unique_ptr<Entity>*> removable;
-    auto& occupants = _tiles[( _player.real->position.y * _size.x ) + _player.real->position.x].occupants;
-    
-    /* Engage combative entity on players position */
-    for( auto& it = occupants.begin( ); it != occupants.end( ); it++ )
+    /* Fight hostile entities on player position */
+    for( auto& occupant : _tiles[( _player.real->position.y * _size.x ) + _player.real->position.x].occupants )
     {
-        std::unique_ptr<Entity>& entity = *(*it);
-
-        if( entity->attributes & Attributes::Combative )
+        if( (*occupant)->attributes & Attributes::Hostile )
         {
-            Character* const enemy = dynamic_cast<Character*>( entity.get( ) );
+            Character* enemy = dynamic_cast<Character*>( (*occupant).get( ) );
 
             Fight( *_player.real, *enemy );
 
             if( enemy->health < 0 )
             {
-                removable.push_back( &entity );
+                enemy->active = false;
             }
         }
     }
 
-    /* Swap dungeon for player */
+    /* Swap dungeon if conditions meet */
     for( const auto& link : links )
     {
         if( _player.real->position == link.entrance )
@@ -223,10 +218,18 @@ void Dungeon::Events( )
         }
     }
 
-    /* Remove dead characters */
-    for( auto& entity : removable )
+
+    /* Remove inactive entities */
+    for( auto it = _entities.begin( ); it != _entities.end( ); )
     {
-        EntityRemove( (*entity)->position, *entity );
+        std::unique_ptr<Entity>& entity = *it;
+
+        it++;
+
+        if( !entity->active )
+        {
+            EntityRemove( entity->position, entity );
+        }
     }
 }
 
@@ -284,7 +287,7 @@ bool Dungeon::TileLacking( const Vector2<int>& position, int bitmask ) const
 
 void Dungeon::LineOfSight( const std::vector<Vector2<int>>& line )
 {
-    for( auto& current : line )
+    for( const auto& current : line )
     {
         if( !InBounds( current, _size ) )
         {
@@ -301,7 +304,7 @@ void Dungeon::LineOfSight( const std::vector<Vector2<int>>& line )
 }
 void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
 {
-    static constexpr std::array<int, 2> polarity { 1, -1 };
+    static constexpr std::array<int, 2> polarity = { 1, -1 };
     static constexpr std::array<std::pair<Vector2<int>, std::pair<Vector2<int>, Vector2<int>>>, 4> neighbours
     { {
         { {  0, -1 }, { { -1, -1 }, {  1, -1 } } },
@@ -312,37 +315,13 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
 
     vision.clear( );
 
+    /* Base vision generation */
     for( const auto& endpoint : BresenhamCircle( position, visionReach ) )
     {
-        LineOfSight( BresenhamLineDiagonal( position, endpoint ) );
-        LineOfSight( BresenhamLine(         position, endpoint ) );
+        LineOfSight( BresenhamLine( position, endpoint ) );
     }
 
-    /* Fix vision artifacts */
-    for( const auto& position : vision )
-    {
-        for( const auto& neighbour : neighbours )
-        {
-            if( InBounds( position + neighbour.first, _size ) &&
-                vision.find( position + neighbour.first ) == vision.end( ) )
-            {
-                const Vector2<int> neighbourOne = position + neighbour.second.first;
-                const Vector2<int> neighbourTwo = position + neighbour.second.second;
-
-                if( InBounds( neighbourOne, _size ) &&
-                    InBounds( neighbourTwo, _size ) &&
-                    TileLacking( neighbourOne, Attributes::Obstacle ) &&
-                    TileLacking( neighbourTwo, Attributes::Obstacle ) &&
-                    vision.find( neighbourOne ) != vision.end( ) &&
-                    vision.find( neighbourTwo ) != vision.end( ) )
-                {
-                    vision.insert( position + neighbour.first );
-                }
-            }
-        }
-    }
-
-    /* Fix vision artificats */
+    /* Fix vision artifacts by adding to nearby walls  */
     for( const auto& neighbour : neighbours )
     {
         const Vector2<int> direction = neighbour.first;
@@ -365,6 +344,40 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
                     !TileLacking( current, Attributes::Obstacle ) )
                 {
                     break;
+                }
+            }
+        }
+    }
+
+    /* Fix vision artifacts by adding to deadspots */
+    for( const auto& visible : vision )
+    {
+        for( const auto& neighbour : neighbours )
+        {
+            const Vector2<int> adjacent = visible + neighbour.first;
+
+            if( InBounds( adjacent, _size ) &&
+                vision.find( adjacent ) == vision.end( ) )
+            {
+                const Vector2<int> neighbourOne = visible + neighbour.second.first;
+                const Vector2<int> neighbourTwo = visible + neighbour.second.second;
+
+                if( InBounds( neighbourOne, _size ) &&
+                    InBounds( neighbourTwo, _size ) &&
+                    vision.find( neighbourOne ) != vision.end( ) &&
+                    vision.find( neighbourTwo ) != vision.end( ) )
+                {
+                    if( ( !TileLacking( adjacent, Attributes::Obstacle ) &&
+                          !TileLacking( neighbourOne, Attributes::Obstacle ) &&
+                          !TileLacking( neighbourTwo, Attributes::Obstacle ) ) ||
+                        TileLacking( visible, Attributes::Obstacle ) == TileLacking( adjacent, Attributes::Obstacle ) )
+                    {
+                        vision.insert( adjacent );
+                    }
+                    else
+                    {
+                        LineOfSight( BresenhamLine( position, adjacent ) );
+                    }
                 }
             }
         }
@@ -412,7 +425,7 @@ void Dungeon::OccupantRemove( const Vector2<int>& position, std::unique_ptr<Enti
 
 void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
 {
-    const int doors = amount ? amount : 3;
+    const int limit = amount ? amount : 3;
     const int start = RandomNumberGenerator( 0, 3 );
     const int sensitivity = static_cast<int>( std::ceil( ( std::sqrt( _size.x * _size.y ) + 6.0 ) / 10.0 ) - 1.0 );
     std::map<Orientation::Enum, std::vector<Vector2<int>>> sides;
@@ -431,11 +444,9 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
         }
     }
 
-    for( int i = 0; i < doors; i++ )
+    for( int i = 0; i < limit; i++ )
     {
-        const int value = ( start + i ) % 4;
-
-        spacing.push_back( value - 1 );
+        spacing.push_back( ( ( start + i ) % 4 ) - 1 );
     }
 
     for( const auto value : spacing )
@@ -471,8 +482,7 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
 
     for( const auto& entity : _entities )
     {
-        if( entity->attributes & Attributes::Obstacle &&
-            entity->name != "Door" )
+        if( !( entity->attributes & Attributes::AllowPlayer ) )
         {
             obstacles.push_back( entity->position );
         }
@@ -545,10 +555,10 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
 void Dungeon::GenerateWallsFiller( const EntityFactory& entityFactory, int amount )
 {
     const Vector2<int> center = _size / 2;
-    const int cycles = amount ? amount : 6;
+    const int limit = amount ? amount : 6;
     Vector2<int> iterator;
 
-    for( int i = 0; i < cycles; i++ )
+    for( int i = 0; i < limit; i++ )
     {
         for( iterator.y = 1; iterator.y < _size.y - 1; iterator.y++ )
         {
@@ -564,15 +574,29 @@ void Dungeon::GenerateWallsFiller( const EntityFactory& entityFactory, int amoun
         }
     }
 }
-void Dungeon::GenerateMonsters( const EntityFactory& entityFactory, int amount )
+void Dungeon::GenerateEnemies( const EntityFactory& entityFactory, int amount )
 {
-    static const std::vector<Character> characters = LoadCharacters( LoadAbilities( ) );
+    static const std::vector<Character> enemies = []( ) -> std::vector<Character>
+    {
+        std::vector<Character> enemies;
+
+        for( const auto& character : LoadCharacters( LoadAbilities( ) ) )
+        {
+            if( character.attributes & Attributes::Hostile &&
+                character.attributes & Attributes::Movement )
+            {
+                enemies.push_back( character );
+            }
+        }
+
+        return enemies;
+    }( );
     const Vector2<int> center = _size / 2;
     const int min = static_cast<int>( sqrt( _size.x * _size.y ) / 3.0 );
     const int max = static_cast<int>( sqrt( _size.x * _size.y ) / 1.5 );
-    const int monsters = amount ? amount : RandomNumberGenerator( min, max );
+    const int limit = amount ? amount : RandomNumberGenerator( min, max );
 
-    for( int i = 0; i < monsters; i++ )
+    for( int i = 0; i < limit; i++ )
     {
         while( true )
         {
@@ -585,8 +609,8 @@ void Dungeon::GenerateMonsters( const EntityFactory& entityFactory, int amount )
             if( Unoccupied( position ) &&
                 position != center )
             {
-                const int index = RandomNumberGenerator( 0, characters.size( ) - 1 );
-                const std::string random = characters[index].name;
+                const int index = RandomNumberGenerator( 0, enemies.size( ) - 1 );
+                const std::string random = enemies[index].name;
 
                 EntityAdd( position, entityFactory.Get( random )->Clone( ) );
 

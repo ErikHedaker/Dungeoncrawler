@@ -106,7 +106,7 @@ DungeonConfiguration GetDungeonConfiguration( )
     config.generate.wallsParents  = ToBool( GetChar( "Generate parent walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
     config.generate.wallsChildren = ToBool( GetChar( "Generate children walls, [Y/N]: ",  { 'Y', 'N' }, std::toupper ) );
     config.generate.wallsFiller   = ToBool( GetChar( "Generate filler walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
-    config.generate.monsters      = ToBool( GetChar( "Generate monsters, [Y/N]: ",        { 'Y', 'N' }, std::toupper ) );
+    config.generate.enemies       = ToBool( GetChar( "Generate monsters, [Y/N]: ",        { 'Y', 'N' }, std::toupper ) );
     std::cout << "\n";
 
     if( config.size.determined )
@@ -118,8 +118,8 @@ DungeonConfiguration GetDungeonConfiguration( )
     if( config.generate.wallsParents )  config.amount.wallsParents      = GetPositiveInteger( "Enter amount of parent walls: " );
     if( config.generate.wallsChildren ) config.amount.wallsChildren     = GetPositiveInteger( "Enter amount of children walls: " );
     if( config.generate.wallsFiller )   config.amount.wallsFillerCycles = GetPositiveInteger( "Enter amount of filler wall cycles: " );
-    if( config.generate.monsters )      config.amount.monsters          = GetPositiveInteger( "Enter amount of monsters: " );
-
+    if( config.generate.enemies )       config.amount.enemies           = GetPositiveInteger( "Enter amount of enemies: " );
+    
     return config;
 }
 Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& rotation )
@@ -478,12 +478,12 @@ void SaveGameConfig( const DungeonConfiguration& config )
     fileOut << config.generate.wallsParents << '\n';
     fileOut << config.generate.wallsChildren << '\n';
     fileOut << config.generate.wallsFiller << '\n';
-    fileOut << config.generate.monsters << '\n';
+    fileOut << config.generate.enemies << '\n';
     fileOut << config.amount.doors << '\n';
     fileOut << config.amount.wallsParents << '\n';
     fileOut << config.amount.wallsChildren << '\n';
     fileOut << config.amount.wallsFillerCycles << '\n';
-    fileOut << config.amount.monsters << '\n';
+    fileOut << config.amount.enemies << '\n';
 }
 void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
 {
@@ -675,47 +675,6 @@ std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radiu
     return result;
 }
 std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector2<int>& end )
-{
-    const Vector2<int> delta
-    {
-        std::abs( end.x - start.x ),
-        std::abs( end.y - start.y ) * ( -1 )
-    };
-    const Vector2<int> offset
-    {
-        start.x < end.x ? 1 : -1,
-        start.y < end.y ? 1 : -1
-    };
-    std::vector<Vector2<int>> result;
-    Vector2<int> current = start;
-    int error = delta.x + delta.y;
-
-    while( true )
-    {
-        const int temp = error * 2;
-
-        result.push_back( current );
-
-        if( current == end )
-        {
-            break;
-        }
-
-        if( temp >= delta.y )
-        {
-            error += delta.y;
-            current.x += offset.x;
-        }
-        else if( temp <= delta.x )
-        {
-            error += delta.x;
-            current.y += offset.y;
-        }
-    }
-
-    return result;
-}
-std::vector<Vector2<int>> BresenhamLineDiagonal( const Vector2<int>& start, const Vector2<int>& end )
 {
     const Vector2<int> delta
     {

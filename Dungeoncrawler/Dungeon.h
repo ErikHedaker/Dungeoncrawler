@@ -28,7 +28,7 @@ struct DungeonConfiguration
         bool wallsParents;
         bool wallsChildren;
         bool wallsFiller;
-        bool monsters;
+        bool enemies;
     } generate;
 
     struct Amount
@@ -37,7 +37,7 @@ struct DungeonConfiguration
         int wallsParents;
         int wallsChildren;
         int wallsFillerCycles;
-        int monsters;
+        int enemies;
     } amount;
 };
 
@@ -96,5 +96,5 @@ class Dungeon
         void GenerateWallsParents( const EntityFactory& entityFactory, int amount );
         void GenerateWallsChildren( const EntityFactory& entityFactory, int amount );
         void GenerateWallsFiller( const EntityFactory& entityFactory, int amount );
-        void GenerateMonsters( const EntityFactory& entityFactory, int amount );
+        void GenerateEnemies( const EntityFactory& entityFactory, int amount );
 };
