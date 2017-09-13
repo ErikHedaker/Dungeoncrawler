@@ -15,7 +15,7 @@ class Game
         const EntityFactory _entityFactory;
         std::vector<Dungeon> _dungeons;
         DungeonConfiguration _config;
-        PlayerType _player;
+        PlayerHandle _player;
         int _index;
 
         bool PlayerTurn( );

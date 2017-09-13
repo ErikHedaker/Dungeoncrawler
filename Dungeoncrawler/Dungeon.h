@@ -58,10 +58,9 @@ struct Tile
 class Dungeon
 {
     public:
-        Dungeon( PlayerType& player, const EntityFactory& entityFactory, const DungeonConfiguration& config );
-        Dungeon( PlayerType& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<char>& icons );
+        Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const DungeonConfiguration& config );
+        Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<char>& icons );
 
-        std::unordered_set<Vector2<int>, HasherVector2<int>> vision;
         std::vector<Link> links;
 
         void Rotate( const Orientation::Enum& orientation );
@@ -72,6 +71,7 @@ class Dungeon
 
         const Vector2<int>& GetSize( ) const;
         const Tile& GetTile( const Vector2<int>& position ) const;
+        bool Visible( const Vector2<int>& position ) const;
         bool Unoccupied( const Vector2<int>& position ) const;
         bool Surrounded( const Vector2<int>& position, int threshold ) const;
         bool TileLacking( const Vector2<int>& position, int bitmask ) const;
@@ -80,10 +80,11 @@ class Dungeon
         Vector2<int> _size;
         std::vector<Tile> _tiles;
         std::list<std::unique_ptr<Entity>> _entities;
-        PlayerType& _player;
+        std::unordered_set<Vector2<int>, HasherVector2<int>> _vision;
+        PlayerHandle& _player;
 
         void LineOfSight( const std::vector<Vector2<int>>& line );
-        void UpdateVision( const Vector2<int>& position, int visionReach );
+        void BuildVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
         void EntityAdd( const Vector2<int>& position, Entity* entity );
         void EntityRemove( const Vector2<int>& position, std::unique_ptr<Entity>& entity );

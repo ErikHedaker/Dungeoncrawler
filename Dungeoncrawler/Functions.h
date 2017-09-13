@@ -25,7 +25,7 @@ std::string UseAbility( Character& attacker, Character& target, const Ability& a
 std::string UseWeapon( Character& attacker, Character& target );
 std::string TurnPlayer( Character& player, Character& AI );
 std::string TurnAI( Character& player, Character& AI );
-void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen = { 40, 20 } );
+void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen );
 void PrintHealth( const Character& character );
 void Fight( Character& player, Character& AI );
 std::vector<Ability> LoadAbilities( );
@@ -35,7 +35,7 @@ Player LoadPlayerDefault( const std::vector<Ability>& abilities );
 void SaveGameConfig( const DungeonConfiguration& config );
 void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index );
 DungeonConfiguration LoadGameConfig( );
-std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& entityFactory, int& index );
+std::vector<Dungeon> LoadGameDungeons( PlayerHandle& player, const EntityFactory& entityFactory, int& index );
 std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radius );
 std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector2<int>& end );
 bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vector2<int>& origo = { 0, 0 }, int layerFrom = 0, int layerTo = 0 );

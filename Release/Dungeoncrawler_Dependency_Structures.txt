@@ -3,21 +3,16 @@
 # Attributes
 
 # 0
-:Ground
-:-
-:
-
-# 1
 :Path
 :-
 :
 
-# 2
+# 1
 :Wall
 :#
-:1
+:0
 
-# 3
+# 2
 :Door
 :+
-:0,1
+:0

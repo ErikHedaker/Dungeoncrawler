@@ -282,7 +282,7 @@ void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& 
                 std::cout << '\\';
             }
             else if( InBounds( iterator, dungeon.GetSize( ) ) &&
-                     dungeon.vision.find( iterator ) != dungeon.vision.end( ) )
+                     dungeon.Visible( iterator ) )
             {
                 std::cout << dungeon.GetTile( iterator ).icon;
             }
@@ -516,14 +516,6 @@ void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
             fileOut << '\n';
         }
 
-        fileOut << dungeon.vision.size( ) << '\n';
-
-        for( const auto& position : dungeon.vision )
-        {
-            fileOut << position.x << ',';
-            fileOut << position.y << '\n';
-        }
-
         fileOut << dungeon.links.size( ) << '\n';
 
         for( const auto& link : dungeon.links )
@@ -549,7 +541,7 @@ DungeonConfiguration LoadGameConfig( )
 
     return DungeonConfiguration( std::vector<std::string> { std::istream_iterator<std::string> { fileIn }, { } } );
 }
-std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& entityFactory, int& index )
+std::vector<Dungeon> LoadGameDungeons( PlayerHandle& player, const EntityFactory& entityFactory, int& index )
 {
     const std::string name = "Dungeoncrawler_Save_Dungeons.txt";
     std::ifstream fileIn( name, std::ios::in );
@@ -604,7 +596,6 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
         std::vector<char> icons;
         Vector2<int> size;
         Vector2<int> iterator;
-        int amountVision;
         int amountLink;
 
         std::getline( fileIn, line );
@@ -622,15 +613,6 @@ std::vector<Dungeon> LoadGameDungeons( PlayerType& player, const EntityFactory& 
         }
 
         dungeons.emplace_back( player, entityFactory, size, icons );
-
-        std::getline( fileIn, line );
-        amountVision = std::stoi( line );
-
-        for( int indexVision = 0; indexVision < amountVision; indexVision++ )
-        {
-            std::getline( fileIn, line );
-            dungeons.back( ).vision.insert( GetVector2int( line ) );
-        }
 
         std::getline( fileIn, line );
         amountLink = std::stoi( line );

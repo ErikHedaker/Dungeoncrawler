@@ -5,12 +5,13 @@
 #include <cctype>
 #include <memory>
 #include <chrono>
+#include <deque>
 
 class Stopwatch
 {
     public:
         Stopwatch( ) :
-            _FPS( { 0 } )
+            _current( 0 )
         { }
 
         void Start( )
@@ -20,28 +21,35 @@ class Stopwatch
         void Stop( )
         {
             _stop = std::chrono::high_resolution_clock::now( );
-            _FPS.push_back( 1.0 / ( static_cast<double>( std::chrono::duration_cast<std::chrono::microseconds>( _stop - _start ).count( ) ) / 1000000.0 ) );
-        }
-        double CurrentFPS( )
-        {
-            return _FPS.back( );
-        }
-        double AverageFPS( )
-        {
-            double total = 0.0;
+            _current = std::chrono::duration_cast< std::chrono::microseconds >( _stop - _start ).count( );
+            _average.push_back( _current );
 
-            for( unsigned int i = 1; i < _FPS.size( ); i++ )
+            if( _average.size( ) > 100 )
             {
-                total += _FPS[i];
+                _average.pop_front( );
+            }
+        }
+        long long int MicrosecondsCurrent( ) const
+        {
+            return _current;
+        }
+        long long int MicrosecondsAverage( ) const
+        {
+            long long int total = 0;
+
+            for( const auto& value : _average )
+            {
+                total += value;
             }
 
-            return total / static_cast<double>( _FPS.size( ) );
+            return total / ( _average.size( ) ? _average.size( ) : 1 );
         }
 
     private:
+        long long int _current;
+        std::deque<long long int> _average;
         std::chrono::time_point<std::chrono::steady_clock> _start;
         std::chrono::time_point<std::chrono::steady_clock> _stop;
-        std::vector<double> _FPS;
 } stopwatch;
 
 Game::Game( ) :
@@ -54,6 +62,7 @@ void Game::Menu( )
 
     while( true )
     {
+        stopwatch = Stopwatch( );
         ClearScreen( );
         std::cout << "[1] Continue current game\n";
         std::cout << "[2] Load game from file\n";
@@ -76,7 +85,7 @@ void Game::Menu( )
             case '2':
             {
                 ClearScreen( );
-                std::cout << "Loading, please wait.";
+                std::cout << "Loading, please wait.\n";
 
                 try
                 {
@@ -85,7 +94,7 @@ void Game::Menu( )
                 }
                 catch( const std::exception& error )
                 {
-                    std::cout << "\nError: " << error.what( );
+                    std::cout << "\nERROR " << error.what( );
                     std::cout << "\n\nPress enter to continue: ";
                     GetEnter( );
                 }
@@ -102,7 +111,7 @@ void Game::Menu( )
             {
                 _config = input == '3' ? DungeonConfiguration( ) : GetDungeonConfiguration( );
                 ClearScreen( );
-                std::cout << "Loading, please wait.";
+                std::cout << "Loading, please wait.\n";
                 Reset( );
                 Start( );
 
@@ -140,8 +149,9 @@ bool Game::PlayerTurn( )
     while( true )
     {
         ClearScreen( );
-        PrintDungeon( _dungeons[_index], _player.real->visionReach, _player.real->position );
-        std::cout << "Sample logic FPS: " << stopwatch.CurrentFPS( ) << "\n\n";
+        PrintDungeon( _dungeons[_index], _player.real->visionReach, _player.real->position, { 30, 15 } );
+        std::cout << "Sampled logic current microseconds: " << stopwatch.MicrosecondsCurrent( ) << "\n";
+        std::cout << "Sampled logic average microseconds: " << stopwatch.MicrosecondsAverage( ) << "\n\n";
         PrintHealth( *_player.real );
         std::cout << "\n";
         std::cout << "[W] Go North\n";
@@ -224,7 +234,7 @@ void Game::DungeonSwap( )
         if( _dungeons[_index].links[i].entrance == _player.real->position )
         {
             const int indexPrev = _index;
-            const int indexNext = _dungeons[_index].links[i].indexDungeon;
+            const int indexNext = _dungeons[indexPrev].links[i].indexDungeon;
             const int entrance  = Quadrant( _dungeons[indexPrev].links[i].entrance, _dungeons[indexPrev].GetSize( ) );
             const int exit      = Quadrant( _dungeons[indexPrev].links[i].exit,     _dungeons[indexNext].GetSize( ) );
             const int align     = ( ( ( entrance - exit ) + 3 ) % 4 ) - 1;

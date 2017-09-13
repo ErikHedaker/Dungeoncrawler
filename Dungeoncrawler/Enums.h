@@ -1,24 +1,12 @@
 #pragma once
 
-struct EntityType
-{
-    enum Enum
-    {
-        Ability      = 0,
-        Character    = 1,
-        Structure    = 2
-    };
-};
-
 struct Attributes
 {
     enum Enum
     {
-        AllowPlayer = 1 << 0,
-        Obstacle    = 1 << 1,
-        Movement    = 1 << 2,
-        Hostile     = 1 << 3,
-        Lootable    = 1 << 4
+        Obstacle    = 1 << 0,
+        Movement    = 1 << 1,
+        Hostile     = 1 << 2
     };
 };
 

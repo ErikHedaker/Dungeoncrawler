@@ -15,11 +15,12 @@ struct Entity
     virtual Entity* Clone( ) const = 0;
     virtual void Update( ) { }
 
+    const std::string name;
+    const char icon;
+    const int attributes;
     bool active;
     Vector2<int> position;
-    std::string name;
-    char icon;
-    const int attributes;
+
 };
 
 struct Ability : public Entity
@@ -92,9 +93,9 @@ struct Player : public Character
     int states;
 };
 
-struct PlayerType
+struct PlayerHandle
 {
-    PlayerType( const Player& player );
+    PlayerHandle( const Player& player );
 
     void Reset( const Player& player );
 
@@ -107,10 +108,9 @@ class EntityFactory
     public:
         EntityFactory( );
 
-        const std::unique_ptr<Entity>& Get( const std::pair<EntityType::Enum, int>& id ) const;
         const std::unique_ptr<Entity>& Get( const std::string& name ) const;
         const std::unique_ptr<Entity>& Get( char icon ) const;
 
     private:
-        const std::map<std::pair<EntityType::Enum, int>, std::unique_ptr<Entity>> _entities;
+        const std::map<std::string, std::unique_ptr<Entity>> _entities;
 };

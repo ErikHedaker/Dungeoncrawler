@@ -3,11 +3,11 @@
 #include <algorithm>
 
 Entity::Entity( const std::string& name, char icon, int attributes ) :
-    active( true ),
-    position( { -1, -1 } ),
     name( name ),
     icon( icon ),
-    attributes( attributes )
+    attributes( attributes ),
+    active( true ),
+    position( { -1, -1 } )
 { }
 Ability::Ability( const std::string& name, char icon, int attributes, float damage ) :
     Entity( name, icon, attributes ),
@@ -32,7 +32,7 @@ Player::Player( const std::string& name, char icon, int attributes, int health, 
     visionReach( visionReach ),
     states( states )
 { }
-PlayerType::PlayerType( const Player& player ) :
+PlayerHandle::PlayerHandle( const Player& player ) :
     base( std::make_unique<Player>( player ) ),
     real( dynamic_cast<Player*>( base.get( ) ) )
 { }
@@ -42,48 +42,36 @@ EntityFactory::EntityFactory( ) :
         const std::vector<Ability> abilities = LoadAbilities( );
         const std::vector<Character> characters = LoadCharacters( abilities );
         const std::vector<Structure> structures = LoadStructures( );
-        std::map<std::pair<EntityType::Enum, int>, std::unique_ptr<Entity>> entities;
+        std::map<std::string, std::unique_ptr<Entity>> entities;
 
-        for( unsigned int i = 0; i < abilities.size( ); i++ )
+        for( const auto& ability : abilities )
         {
-            entities.emplace( std::make_pair( EntityType::Ability, i ), std::make_unique<Ability>( abilities[i] ) );
+            entities[ability.name] = std::make_unique<Ability>( ability );
         }
 
-        for( unsigned int i = 0; i < characters.size( ); i++ )
+        for( const auto& character : characters )
         {
-            entities.emplace( std::make_pair( EntityType::Character, i ), std::make_unique<Character>( characters[i] ) );
+            entities[character.name] = std::make_unique<Character>( character );
         }
 
-        for( unsigned int i = 0; i < structures.size( ); i++ )
+        for( const auto& structure : structures )
         {
-            entities.emplace( std::make_pair( EntityType::Structure, i ), std::make_unique<Structure>( structures[i] ) );
+            entities[structure.name] = std::make_unique<Structure>( structure );
         }
 
         return entities;
     }( ) )
 { }
 
-void PlayerType::Reset( const Player& player )
+void PlayerHandle::Reset( const Player& player )
 {
     base.reset( new Player( player ) );
     real = dynamic_cast<Player*>( base.get( ) );
 }
 
-const std::unique_ptr<Entity>& EntityFactory::Get( const std::pair<EntityType::Enum, int>& id ) const
-{
-    return _entities.at( id );
-}
 const std::unique_ptr<Entity>& EntityFactory::Get( const std::string& name ) const
 {
-    for( const auto& it : _entities )
-    {
-        if( it.second->name == name )
-        {
-            return it.second;
-        }
-    }
-
-    throw std::exception( "Entity does not exist!" );
+    return _entities.at( name );
 }
 const std::unique_ptr<Entity>& EntityFactory::Get( char icon ) const
 {

@@ -36,7 +36,7 @@ DungeonConfiguration::DungeonConfiguration( const std::vector<std::string>& data
     }
 }
 
-Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const DungeonConfiguration& config ) :
+Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const DungeonConfiguration& config ) :
     _size( [&config] ( )
     {
         constexpr int min = 30;
@@ -60,7 +60,7 @@ Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const 
     if( config.generate.wallsFiller )   GenerateWallsFiller( entityFactory, config.amount.wallsFillerCycles );
     if( config.generate.enemies )       GenerateEnemies( entityFactory, config.amount.enemies );
 }
-Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<char>& icons ) :
+Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<char>& icons ) :
     _size( size ),
     _tiles( size.x * size.y ),
     _player( player )
@@ -86,6 +86,8 @@ Dungeon::Dungeon( PlayerType& player, const EntityFactory& entityFactory, const 
             }
         }
     }
+
+    BuildVision( _player.real->position, _player.real->visionReach );
 }
 
 void Dungeon::Rotate( const Orientation::Enum& orientation )
@@ -114,7 +116,7 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
         entity->position = PositionRotate( entity->position, sizePrev, orientation );
     }
 
-    for( const auto& position : vision )
+    for( const auto& position : _vision )
     {
         rotateVision.insert( PositionRotate( position, sizePrev, orientation ) );
     }
@@ -122,7 +124,7 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
     _player.real->position = PositionRotate( _player.real->position, sizePrev, orientation );
     _size = sizeNext;
     _tiles = rotateTiles;
-    vision = rotateVision;
+    _vision = rotateVision;
 }
 void Dungeon::PlayerPlace( const Vector2<int>& position )
 {
@@ -152,23 +154,35 @@ void Dungeon::PlayerPlace( const Vector2<int>& position )
         }
     }
 
+    BuildVision( _player.real->position, _player.real->visionReach );
     OccupantAdd( _player.real->position, _player.base );
-    UpdateVision( _player.real->position, _player.real->visionReach );
 }
 void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
 {
     const Vector2<int> moving = PositionMove( _player.real->position, orientation );
+    auto Door = []( const Tile& tile )
+    {
+        for( const auto& occupant : tile.occupants )
+        {
+            if( (*occupant)->name == "Door" )
+            {
+                return true;
+            }
+        }
+
+        return false;
+    };
 
     if( InBounds( moving, _size ) &&
         ( TileLacking( moving, Attributes::Obstacle ) ||
-          !TileLacking( moving, Attributes::AllowPlayer ) ) )
+          Door( GetTile( moving ) ) ) )
     {
         OccupantRemove(_player.real->position, _player.base );
         _player.real->position = moving;
         OccupantAdd( _player.real->position, _player.base );
     }
 
-    UpdateVision( _player.real->position, _player.real->visionReach );
+    BuildVision( _player.real->position, _player.real->visionReach );
 }
 void Dungeon::MovementRandom( )
 {
@@ -241,6 +255,10 @@ const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
 {
     return _tiles[( position.y * _size.x ) + position.x];
 }
+bool Dungeon::Visible( const Vector2<int>& position ) const
+{
+    return _vision.find( position ) != _vision.end( );
+}
 bool Dungeon::Unoccupied( const Vector2<int>& position ) const
 {
     return _tiles[( position.y * _size.x ) + position.x].occupants.empty( );
@@ -258,7 +276,7 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
         { -1,  0 },
         { -1, -1 }
     } };
-    int entities = 0;
+    int count = 0;
 
     for( const auto& direction : directions )
     {
@@ -266,11 +284,11 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 
         if( !TileLacking( neighbour, Attributes::Obstacle ) )
         {
-            entities++;
+            count++;
         }
     }
 
-    return entities >= threshold;
+    return count >= threshold;
 }
 bool Dungeon::TileLacking( const Vector2<int>& position, int bitmask ) const
 {
@@ -294,7 +312,7 @@ void Dungeon::LineOfSight( const std::vector<Vector2<int>>& line )
             break;
         }
 
-        vision.insert( current );
+        _vision.insert( current );
 
         if( !TileLacking( current, Attributes::Obstacle ) )
         {
@@ -302,7 +320,7 @@ void Dungeon::LineOfSight( const std::vector<Vector2<int>>& line )
         }
     }
 }
-void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
+void Dungeon::BuildVision( const Vector2<int>& position, int visionReach )
 {
     static constexpr std::array<int, 2> polarity = { 1, -1 };
     static constexpr std::array<std::pair<Vector2<int>, std::pair<Vector2<int>, Vector2<int>>>, 4> neighbours
@@ -313,7 +331,7 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
         { { -1,  0 }, { { -1,  1 }, { -1, -1 } } }
     } };
 
-    vision.clear( );
+    _vision.clear( );
 
     /* Base vision generation */
     for( const auto& endpoint : BresenhamCircle( position, visionReach ) )
@@ -321,7 +339,7 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
         LineOfSight( BresenhamLine( position, endpoint ) );
     }
 
-    /* Fix vision artifacts by adding to nearby walls  */
+    /* Fix vision artifacts by adding to parallell obstacles  */
     for( const auto& neighbour : neighbours )
     {
         const Vector2<int> direction = neighbour.first;
@@ -337,7 +355,7 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
                 if( InBounds( adjacent, _size ) &&
                     !TileLacking( adjacent, Attributes::Obstacle ) )
                 {
-                    vision.insert( adjacent );
+                    _vision.insert( adjacent );
                 }
 
                 if( InBounds( current, _size ) &&
@@ -349,35 +367,25 @@ void Dungeon::UpdateVision( const Vector2<int>& position, int visionReach )
         }
     }
 
-    /* Fix vision artifacts by adding to deadspots */
-    for( const auto& visible : vision )
+    /* Fix vision artifacts by adding to surrounded deadspots */
+    for( const auto& visible : _vision )
     {
         for( const auto& neighbour : neighbours )
         {
             const Vector2<int> adjacent = visible + neighbour.first;
 
             if( InBounds( adjacent, _size ) &&
-                vision.find( adjacent ) == vision.end( ) )
+                !Visible( adjacent ) )
             {
                 const Vector2<int> neighbourOne = visible + neighbour.second.first;
                 const Vector2<int> neighbourTwo = visible + neighbour.second.second;
 
                 if( InBounds( neighbourOne, _size ) &&
                     InBounds( neighbourTwo, _size ) &&
-                    vision.find( neighbourOne ) != vision.end( ) &&
-                    vision.find( neighbourTwo ) != vision.end( ) )
+                    Visible( neighbourOne ) &&
+                    Visible( neighbourTwo ) )
                 {
-                    if( ( !TileLacking( adjacent, Attributes::Obstacle ) &&
-                          !TileLacking( neighbourOne, Attributes::Obstacle ) &&
-                          !TileLacking( neighbourTwo, Attributes::Obstacle ) ) ||
-                        TileLacking( visible, Attributes::Obstacle ) == TileLacking( adjacent, Attributes::Obstacle ) )
-                    {
-                        vision.insert( adjacent );
-                    }
-                    else
-                    {
-                        LineOfSight( BresenhamLine( position, adjacent ) );
-                    }
+                    LineOfSight( BresenhamLine( position, adjacent ) );
                 }
             }
         }
@@ -482,7 +490,8 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
 
     for( const auto& entity : _entities )
     {
-        if( !( entity->attributes & Attributes::AllowPlayer ) )
+        if( entity->attributes & Attributes::Obstacle &&
+            entity->name != "Door" )
         {
             obstacles.push_back( entity->position );
         }
