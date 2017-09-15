@@ -8,6 +8,7 @@
 #include <deque>
 
 Stopwatch stopwatch;
+Stopwatch stopwatchLogic;
 
 Game::Game( ) :
     _player( LoadPlayerDefault( LoadAbilities( ) ) )
@@ -107,7 +108,8 @@ bool Game::PlayerTurn( )
         ClearScreen( );
         PrintDungeon( _dungeons[_index], _player.real->visionReach, _player.real->position, { 30, 15 } );
         stopwatch.Stop( );
-        std::cout << "Frames per second: " << stopwatch.FPS( ) << "\n\n";
+        std::cout << "Frames per second: " << stopwatch.FPS( ) << "\n";
+        std::cout << "Sampled logic microseconds: " << stopwatchLogic.MicrosecondsAverage( ) << "\n\n";
         PrintHealth( *_player.real );
         std::cout << "\n";
         std::cout << "[W] Go North\n";
@@ -129,9 +131,9 @@ bool Game::PlayerTurn( )
             case 'S':
             case 'D':
             {
-                stopwatch.Start( );
+                stopwatchLogic.Start( );
                 _dungeons[_index].MovementPlayer( directions.at( input ) );
-                stopwatch.Stop( );
+                stopwatchLogic.Stop( );
 
                 return true;
             }

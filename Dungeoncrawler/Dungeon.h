@@ -14,13 +14,13 @@ struct DungeonConfiguration
     DungeonConfiguration( );
     DungeonConfiguration( const std::vector<std::string>& data );
     
-    struct Size
+    struct
     {
         bool determined;
         Vector2<int> dungeon;
     } size;
 
-    struct Generate
+    struct
     {
         bool doors;
         bool wallsOuter;
@@ -31,7 +31,7 @@ struct DungeonConfiguration
         bool enemies;
     } generate;
 
-    struct Amount
+    struct
     {
         int doors;
         int wallsParents;
@@ -83,7 +83,6 @@ class Dungeon
         std::unordered_set<Vector2<int>, HasherVector2<int>> _vision;
         PlayerHandle& _player;
 
-        void LineOfSight( const std::vector<Vector2<int>>& line );
         void BuildVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
         void EntityInsert( const Vector2<int>& position, Entity* entity );

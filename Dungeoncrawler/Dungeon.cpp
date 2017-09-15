@@ -303,23 +303,6 @@ bool Dungeon::TileLacking( const Vector2<int>& position, int bitmask ) const
     return true;
 }
 
-void Dungeon::LineOfSight( const std::vector<Vector2<int>>& line )
-{
-    for( const auto& current : line )
-    {
-        if( !InBounds( current, _size ) )
-        {
-            break;
-        }
-
-        _vision.insert( current );
-
-        if( !TileLacking( current, Attributes::Obstacle ) )
-        {
-            break;
-        }
-    }
-}
 void Dungeon::BuildVision( const Vector2<int>& position, int visionReach )
 {
     static constexpr std::array<int, 2> polarity = { 1, -1 };
@@ -330,6 +313,23 @@ void Dungeon::BuildVision( const Vector2<int>& position, int visionReach )
         { {  0,  1 }, { {  1,  1 }, { -1,  1 } } },
         { { -1,  0 }, { { -1,  1 }, { -1, -1 } } }
     } };
+    auto LineOfSight = [this] ( const std::vector<Vector2<int>>& path )
+    {
+        for( const auto& current : path )
+        {
+            if( !InBounds( current, _size ) )
+            {
+                break;
+            }
+
+            _vision.insert( current );
+
+            if( !TileLacking( current, Attributes::Obstacle ) )
+            {
+                break;
+            }
+        }
+    };
 
     _vision.clear( );
 
@@ -343,11 +343,11 @@ void Dungeon::BuildVision( const Vector2<int>& position, int visionReach )
     for( const auto& neighbour : neighbours )
     {
         const Vector2<int> direction = neighbour.first;
-        const std::vector<Vector2<int>> line = BresenhamLine( position, position + direction * visionReach );
+        const std::vector<Vector2<int>> straight = BresenhamLine( position, position + direction * visionReach );
 
         for( const auto& polar : polarity )
         {
-            for( const auto& current : line )
+            for( const auto& current : straight )
             {
                 const Vector2<int> flip = { direction.y, direction.x };
                 const Vector2<int> adjacent = current + flip * polar;
@@ -475,8 +475,8 @@ void Dungeon::GenerateWallsOuter( const EntityFactory& entityFactory )
     {
         for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
         {
-            if( OnBorder( iterator, _size ) &&
-                Unoccupied( iterator ) )
+            if( Unoccupied( iterator ) &&
+                OnBorder( iterator, _size ) )
             {
                 EntityInsert( iterator, entityFactory.Get( "Wall" )->Clone( ) );
             }
@@ -487,6 +487,17 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
 {
     const Vector2<int> center = _size / 2;
     std::vector<Vector2<int>> obstacles;
+    std::vector<std::pair<Vector2<int>, Vector2<int>>> redirection;
+    auto PathAdd = [this, &entityFactory] ( const std::vector<Vector2<int>>& path )
+    {
+        for( const auto& position : path )
+        {
+            if( Unoccupied( position ) )
+            {
+                EntityInsert( position, entityFactory.Get( "Path" )->Clone( ) );
+            }
+        }
+    };
 
     for( const auto& entity : _entities )
     {
@@ -499,19 +510,32 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
 
     for( const auto& link : links )
     {
-        for( const auto& position : AStarAlgorithm( link.entrance, center, _size, obstacles ) )
+        while( true )
         {
-            if( Unoccupied( position ) )
+            const Vector2<int> random
             {
-                EntityInsert( position, entityFactory.Get( "Path" )->Clone( ) );
+                RandomNumberGenerator( 1, _size.x - 2 ),
+                RandomNumberGenerator( 1, _size.y - 2 )
+            };
+
+            if( Unoccupied( random ) )
+            {
+                redirection.emplace_back( link.entrance, random );
+
+                break;
             }
         }
+    }
+
+    for( const auto& pair : redirection )
+    {
+        PathAdd( AStarAlgorithm( pair.first, pair.second, _size, obstacles ) );
+        PathAdd( AStarAlgorithm( pair.second, center, _size, obstacles ) );
     }
 }
 void Dungeon::GenerateWallsParents( const EntityFactory& entityFactory, int amount )
 {
-    const Vector2<int> center = _size / 2;
-    int remaining = amount ? amount : ( _size.x * _size.y ) / 14;
+    int remaining = amount ? amount : ( _size.x * _size.y ) / 10;
 
     while( remaining > 0 )
     {
@@ -521,8 +545,7 @@ void Dungeon::GenerateWallsParents( const EntityFactory& entityFactory, int amou
             RandomNumberGenerator( 1, _size.y - 2 )
         };
 
-        if( Unoccupied( position ) &&
-            position != center )
+        if( Unoccupied( position ) )
         {
             EntityInsert( position, entityFactory.Get( "Wall" )->Clone( ) );
             remaining--;
@@ -538,7 +561,6 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
         {  0,  1 },
         { -1,  0 }
     } };
-    const Vector2<int> center = _size / 2;
     int remaining = amount ? amount : ( _size.x * _size.y ) / 4;
 
     while( remaining > 0 )
@@ -551,8 +573,7 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
                 const Vector2<int> position = entity->position + directions[index];
 
                 if( InBounds( position, _size ) &&
-                    Unoccupied( position ) &&
-                    position != center )
+                    Unoccupied( position ) )
                 {
                     EntityInsert( position, entityFactory.Get( "Wall" )->Clone( ) );
                     remaining--;
@@ -563,8 +584,7 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
 }
 void Dungeon::GenerateWallsFiller( const EntityFactory& entityFactory, int amount )
 {
-    const Vector2<int> center = _size / 2;
-    const int limit = amount ? amount : 6;
+    const int limit = amount ? amount : 5;
     Vector2<int> iterator;
 
     for( int i = 0; i < limit; i++ )
@@ -574,8 +594,7 @@ void Dungeon::GenerateWallsFiller( const EntityFactory& entityFactory, int amoun
             for( iterator.x = 1; iterator.x < _size.x - 1; iterator.x++ )
             {
                 if( Unoccupied( iterator ) &&
-                    Surrounded( iterator, 5 ) &&
-                    iterator != center )
+                    Surrounded( iterator, 5 ) )
                 {
                     EntityInsert( iterator, entityFactory.Get( "Wall" )->Clone( ) );
                 }
@@ -600,7 +619,6 @@ void Dungeon::GenerateEnemies( const EntityFactory& entityFactory, int amount )
 
         return enemies;
     }( );
-    const Vector2<int> center = _size / 2;
     const int min = static_cast<int>( sqrt( _size.x * _size.y ) / 3.0 );
     const int max = static_cast<int>( sqrt( _size.x * _size.y ) / 1.5 );
     const int limit = amount ? amount : RandomNumberGenerator( min, max );
@@ -615,8 +633,7 @@ void Dungeon::GenerateEnemies( const EntityFactory& entityFactory, int amount )
                 RandomNumberGenerator( 1, _size.y - 2 )
             };
 
-            if( Unoccupied( position ) &&
-                position != center )
+            if( Unoccupied( position ) )
             {
                 const int index = RandomNumberGenerator( 0, enemies.size( ) - 1 );
                 const std::string random = enemies[index].name;
