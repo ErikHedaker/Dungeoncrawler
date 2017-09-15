@@ -8,6 +8,8 @@
 #include <string>
 #include <iostream>
 #include <functional>
+#include <chrono>
+#include <deque>
 
 double RandomNumberGenerator( double min, double max );
 int RandomNumberGenerator( int min, int max );
@@ -43,16 +45,16 @@ bool InCorner( const Vector2<int>& position, const Vector2<int>& size, int sensi
 bool InBounds( const Vector2<int>& position, const Vector2<int>& size );
 Orientation::Enum Quadrant( const Vector2<int>& position, const Vector2<int>& size );
 
-class StringWrapper
+class FileString
 {
     public:
-        friend std::istream &operator>>( std::istream &stream, StringWrapper &line )
+        friend std::istream& operator>>( std::istream& stream, FileString& line )
         {
-            while( std::getline( stream, line.data ) )
+            while( std::getline( stream, line._data ) )
             {
-                if( !line.data.empty( ) && line.data[0] == ':' )
+                if( !line._data.empty( ) && line._data[0] == ':' )
                 {
-                    line.data = line.data.substr( 1, line.data.find( '#' ) );
+                    line._data = line._data.substr( 1, line._data.find( '#' ) );
 
                     break;
                 }
@@ -63,9 +65,58 @@ class StringWrapper
 
         operator std::string( ) const
         {
-            return data;
+            return _data;
         }
 
     private:
-        std::string data;   
+        std::string _data;   
+};
+
+class Stopwatch
+{
+    public:
+        Stopwatch( ) :
+            _current( 0 )
+        { }
+
+        void Start( )
+        {
+            _start = std::chrono::high_resolution_clock::now( );
+        }
+        void Stop( )
+        {
+            _stop = std::chrono::high_resolution_clock::now( );
+            _current = std::chrono::duration_cast<std::chrono::microseconds>( _stop - _start );
+            _average.push_back( _current );
+
+            if( _average.size( ) > 100 )
+            {
+                _average.pop_front( );
+            }
+        }
+        long long int Microseconds( ) const
+        {
+            return _current.count( );
+        }
+        long long int MicrosecondsAverage( ) const
+        {
+            long long int total = 0;
+
+            for( const auto& value : _average )
+            {
+                total += value.count( );
+            }
+
+            return total / ( _average.size( ) ? _average.size( ) : 1 );
+        }
+        double FPS( )
+        {
+            return 1.0 / ( static_cast<double>( _current.count( ) ) / 1000000.0 );
+        }
+
+    private:
+        std::chrono::microseconds _current;
+        std::deque<std::chrono::microseconds> _average;
+        std::chrono::time_point<std::chrono::steady_clock> _start;
+        std::chrono::time_point<std::chrono::steady_clock> _stop;
 };

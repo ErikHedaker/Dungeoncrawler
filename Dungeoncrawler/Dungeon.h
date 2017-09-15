@@ -86,9 +86,9 @@ class Dungeon
         void LineOfSight( const std::vector<Vector2<int>>& line );
         void BuildVision( const Vector2<int>& position, int visionReach );
         void UpdateTile( const Vector2<int>& position );
-        void EntityAdd( const Vector2<int>& position, Entity* entity );
+        void EntityInsert( const Vector2<int>& position, Entity* entity );
         void EntityRemove( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
-        void OccupantAdd( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
+        void OccupantInsert( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
         void OccupantRemove( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
 
         void GenerateDoors( const EntityFactory& entityFactory, int amount );

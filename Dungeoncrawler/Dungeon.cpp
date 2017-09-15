@@ -81,7 +81,7 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
                 }
                 else
                 {
-                    EntityAdd( iterator, entityFactory.Get( icon )->Clone( ) );
+                    EntityInsert( iterator, entityFactory.Get( icon )->Clone( ) );
                 }
             }
         }
@@ -155,7 +155,7 @@ void Dungeon::PlayerPlace( const Vector2<int>& position )
     }
 
     BuildVision( _player.real->position, _player.real->visionReach );
-    OccupantAdd( _player.real->position, _player.base );
+    OccupantInsert( _player.real->position, _player.base );
 }
 void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
 {
@@ -179,7 +179,7 @@ void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
     {
         OccupantRemove(_player.real->position, _player.base );
         _player.real->position = moving;
-        OccupantAdd( _player.real->position, _player.base );
+        OccupantInsert( _player.real->position, _player.base );
     }
 
     BuildVision( _player.real->position, _player.real->visionReach );
@@ -199,7 +199,7 @@ void Dungeon::MovementRandom( )
             {
                 OccupantRemove( entity->position, entity );
                 entity->position = moving;
-                OccupantAdd( entity->position, entity );
+                OccupantInsert( entity->position, entity );
             }
         }
     }
@@ -397,11 +397,11 @@ void Dungeon::UpdateTile( const Vector2<int>& position )
 
     tile.icon = tile.occupants.empty( ) ? '-' : (*tile.occupants.back( ))->icon;
 }
-void Dungeon::EntityAdd( const Vector2<int>& position, Entity* entity )
+void Dungeon::EntityInsert( const Vector2<int>& position, Entity* entity )
 {
     _entities.push_back( std::unique_ptr<Entity>( entity ) );
     _entities.back( )->position = position;
-    OccupantAdd( position, _entities.back( ) );
+    OccupantInsert( position, _entities.back( ) );
 }
 void Dungeon::EntityRemove( const Vector2<int>& position, std::unique_ptr<Entity>& entity )
 {
@@ -416,7 +416,7 @@ void Dungeon::EntityRemove( const Vector2<int>& position, std::unique_ptr<Entity
         }
     }
 }
-void Dungeon::OccupantAdd( const Vector2<int>& position, std::unique_ptr<Entity>& entity )
+void Dungeon::OccupantInsert( const Vector2<int>& position, std::unique_ptr<Entity>& entity )
 {
     auto& occupants = _tiles[( position.y * _size.x ) + position.x].occupants;
 
@@ -462,7 +462,7 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
         const Orientation::Enum side = static_cast<Orientation::Enum>( value );
         const int index = RandomNumberGenerator( 0, sides[side].size( ) - 1 );
 
-        EntityAdd( sides[side][index], entityFactory.Get( "Door" )->Clone( ) );
+        EntityInsert( sides[side][index], entityFactory.Get( "Door" )->Clone( ) );
         links.push_back( { -1, -1, sides[side][index], { -1, -1 } } );
         sides[side].erase( sides[side].begin( ) + index );
     }
@@ -478,7 +478,7 @@ void Dungeon::GenerateWallsOuter( const EntityFactory& entityFactory )
             if( OnBorder( iterator, _size ) &&
                 Unoccupied( iterator ) )
             {
-                EntityAdd( iterator, entityFactory.Get( "Wall" )->Clone( ) );
+                EntityInsert( iterator, entityFactory.Get( "Wall" )->Clone( ) );
             }
         }
     }
@@ -503,7 +503,7 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
         {
             if( Unoccupied( position ) )
             {
-                EntityAdd( position, entityFactory.Get( "Path" )->Clone( ) );
+                EntityInsert( position, entityFactory.Get( "Path" )->Clone( ) );
             }
         }
     }
@@ -524,7 +524,7 @@ void Dungeon::GenerateWallsParents( const EntityFactory& entityFactory, int amou
         if( Unoccupied( position ) &&
             position != center )
         {
-            EntityAdd( position, entityFactory.Get( "Wall" )->Clone( ) );
+            EntityInsert( position, entityFactory.Get( "Wall" )->Clone( ) );
             remaining--;
         }
     }
@@ -554,7 +554,7 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
                     Unoccupied( position ) &&
                     position != center )
                 {
-                    EntityAdd( position, entityFactory.Get( "Wall" )->Clone( ) );
+                    EntityInsert( position, entityFactory.Get( "Wall" )->Clone( ) );
                     remaining--;
                 }
             }
@@ -577,7 +577,7 @@ void Dungeon::GenerateWallsFiller( const EntityFactory& entityFactory, int amoun
                     Surrounded( iterator, 5 ) &&
                     iterator != center )
                 {
-                    EntityAdd( iterator, entityFactory.Get( "Wall" )->Clone( ) );
+                    EntityInsert( iterator, entityFactory.Get( "Wall" )->Clone( ) );
                 }
             }
         }
@@ -621,7 +621,7 @@ void Dungeon::GenerateEnemies( const EntityFactory& entityFactory, int amount )
                 const int index = RandomNumberGenerator( 0, enemies.size( ) - 1 );
                 const std::string random = enemies[index].name;
 
-                EntityAdd( position, entityFactory.Get( random )->Clone( ) );
+                EntityInsert( position, entityFactory.Get( random )->Clone( ) );
 
                 break;
             }

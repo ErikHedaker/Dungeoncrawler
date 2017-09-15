@@ -7,50 +7,7 @@
 #include <chrono>
 #include <deque>
 
-class Stopwatch
-{
-    public:
-        Stopwatch( ) :
-            _current( 0 )
-        { }
-
-        void Start( )
-        {
-            _start = std::chrono::high_resolution_clock::now( );
-        }
-        void Stop( )
-        {
-            _stop = std::chrono::high_resolution_clock::now( );
-            _current = std::chrono::duration_cast< std::chrono::microseconds >( _stop - _start ).count( );
-            _average.push_back( _current );
-
-            if( _average.size( ) > 100 )
-            {
-                _average.pop_front( );
-            }
-        }
-        long long int MicrosecondsCurrent( ) const
-        {
-            return _current;
-        }
-        long long int MicrosecondsAverage( ) const
-        {
-            long long int total = 0;
-
-            for( const auto& value : _average )
-            {
-                total += value;
-            }
-
-            return total / ( _average.size( ) ? _average.size( ) : 1 );
-        }
-
-    private:
-        long long int _current;
-        std::deque<long long int> _average;
-        std::chrono::time_point<std::chrono::steady_clock> _start;
-        std::chrono::time_point<std::chrono::steady_clock> _stop;
-} stopwatch;
+Stopwatch stopwatch;
 
 Game::Game( ) :
     _player( LoadPlayerDefault( LoadAbilities( ) ) )
@@ -62,7 +19,6 @@ void Game::Menu( )
 
     while( true )
     {
-        stopwatch = Stopwatch( );
         ClearScreen( );
         std::cout << "[1] Continue current game\n";
         std::cout << "[2] Load game from file\n";
@@ -150,8 +106,8 @@ bool Game::PlayerTurn( )
     {
         ClearScreen( );
         PrintDungeon( _dungeons[_index], _player.real->visionReach, _player.real->position, { 30, 15 } );
-        std::cout << "Sampled logic current microseconds: " << stopwatch.MicrosecondsCurrent( ) << "\n";
-        std::cout << "Sampled logic average microseconds: " << stopwatch.MicrosecondsAverage( ) << "\n\n";
+        stopwatch.Stop( );
+        std::cout << "Frames per second: " << stopwatch.FPS( ) << "\n\n";
         PrintHealth( *_player.real );
         std::cout << "\n";
         std::cout << "[W] Go North\n";
@@ -164,6 +120,7 @@ bool Game::PlayerTurn( )
         std::cout << "[G] Rotate dungeon 180'\n";
         std::cout << "[H] Rotate dungeon 270'\n\n";
         input = GetChar( "Enter choice: ", { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
+        stopwatch.Start( );
 
         switch( input )
         {

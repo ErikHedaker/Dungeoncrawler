@@ -347,7 +347,7 @@ std::vector<Ability> LoadAbilities( )
 {
     constexpr int offset = 4;
     const std::string name = "Dungeoncrawler_Dependency_Abilities.txt";
-    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper> { std::ifstream { name, std::ios::in } }, { } };
+    std::vector<std::string> fileCache { std::istream_iterator<FileString> { std::ifstream { name, std::ios::in } }, { } };
     std::vector<Ability> abilities;
 
     if( fileCache.empty( ) )
@@ -369,7 +369,7 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 {
     constexpr int offset = 8;
     const std::string name = "Dungeoncrawler_Dependency_Characters.txt";
-    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper> { std::ifstream { name, std::ios::in } }, { } };
+    std::vector<std::string> fileCache { std::istream_iterator<FileString> { std::ifstream { name, std::ios::in } }, { } };
     std::vector<Character> characters;
     auto GetAbilities = [&abilities] ( const std::string& line ) -> std::vector<Ability>
     {
@@ -408,7 +408,7 @@ std::vector<Structure> LoadStructures( )
 {
     constexpr int offset = 3;
     const std::string name = "Dungeoncrawler_Dependency_Structures.txt";
-    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ name, std::ios::in } }, { } };
+    std::vector<std::string> fileCache { std::istream_iterator<FileString>{ std::ifstream{ name, std::ios::in } }, { } };
     std::vector<Structure> structures;
 
     if( fileCache.empty( ) )
@@ -428,7 +428,7 @@ std::vector<Structure> LoadStructures( )
 Player LoadPlayerDefault( const std::vector<Ability>& abilities )
 {
     const std::string name = "Dungeoncrawler_Dependency_Player.txt";
-    std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream{ name, std::ios::in } }, { } };
+    std::vector<std::string> fileCache { std::istream_iterator<FileString>{ std::ifstream{ name, std::ios::in } }, { } };
     auto GetAbilities = [&abilities] ( const std::string& line ) -> std::vector<Ability>
     {
         std::stringstream sstream( line );
@@ -698,13 +698,13 @@ std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector
 
     return result;
 }
-bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vector2<int>& origo, int layerFrom, int layerTo )
+bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vector2<int>& origo, int minLayer, int maxLayer )
 {
     return
-        position.x + layerTo <= origo.x + layerFrom ||
-        position.y + layerTo <= origo.y + layerFrom ||
-        position.x - layerTo >= size.x  - layerFrom - 1 ||
-        position.y - layerTo >= size.y  - layerFrom - 1;
+        position.x + minLayer <= origo.x + maxLayer ||
+        position.y + minLayer <= origo.y + maxLayer ||
+        position.x - minLayer >= size.x  - maxLayer - 1 ||
+        position.y - minLayer >= size.y  - maxLayer - 1;
 }
 bool InCorner( const Vector2<int>& position, const Vector2<int>& size, int sensitivity )
 {
@@ -725,9 +725,9 @@ Orientation::Enum Quadrant( const Vector2<int>& position, const Vector2<int>& si
     static const std::map<std::pair<bool, bool>, Orientation::Enum> quadrants
     {
         { { true,  false }, Orientation::North },
-        { { true,  true  }, Orientation::East },
+        { { true,  true  }, Orientation::East  },
         { { false, true  }, Orientation::South },
-        { { false, false }, Orientation::West }
+        { { false, false }, Orientation::West  }
     };
     const Vector2<float> positionf = position;
     const Vector2<float> sizef     = size;
