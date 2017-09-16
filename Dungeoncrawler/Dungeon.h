@@ -51,7 +51,7 @@ struct Link
 
 struct Tile
 {
-    std::vector<std::unique_ptr<Entity>*> occupants = { };
+    std::vector<int> occupants = { };
     char icon = '-';
 };
 
@@ -68,6 +68,7 @@ class Dungeon
         void MovementPlayer( const Orientation::Enum& orientation );
         void MovementRandom( );
         void Events( );
+        void UpdateTiles( );
 
         const Vector2<int>& GetSize( ) const;
         const Tile& GetTile( const Vector2<int>& position ) const;
@@ -79,16 +80,15 @@ class Dungeon
     private:
         Vector2<int> _size;
         std::vector<Tile> _tiles;
-        std::list<std::unique_ptr<Entity>> _entities;
+        std::vector<std::unique_ptr<Entity>> _entities;
         std::unordered_set<Vector2<int>, HasherVector2<int>> _vision;
         PlayerHandle& _player;
 
         void BuildVision( const Vector2<int>& position, int visionReach );
-        void UpdateTile( const Vector2<int>& position );
         void EntityInsert( const Vector2<int>& position, Entity* entity );
-        void EntityRemove( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
-        void OccupantInsert( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
-        void OccupantRemove( const Vector2<int>& position, std::unique_ptr<Entity>& entity );
+        void EntityRemove( const Vector2<int>& position, int index );
+        void OccupantInsert( const Vector2<int>& position, int index );
+        void OccupantRemove( const Vector2<int>& position, int index );
 
         void GenerateDoors( const EntityFactory& entityFactory, int amount );
         void GenerateWallsOuter( const EntityFactory& entityFactory );

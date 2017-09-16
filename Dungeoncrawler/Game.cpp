@@ -175,6 +175,7 @@ void Game::Start( )
     {
         _dungeons[_index].MovementRandom( );
         _dungeons[_index].Events( );
+        _dungeons[_index].UpdateTiles( );
         _player.real->Update( );
 
         if( _player.real->states & States::Swapping )
