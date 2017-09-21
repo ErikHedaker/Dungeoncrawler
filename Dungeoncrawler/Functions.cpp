@@ -346,7 +346,7 @@ void Fight( Character& player, Character& AI )
 std::vector<Ability> LoadAbilities( )
 {
     constexpr int offset = 4;
-    const std::string name = "Dungeoncrawler_Dependency_Abilities.txt";
+    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Dependency_Abilities.txt";
     std::vector<std::string> fileCache { std::istream_iterator<FileString> { std::ifstream { name, std::ios::in } }, { } };
     std::vector<Ability> abilities;
 
@@ -365,10 +365,11 @@ std::vector<Ability> LoadAbilities( )
 
     return abilities;
 }
-std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
+std::vector<Character> LoadCharacters( )
 {
     constexpr int offset = 8;
-    const std::string name = "Dungeoncrawler_Dependency_Characters.txt";
+    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Dependency_Characters.txt";
+    const std::vector<Ability> abilities = LoadAbilities( );
     std::vector<std::string> fileCache { std::istream_iterator<FileString> { std::ifstream { name, std::ios::in } }, { } };
     std::vector<Character> characters;
     auto GetAbilities = [&abilities] ( const std::string& line ) -> std::vector<Ability>
@@ -407,7 +408,7 @@ std::vector<Character> LoadCharacters( const std::vector<Ability>& abilities )
 std::vector<Structure> LoadStructures( )
 {
     constexpr int offset = 3;
-    const std::string name = "Dungeoncrawler_Dependency_Structures.txt";
+    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Dependency_Structures.txt";
     std::vector<std::string> fileCache { std::istream_iterator<FileString>{ std::ifstream{ name, std::ios::in } }, { } };
     std::vector<Structure> structures;
 
@@ -425,9 +426,10 @@ std::vector<Structure> LoadStructures( )
 
     return structures;
 }
-Player LoadPlayerDefault( const std::vector<Ability>& abilities )
+Player LoadPlayerDefault( )
 {
-    const std::string name = "Dungeoncrawler_Dependency_Player.txt";
+    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Dependency_Player.txt";
+    const std::vector<Ability> abilities = LoadAbilities( );
     std::vector<std::string> fileCache { std::istream_iterator<FileString>{ std::ifstream{ name, std::ios::in } }, { } };
     auto GetAbilities = [&abilities] ( const std::string& line ) -> std::vector<Ability>
     {
@@ -458,173 +460,6 @@ Player LoadPlayerDefault( const std::vector<Ability>& abilities )
      GetAbilities( fileCache[7] ),
         std::stoi( fileCache[8] ),
        GetBitmask( fileCache[9] ) );
-}
-void SaveGameConfig( const DungeonConfiguration& config )
-{
-    const std::string name = "Dungeoncrawler_Save_Config.txt";
-    std::ofstream fileOut( name, std::ios::out | std::ios::trunc );
-
-    if( !fileOut.is_open( ) )
-    {
-        throw std::exception( std::string( "Unable to open file: " + name ).c_str( ) );
-    }
-
-    fileOut << config.size.determined << '\n';
-    fileOut << config.size.dungeon.x << '\n';
-    fileOut << config.size.dungeon.y << '\n';
-    fileOut << config.generate.doors << '\n';
-    fileOut << config.generate.wallsOuter << '\n';
-    fileOut << config.generate.hiddenPath << '\n';
-    fileOut << config.generate.wallsParents << '\n';
-    fileOut << config.generate.wallsChildren << '\n';
-    fileOut << config.generate.wallsFiller << '\n';
-    fileOut << config.generate.enemies << '\n';
-    fileOut << config.amount.doors << '\n';
-    fileOut << config.amount.wallsParents << '\n';
-    fileOut << config.amount.wallsChildren << '\n';
-    fileOut << config.amount.wallsFillerCycles << '\n';
-    fileOut << config.amount.enemies << '\n';
-}
-void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index )
-{
-    const std::string name = "Dungeoncrawler_Save_Dungeons.txt";
-    std::ofstream fileOut( name, std::ios::out | std::ios::trunc );
-
-    if( !fileOut.is_open( ) )
-    {
-        throw std::exception( std::string( "Unable to open file: " + name ).c_str( ) );
-    }
-
-    fileOut << index << '\n';
-    fileOut << dungeons.size( ) << '\n';
-
-    for( const auto& dungeon : dungeons )
-    {
-        const Vector2<int> size = dungeon.GetSize( );
-        Vector2<int> iterator;
-
-        fileOut << size.x << ',';
-        fileOut << size.y << '\n';
-
-        for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
-        {
-            for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
-            {
-                fileOut << dungeon.GetTile( iterator ).icon;
-            }
-
-            fileOut << '\n';
-        }
-
-        fileOut << dungeon.links.size( ) << '\n';
-
-        for( const auto& link : dungeon.links )
-        {
-            fileOut << link.indexDungeon << ',';
-            fileOut << link.indexLink << ',';
-            fileOut << link.entrance.x << ',';
-            fileOut << link.entrance.y << ',';
-            fileOut << link.exit.x << ',';
-            fileOut << link.exit.y << '\n';
-        }
-    }
-}
-DungeonConfiguration LoadGameConfig( )
-{
-    const std::string name = "Dungeoncrawler_Save_Config.txt";
-    std::ifstream fileIn( name, std::ios::in );
-
-    if( !fileIn.is_open( ) )
-    {
-        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
-    }
-
-    return DungeonConfiguration( std::vector<std::string> { std::istream_iterator<std::string> { fileIn }, { } } );
-}
-std::vector<Dungeon> LoadGameDungeons( PlayerHandle& player, const EntityFactory& entityFactory, int& index )
-{
-    const std::string name = "Dungeoncrawler_Save_Dungeons.txt";
-    std::ifstream fileIn( name, std::ios::in );
-    std::string line;
-    std::vector<Dungeon> dungeons;
-    int amountDungeon;
-    auto GetVector2int = [] ( const std::string& line ) -> Vector2<int>
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        Vector2<int> values;
-
-        std::getline( sstream, value, ',' );
-        values.x = std::stoi( value );
-        std::getline( sstream, value, ',' );
-        values.y = std::stoi( value );
-
-        return values;
-    };
-    auto GetLink = [] ( const std::string& line ) -> Link
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        std::vector<int> values;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values.push_back( std::stoi( value ) );
-        }
-
-        return Link
-        {
-            values[0],
-            values[1],
-            { values[2], values[3] },
-            { values[4], values[5] }
-        };
-    };
-
-    if( !fileIn.is_open( ) )
-    {
-        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
-    }
-
-    std::getline( fileIn, line );
-    index = std::stoi( line );
-    std::getline( fileIn, line );
-    amountDungeon = std::stoi( line );
-
-    for( int indexDungeon = 0; indexDungeon < amountDungeon; indexDungeon++ )
-    {
-        std::vector<char> icons;
-        Vector2<int> size;
-        Vector2<int> iterator;
-        int amountLink;
-
-        std::getline( fileIn, line );
-        size = GetVector2int( line );
-        icons.resize( size.x * size.y );
-
-        for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
-        {
-            std::getline( fileIn, line );
-
-            for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
-            {
-                icons[( iterator.y * size.x ) + iterator.x] = line[iterator.x];
-            }
-        }
-
-        dungeons.emplace_back( player, entityFactory, size, icons );
-
-        std::getline( fileIn, line );
-        amountLink = std::stoi( line );
-
-        for( int indexLink = 0; indexLink < amountLink; indexLink++ )
-        {
-            std::getline( fileIn, line );
-            dungeons.back( ).links.push_back( GetLink( line ) );
-        }
-    }
-
-    return dungeons;
 }
 std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radius )
 {

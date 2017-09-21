@@ -107,6 +107,11 @@ class EntityFactory
 {
     public:
         EntityFactory( );
+        
+        const std::vector<Ability> abilities;
+        const std::vector<Structure> structures;
+        const std::vector<Character> characters;
+        const Player player;
 
         const std::unique_ptr<Entity>& Get( const std::string& name ) const;
         const std::unique_ptr<Entity>& Get( char icon ) const;

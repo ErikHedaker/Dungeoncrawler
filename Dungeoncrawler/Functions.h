@@ -31,13 +31,9 @@ void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& 
 void PrintHealth( const Character& character );
 void Fight( Character& player, Character& AI );
 std::vector<Ability> LoadAbilities( );
-std::vector<Character> LoadCharacters( const std::vector<Ability>& abilitiesLibrary );
+std::vector<Character> LoadCharacters( );
 std::vector<Structure> LoadStructures( );
-Player LoadPlayerDefault( const std::vector<Ability>& abilities );
-void SaveGameConfig( const DungeonConfiguration& config );
-void SaveGameDungeons( const std::vector<Dungeon>& dungeons, int index );
-DungeonConfiguration LoadGameConfig( );
-std::vector<Dungeon> LoadGameDungeons( PlayerHandle& player, const EntityFactory& entityFactory, int& index );
+Player LoadPlayerDefault( );
 std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radius );
 std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector2<int>& end );
 bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vector2<int>& origo = { 0, 0 }, int layerFrom = 0, int layerTo = 0 );

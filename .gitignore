@@ -18,14 +18,11 @@
 *.suo
 *.idb
 *.db
+*.vs
+*.vs/
 
+.vs/
 Dungeoncrawler/Debug/
 Dungeoncrawler/Release/
 Dungeoncrawler/.vs/
 Dungeoncrawler/Dungeoncrawler/
-
-Debug/Dungeoncrawler_Save_DungeonSystem.txt
-Release/Dungeoncrawler_Save_DungeonSystem.txt
-
-Debug/Dungeoncrawler_Save_Player.txt
-Release/Dungeoncrawler_Save_Player.txt

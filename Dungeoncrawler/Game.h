@@ -8,8 +8,8 @@ class Game
     public:
         Game( );
 
-        void Menu( );
         bool Exist( ) const;
+        void Menu( );
 
     private:
         const EntityFactory _entityFactory;
@@ -24,4 +24,6 @@ class Game
         void DungeonSwap( );
         void DungeonLink( int indexDungeonCurrent );
         void DungeonRotate( int indexDungeon, const Orientation::Enum& orientation );
+		void Save( );
+        void Load( );
 };

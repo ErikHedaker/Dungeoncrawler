@@ -37,11 +37,12 @@ PlayerHandle::PlayerHandle( const Player& player ) :
     real( dynamic_cast<Player*>( base.get( ) ) )
 { }
 EntityFactory::EntityFactory( ) :
-    _entities( []( )
+    abilities( LoadAbilities( ) ),
+    characters( LoadCharacters( ) ),
+    structures( LoadStructures( ) ),
+    player( LoadPlayerDefault( ) ),
+    _entities( [this]( )
     {
-        const std::vector<Ability> abilities = LoadAbilities( );
-        const std::vector<Character> characters = LoadCharacters( abilities );
-        const std::vector<Structure> structures = LoadStructures( );
         std::map<std::string, std::unique_ptr<Entity>> entities;
 
         for( const auto& ability : abilities )
@@ -59,7 +60,7 @@ EntityFactory::EntityFactory( ) :
             entities[structure.name] = std::make_unique<Structure>( structure );
         }
 
-        return entities;
+        return std::move( entities );
     }( ) )
 { }
 

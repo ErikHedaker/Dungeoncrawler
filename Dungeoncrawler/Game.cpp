@@ -1,19 +1,26 @@
 #include "Game.h"
 #include "Functions.h"
+#include "Dungeon.h"
+#include "EntityFactory.h"
 #include <iostream>
-#include <map>
+#include <sstream>
+#include <fstream>
 #include <cctype>
-#include <memory>
 #include <chrono>
-#include <deque>
+#include <vector>
+#include <map>
 
 Stopwatch stopwatch;
 Stopwatch stopwatchLogic;
 
 Game::Game( ) :
-    _player( LoadPlayerDefault( LoadAbilities( ) ) )
+    _player( _entityFactory.player )
 { }
 
+bool Game::Exist( ) const
+{
+    return _dungeons.size( ) != 0;
+}
 void Game::Menu( )
 {
     char input;
@@ -46,14 +53,15 @@ void Game::Menu( )
 
                 try
                 {
-                    _config = LoadGameConfig( );
-                    _dungeons = LoadGameDungeons( _player, _entityFactory, _index );
+                    Load( );
                 }
                 catch( const std::exception& error )
                 {
                     std::cout << "\nERROR " << error.what( );
                     std::cout << "\n\nPress enter to continue: ";
                     GetEnter( );
+
+                    break;
                 }
 
                 if( Exist( ) )
@@ -81,10 +89,6 @@ void Game::Menu( )
         }
     }
 }
-bool Game::Exist( ) const
-{
-    return _dungeons.size( ) != 0;
-}
 
 bool Game::PlayerTurn( )
 {
@@ -106,7 +110,7 @@ bool Game::PlayerTurn( )
     while( true )
     {
         ClearScreen( );
-        PrintDungeon( _dungeons[_index], _player.real->visionReach, _player.real->position, { 30, 15 } );
+        PrintDungeon( _dungeons[_index], _player.real->visionReach, _player.real->position, { 16, 8 } );
         stopwatch.Stop( );
         std::cout << "Frames per second: " << stopwatch.FPS( ) << "\n";
         std::cout << "Sampled logic microseconds: " << stopwatchLogic.MicrosecondsAverage( ) << "\n\n";
@@ -142,8 +146,7 @@ bool Game::PlayerTurn( )
             {
                 if( input == 'E' )
                 {
-                    SaveGameConfig( _config );
-                    SaveGameDungeons( _dungeons, _index );
+                    Save( );
                 }
 
                 return false;
@@ -161,7 +164,7 @@ bool Game::PlayerTurn( )
 }
 void Game::Reset( )
 {
-    _player.Reset( LoadPlayerDefault( LoadAbilities( ) ) );
+    _player.Reset( _entityFactory.player );
     _dungeons.clear( );
     _dungeons.emplace_back( _player, _entityFactory, _config );
     _index = 0;
@@ -238,8 +241,168 @@ void Game::DungeonRotate( int indexDungeon, const Orientation::Enum& orientation
         Link& partner = _dungeons[current.indexDungeon].links[current.indexLink];
 
         current.entrance = PositionRotate( current.entrance, sizePrev, orientation );
-        partner.exit     = PositionRotate( partner.exit,     sizePrev, orientation );
+        partner.exit = PositionRotate( partner.exit, sizePrev, orientation );
     }
 
     _dungeons[indexDungeon].Rotate( orientation );
+}
+void Game::Save( )
+{
+    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Save.txt";
+    std::ofstream fileOut( name, std::ios::out | std::ios::trunc );
+
+    if( !fileOut.is_open( ) )
+    {
+        throw std::exception( std::string( "Unable to open file: " + name ).c_str( ) );
+    }
+
+    fileOut << _config.size.determined << ',';
+    fileOut << _config.size.dungeon.x << ',';
+    fileOut << _config.size.dungeon.y << ',';
+    fileOut << _config.generate.doors << ',';
+    fileOut << _config.generate.wallsOuter << ',';
+    fileOut << _config.generate.hiddenPath << ',';
+    fileOut << _config.generate.wallsParents << ',';
+    fileOut << _config.generate.wallsChildren << ',';
+    fileOut << _config.generate.wallsFiller << ',';
+    fileOut << _config.generate.enemies << ',';
+    fileOut << _config.amount.doors << ',';
+    fileOut << _config.amount.wallsParents << ',';
+    fileOut << _config.amount.wallsChildren << ',';
+    fileOut << _config.amount.wallsFillerCycles << ',';
+    fileOut << _config.amount.enemies << '\n';
+    fileOut << _index << '\n';
+    fileOut << _dungeons.size( ) << '\n';
+
+    for( int i = 0, limit = _dungeons.size( ); i < limit; i++ )
+    {
+        const Vector2<int> sizeDungeon = _dungeons[i].GetSize( );
+        Vector2<int> iterator;
+
+        fileOut << sizeDungeon.x << ',';
+        fileOut << sizeDungeon.y << '\n';
+
+        for( iterator.y = 0; iterator.y < sizeDungeon.y; iterator.y++ )
+        {
+            for( iterator.x = 0; iterator.x < sizeDungeon.x; iterator.x++ )
+            {
+                fileOut << _dungeons[i].GetTile( iterator ).icon;
+            }
+
+            fileOut << '\n';
+        }
+
+        fileOut << _dungeons[i].links.size( ) << '\n';
+
+        for( const auto& link : _dungeons[i].links )
+        {
+            fileOut << link.indexDungeon << ',';
+            fileOut << link.indexLink << ',';
+            fileOut << link.entrance.x << ',';
+            fileOut << link.entrance.y << ',';
+            fileOut << link.exit.x << ',';
+            fileOut << link.exit.y << '\n';
+        }
+    }
+}
+void Game::Load( )
+{
+    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Save.txt";
+    std::ifstream fileIn( name, std::ios::in );
+    std::string line;
+    int amountDungeon;
+    auto GetConfig = [] ( const std::string& line ) -> DungeonConfiguration
+    {
+        std::stringstream sstream( line );
+        std::string value;
+        std::vector<std::string> values;
+
+        while( std::getline( sstream, value, ',' ) )
+        {
+            values.push_back( value );
+        }
+
+        return DungeonConfiguration( values );
+    };
+    auto GetVector2int = [] ( const std::string& line ) -> Vector2<int>
+    {
+        std::stringstream sstream( line );
+        std::string value;
+        Vector2<int> values;
+
+        std::getline( sstream, value, ',' );
+        values.x = std::stoi( value );
+        std::getline( sstream, value, ',' );
+        values.y = std::stoi( value );
+
+        return values;
+    };
+    auto GetLink = [] ( const std::string& line ) -> Link
+    {
+        std::stringstream sstream( line );
+        std::string value;
+        std::vector<int> values;
+
+        while( std::getline( sstream, value, ',' ) )
+        {
+            values.push_back( std::stoi( value ) );
+        }
+
+        return Link
+        {
+            values[0],
+            values[1],
+            { values[2], values[3] },
+            { values[4], values[5] }
+        };
+    };
+
+    if( !fileIn.is_open( ) )
+    {
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
+    }
+
+    _dungeons.clear( );
+
+    std::getline( fileIn, line );
+    _config = GetConfig( line );
+
+    std::getline( fileIn, line );
+    _index = std::stoi( line );
+
+    std::getline( fileIn, line );
+    amountDungeon = std::stoi( line );
+
+    for( int indexDungeon = 0; indexDungeon < amountDungeon; indexDungeon++ )
+    {
+        std::vector<char> icons;
+        Vector2<int> size;
+        Vector2<int> iterator;
+        int amountLink;
+
+        std::getline( fileIn, line );
+        size = GetVector2int( line );
+        icons.resize( size.x * size.y );
+
+        for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
+        {
+            std::getline( fileIn, line );
+
+            for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
+            {
+                icons[( iterator.y * size.x ) + iterator.x] = line[iterator.x];
+            }
+        }
+
+        _dungeons.emplace_back( _player, _entityFactory, size, icons );
+
+        std::getline( fileIn, line );
+        amountLink = std::stoi( line );
+
+        for( int indexLink = 0; indexLink < amountLink; indexLink++ )
+        {
+            std::getline( fileIn, line );
+            _dungeons.back( ).links.push_back( GetLink( line ) );
+        }
+    }
 }

@@ -58,6 +58,8 @@ struct Tile
 class Dungeon
 {
     public:
+        Dungeon( Dungeon&& dungeon ) = default;
+        Dungeon( const Dungeon& dungeon ) = delete;
         Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const DungeonConfiguration& config );
         Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<char>& icons );
 

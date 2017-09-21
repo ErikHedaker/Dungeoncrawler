@@ -5,6 +5,8 @@
 #include <random>
 #include <cmath>
 #include <map>
+#include <optional>
+#include <memory>
 
 DungeonConfiguration::DungeonConfiguration( ) :
     size( { false, { 0, 0 } } ),
@@ -13,27 +15,20 @@ DungeonConfiguration::DungeonConfiguration( ) :
 { }
 DungeonConfiguration::DungeonConfiguration( const std::vector<std::string>& data )
 {
-    try
-    {
-        size.determined          = std::stoi( data[0] ) != 0;
-        size.dungeon             = { std::stoi( data[1] ), std::stoi( data[2] ) };
-        generate.doors           = std::stoi( data[3] ) != 0;
-        generate.wallsOuter      = std::stoi( data[4] ) != 0;
-        generate.hiddenPath      = std::stoi( data[5] ) != 0;
-        generate.wallsParents    = std::stoi( data[6] ) != 0;
-        generate.wallsChildren   = std::stoi( data[7] ) != 0;
-        generate.wallsFiller     = std::stoi( data[8] ) != 0;
-        generate.enemies         = std::stoi( data[9] ) != 0;
-        amount.doors             = std::stoi( data[10] );
-        amount.wallsParents      = std::stoi( data[11] );
-        amount.wallsChildren     = std::stoi( data[12] );
-        amount.wallsFillerCycles = std::stoi( data[13] );
-        amount.enemies           = std::stoi( data[14] );
-    }
-    catch( ... )
-    {
-        *this = DungeonConfiguration( );
-    }
+    size.determined = std::stoi( data[0] ) != 0;
+    size.dungeon = { std::stoi( data[1] ), std::stoi( data[2] ) };
+    generate.doors = std::stoi( data[3] ) != 0;
+    generate.wallsOuter = std::stoi( data[4] ) != 0;
+    generate.hiddenPath = std::stoi( data[5] ) != 0;
+    generate.wallsParents = std::stoi( data[6] ) != 0;
+    generate.wallsChildren = std::stoi( data[7] ) != 0;
+    generate.wallsFiller = std::stoi( data[8] ) != 0;
+    generate.enemies = std::stoi( data[9] ) != 0;
+    amount.doors = std::stoi( data[10] );
+    amount.wallsParents = std::stoi( data[11] );
+    amount.wallsChildren = std::stoi( data[12] );
+    amount.wallsFillerCycles = std::stoi( data[13] );
+    amount.enemies = std::stoi( data[14] );
 }
 
 Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const DungeonConfiguration& config ) :
@@ -65,7 +60,7 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
     _tiles( size.x * size.y ),
     _player( player )
 {
-    std::pair<bool, Vector2<int>> place;
+    std::optional<Vector2<int>> place;
     Vector2<int> iterator;
 
     for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
@@ -78,7 +73,7 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
             {
                 if( icon == '@' )
                 {
-                    place = { true, iterator };
+                    place = iterator;
                 }
                 else
                 {
@@ -88,9 +83,9 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
         }
     }
 
-    if( place.first )
+    if( place )
     {
-        PlayerPlace( place.second );
+        PlayerPlace( *place );
     }
 }
 
@@ -188,7 +183,7 @@ void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
 }
 void Dungeon::MovementRandom( )
 {
-    for( int i = 0, size = _entities.size( ); i < size; i++ )
+    for( int i = 0, limit = _entities.size( ); i < limit; i++ )
     {
         if( _entities[i]->attributes & Attributes::Movement )
         {
@@ -207,7 +202,7 @@ void Dungeon::MovementRandom( )
 void Dungeon::Events( )
 {
     /* Fight hostile entities on player position */
-    for( const auto& index : _tiles[( _player.real->position.y * _size.x ) + _player.real->position.x].occupants )
+    for( auto& index : _tiles[( _player.real->position.y * _size.x ) + _player.real->position.x].occupants )
     {
         if( _entities[index]->attributes & Attributes::Hostile )
         {
@@ -232,7 +227,7 @@ void Dungeon::Events( )
     }
 
 
-    /* Remove inactive entities */
+    /* Remove dead entities */
     for( unsigned int i = 0; i < _entities.size( ); i++ )
     {
         if( !_entities[i]->active )
@@ -269,7 +264,7 @@ bool Dungeon::Unoccupied( const Vector2<int>& position ) const
 }
 bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 {
-    constexpr std::array<Vector2<int>, 8> directions
+    static constexpr std::array<Vector2<int>, 8> directions
     { {
         {  0, -1 },
         {  1, -1 },
@@ -397,7 +392,7 @@ void Dungeon::BuildVision( const Vector2<int>& position, int visionReach )
 }
 void Dungeon::EntityInsert( const Vector2<int>& position, Entity* entity )
 {
-    _entities.push_back( std::unique_ptr<Entity>( entity ) );
+    _entities.emplace_back( entity );
     _entities.back( )->position = position;
     OccupantInsert( position, _entities.size( ) - 1 );
 }
@@ -448,7 +443,7 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
         spacing.push_back( ( ( start + i ) % 4 ) - 1 );
     }
 
-    for( const auto value : spacing )
+    for( const auto& value : spacing )
     {
         const Orientation::Enum side = static_cast<Orientation::Enum>( value );
         const int index = RandomNumberGenerator( 0, sides[side].size( ) - 1 );
@@ -556,7 +551,7 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
 
     while( remaining > 0 )
     {
-        for( int i = 0, size = _entities.size( ); i < size; i++ )
+        for( int i = 0, limit = _entities.size( ); i < limit; i++ )
         {
             if( _entities[i]->attributes & Attributes::Obstacle )
             {
@@ -595,11 +590,11 @@ void Dungeon::GenerateWallsFiller( const EntityFactory& entityFactory, int amoun
 }
 void Dungeon::GenerateEnemies( const EntityFactory& entityFactory, int amount )
 {
-    static const std::vector<Character> enemies = []( ) -> std::vector<Character>
+    static const std::vector<Character> enemies = [&entityFactory]( ) -> std::vector<Character>
     {
         std::vector<Character> enemies;
 
-        for( const auto& character : LoadCharacters( LoadAbilities( ) ) )
+        for( const auto& character : entityFactory.characters )
         {
             if( character.attributes & Attributes::Hostile &&
                 character.attributes & Attributes::Movement )
