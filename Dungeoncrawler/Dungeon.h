@@ -51,7 +51,7 @@ struct Link
 
 struct Tile
 {
-    std::vector<int> occupants = { };
+    std::vector<Entity*> occupants = { };
     char icon = '-';
 };
 
@@ -70,7 +70,6 @@ class Dungeon
         void MovementPlayer( const Orientation::Enum& orientation );
         void MovementRandom( );
         void Events( );
-        void UpdateTiles( );
 
         const Vector2<int>& GetSize( ) const;
         const Tile& GetTile( const Vector2<int>& position ) const;
@@ -86,11 +85,12 @@ class Dungeon
         std::unordered_set<Vector2<int>, HasherVector2<int>> _vision;
         PlayerHandle& _player;
 
+        void UpdateTile( const Vector2<int>& position );
         void BuildVision( const Vector2<int>& position, int visionReach );
+        void OccupantInsert( const Vector2<int>& position, Entity* entity );
+        void OccupantRemove( const Vector2<int>& position, Entity* entity );
         void EntityInsert( const Vector2<int>& position, Entity* entity );
-        void EntityRemove( const Vector2<int>& position, int index );
-        void OccupantInsert( const Vector2<int>& position, int index );
-        void OccupantRemove( const Vector2<int>& position, int index );
+        void EntityRemove( int index );
 
         void GenerateDoors( const EntityFactory& entityFactory, int amount );
         void GenerateWallsOuter( const EntityFactory& entityFactory );
