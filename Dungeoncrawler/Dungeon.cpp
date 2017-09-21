@@ -44,7 +44,7 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
 
         return config.size.determined ? config.size.dungeon : random;
     }( ) ),
-    _tiles( _size.x * _size.y ),
+    _tiles( _size ),
     _player( player )
 {
     if( config.generate.doors )         GenerateDoors( entityFactory, config.amount.doors );
@@ -57,7 +57,7 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
 }
 Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<char>& icons ) :
     _size( size ),
-    _tiles( size.x * size.y ),
+    _tiles( size ),
     _player( player )
 {
     std::optional<Vector2<int>> place;
@@ -95,7 +95,7 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
     const Vector2<int> sizePrev = { _size.x, _size.y };
     const Vector2<int> sizeNext = ( orientation + 2 ) % 2 ? sizeSwap : sizePrev;
     std::unordered_set<Vector2<int>, HasherVector2<int>> rotateVision;
-    std::vector<Tile> rotateTiles = _tiles;
+    Array2D<Tile> rotateTiles( sizeNext );
     Vector2<int> iterator;
 
     for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
@@ -122,7 +122,7 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
 
     _player.real->position = PositionRotate( _player.real->position, sizePrev, orientation );
     _size = sizeNext;
-    _tiles = rotateTiles;
+    _tiles = std::move( rotateTiles );
     _vision = rotateVision;
 }
 void Dungeon::PlayerPlace( const Vector2<int>& position )
@@ -205,7 +205,7 @@ void Dungeon::MovementRandom( )
 void Dungeon::Events( )
 {
     /* Fight hostile entities on player position */
-    for( auto& entity : _tiles[( _player.real->position.y * _size.x ) + _player.real->position.x].occupants )
+    for( auto& entity : _tiles[_player.real->position].occupants )
     {
         if( entity->attributes & Attributes::Hostile )
         {
@@ -250,7 +250,7 @@ const Vector2<int>& Dungeon::GetSize( ) const
 }
 const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
 {
-    return _tiles[( position.y * _size.x ) + position.x];
+    return _tiles[position];
 }
 bool Dungeon::Visible( const Vector2<int>& position ) const
 {
@@ -258,7 +258,7 @@ bool Dungeon::Visible( const Vector2<int>& position ) const
 }
 bool Dungeon::Unoccupied( const Vector2<int>& position ) const
 {
-    return _tiles[( position.y * _size.x ) + position.x].occupants.empty( );
+    return _tiles[position].occupants.empty( );
 }
 bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 {
@@ -302,9 +302,7 @@ bool Dungeon::TileLacking( const Vector2<int>& position, int bitmask ) const
 
 void Dungeon::UpdateTile( const Vector2<int>& position )
 {
-    Tile& tile = _tiles[( position.y * _size.x ) + position.x];
-
-    tile.icon = tile.occupants.empty( ) ? '-' : tile.occupants.back( )->icon;
+    _tiles[position].icon = _tiles[position].occupants.empty( ) ? '-' : _tiles[position].occupants.back( )->icon;
 }
 void Dungeon::BuildVision( const Vector2<int>& position, int visionReach )
 {
@@ -396,16 +394,15 @@ void Dungeon::BuildVision( const Vector2<int>& position, int visionReach )
 }
 void Dungeon::OccupantInsert( const Vector2<int>& position, Entity* entity )
 {
-    auto& occupants = _tiles[( position.y * _size.x ) + position.x].occupants;
-
-    occupants.push_back( entity );
+    _tiles[position].occupants.push_back( entity );
     UpdateTile( position );
 }
 void Dungeon::OccupantRemove( const Vector2<int>& position, Entity* entity )
 {
-    auto& occupants = _tiles[( position.y * _size.x ) + position.x].occupants;
-
-    occupants.erase( std::remove( occupants.begin( ), occupants.end( ), entity ), occupants.end( ) );
+    _tiles[position].occupants.erase( std::remove(
+        _tiles[position].occupants.begin( ),
+        _tiles[position].occupants.end( ), entity ),
+        _tiles[position].occupants.end( ) );
     UpdateTile( position );
 }
 void Dungeon::EntityInsert( const Vector2<int>& position, Entity* entity )
@@ -416,11 +413,22 @@ void Dungeon::EntityInsert( const Vector2<int>& position, Entity* entity )
 }
 void Dungeon::EntityRemove( int index )
 {
+    bool notLast = index != _entities.size( ) - 1;
+
     OccupantRemove( _entities[index]->position, _entities[index].get( ) );
-    OccupantRemove( _entities.back( )->position, _entities.back( ).get( ) );
-    _entities[index].swap( _entities.back( ) );
+
+    if( notLast )
+    {
+        OccupantRemove( _entities.back( )->position, _entities.back( ).get( ) );
+        std::swap( _entities[index], _entities.back( ) );
+    }
+
     _entities.pop_back( );
-    OccupantInsert( _entities[index]->position, _entities[index].get( ) );
+
+    if( notLast )
+    {
+        OccupantInsert( _entities[index]->position, _entities[index].get( ) );
+    }
 }
 
 void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )

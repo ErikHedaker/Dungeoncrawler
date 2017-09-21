@@ -1,13 +1,14 @@
 #pragma once
 
-#include "Enums.h"
 #include "Vector2.h"
+#include "Array2D.h"
+#include "Enums.h"
 #include "EntityFactory.h"
 #include <vector>
 #include <utility>
 #include <memory>
-#include <list>
 #include <unordered_set>
+#include <vector>
 
 struct DungeonConfiguration
 {
@@ -80,7 +81,7 @@ class Dungeon
 
     private:
         Vector2<int> _size;
-        std::vector<Tile> _tiles;
+        Array2D<Tile> _tiles;
         std::vector<std::unique_ptr<Entity>> _entities;
         std::unordered_set<Vector2<int>, HasherVector2<int>> _vision;
         PlayerHandle& _player;
