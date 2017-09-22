@@ -1,0 +1,38 @@
+# Name
+# Icon
+# Attributes
+# Health
+# Health Max
+# Health Regen
+# Damage
+# Abilities
+
+# 0
+:Rotten Zombie
+:R
+:1,2
+:120
+:120
+:5
+:20.0
+:
+
+# 1
+:Frozen Skeleton
+:F
+:1,2
+:80
+:80
+:0
+:10.0
+:2
+
+# 2
+:Burning Lunatic
+:B
+:1,2
+:70
+:70
+:0
+:10.0
+:1
