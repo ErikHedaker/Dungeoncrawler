@@ -247,7 +247,7 @@ void Game::DungeonRotate( int indexDungeon, const Orientation::Enum& orientation
 }
 void Game::Save( )
 {
-    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Save.txt";
+    const std::string name = "Dungeoncrawler_Save.txt";
     std::ofstream fileOut( name, std::ios::out | std::ios::trunc );
 
     if( !fileOut.is_open( ) )
@@ -306,7 +306,7 @@ void Game::Save( )
 }
 void Game::Load( )
 {
-    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Save.txt";
+    const std::string name = "Dungeoncrawler_Save.txt";
     std::ifstream fileIn( name, std::ios::in );
     std::string line;
     int amountDungeon;

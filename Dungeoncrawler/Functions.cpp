@@ -346,7 +346,7 @@ void Fight( Character& player, Character& AI )
 std::vector<Ability> LoadAbilities( )
 {
     constexpr int offset = 4;
-    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Dependency_Abilities.txt";
+    const std::string name = "Dungeoncrawler_Dependency_Abilities.txt";
     std::vector<std::string> fileCache { std::istream_iterator<FileString> { std::ifstream { name, std::ios::in } }, { } };
     std::vector<Ability> abilities;
 
@@ -368,7 +368,7 @@ std::vector<Ability> LoadAbilities( )
 std::vector<Character> LoadCharacters( )
 {
     constexpr int offset = 8;
-    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Dependency_Characters.txt";
+    const std::string name = "Dungeoncrawler_Dependency_Characters.txt";
     const std::vector<Ability> abilities = LoadAbilities( );
     std::vector<std::string> fileCache { std::istream_iterator<FileString> { std::ifstream { name, std::ios::in } }, { } };
     std::vector<Character> characters;
@@ -408,7 +408,7 @@ std::vector<Character> LoadCharacters( )
 std::vector<Structure> LoadStructures( )
 {
     constexpr int offset = 3;
-    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Dependency_Structures.txt";
+    const std::string name = "Dungeoncrawler_Dependency_Structures.txt";
     std::vector<std::string> fileCache { std::istream_iterator<FileString>{ std::ifstream{ name, std::ios::in } }, { } };
     std::vector<Structure> structures;
 
@@ -428,7 +428,7 @@ std::vector<Structure> LoadStructures( )
 }
 Player LoadPlayerDefault( )
 {
-    const std::string name = "C:/Dungeoncrawler/Dungeoncrawler_Dependency_Player.txt";
+    const std::string name = "Dungeoncrawler_Dependency_Player.txt";
     const std::vector<Ability> abilities = LoadAbilities( );
     std::vector<std::string> fileCache { std::istream_iterator<FileString>{ std::ifstream{ name, std::ios::in } }, { } };
     auto GetAbilities = [&abilities] ( const std::string& line ) -> std::vector<Ability>
