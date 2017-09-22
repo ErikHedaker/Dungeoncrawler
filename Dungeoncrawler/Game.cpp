@@ -197,8 +197,8 @@ void Game::DungeonSwap( )
         {
             const int indexPrev = _index;
             const int indexNext = _dungeons[indexPrev].links[i].indexDungeon;
-            const int entrance  = Quadrant( _dungeons[indexPrev].links[i].entrance, _dungeons[indexPrev].GetSize( ) );
-            const int exit      = Quadrant( _dungeons[indexPrev].links[i].exit,     _dungeons[indexNext].GetSize( ) );
+            const int entrance  = RectQuadrant( _dungeons[indexPrev].links[i].entrance, _dungeons[indexPrev].GetSize( ) );
+            const int exit      = RectQuadrant( _dungeons[indexPrev].links[i].exit,     _dungeons[indexNext].GetSize( ) );
             const int align     = ( ( ( entrance - exit ) + 3 ) % 4 ) - 1;
 
             DungeonLink( indexNext );
@@ -285,7 +285,7 @@ void Game::Save( )
         {
             for( iterator.x = 0; iterator.x < sizeDungeon.x; iterator.x++ )
             {
-                fileOut << _dungeons[i].GetTile( iterator ).icon;
+                fileOut << _dungeons[i].GetIcon( iterator );
             }
 
             fileOut << '\n';

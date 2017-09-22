@@ -15,20 +15,20 @@ DungeonConfiguration::DungeonConfiguration( ) :
 { }
 DungeonConfiguration::DungeonConfiguration( const std::vector<std::string>& data )
 {
-    size.determined = std::stoi( data[0] ) != 0;
-    size.dungeon = { std::stoi( data[1] ), std::stoi( data[2] ) };
-    generate.doors = std::stoi( data[3] ) != 0;
-    generate.wallsOuter = std::stoi( data[4] ) != 0;
-    generate.hiddenPath = std::stoi( data[5] ) != 0;
-    generate.wallsParents = std::stoi( data[6] ) != 0;
-    generate.wallsChildren = std::stoi( data[7] ) != 0;
-    generate.wallsFiller = std::stoi( data[8] ) != 0;
-    generate.enemies = std::stoi( data[9] ) != 0;
-    amount.doors = std::stoi( data[10] );
-    amount.wallsParents = std::stoi( data[11] );
-    amount.wallsChildren = std::stoi( data[12] );
+    size.determined          = std::stoi( data[0] ) != 0;
+    size.dungeon             = { std::stoi( data[1] ), std::stoi( data[2] ) };
+    generate.doors           = std::stoi( data[3] ) != 0;
+    generate.wallsOuter      = std::stoi( data[4] ) != 0;
+    generate.hiddenPath      = std::stoi( data[5] ) != 0;
+    generate.wallsParents    = std::stoi( data[6] ) != 0;
+    generate.wallsChildren   = std::stoi( data[7] ) != 0;
+    generate.wallsFiller     = std::stoi( data[8] ) != 0;
+    generate.enemies         = std::stoi( data[9] ) != 0;
+    amount.doors             = std::stoi( data[10] );
+    amount.wallsParents      = std::stoi( data[11] );
+    amount.wallsChildren     = std::stoi( data[12] );
     amount.wallsFillerCycles = std::stoi( data[13] );
-    amount.enemies = std::stoi( data[14] );
+    amount.enemies           = std::stoi( data[14] );
 }
 
 Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const DungeonConfiguration& config ) :
@@ -174,7 +174,7 @@ void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
 
     if( InBounds( moving, _size ) &&
         ( TileLacking( moving, Attributes::Obstacle ) ||
-          Door( GetTile( moving ) ) ) )
+          Door( _tiles[moving] ) ) )
     {
         OccupantRemove( _player.real->position, _player.base.get( ) );
         _player.real->position = moving;
@@ -248,9 +248,9 @@ const Vector2<int>& Dungeon::GetSize( ) const
 {
     return _size;
 }
-const Tile& Dungeon::GetTile( const Vector2<int>& position ) const
+char Dungeon::GetIcon( const Vector2<int>& position ) const
 {
-    return _tiles[position];
+    return _tiles[position].icon;
 }
 bool Dungeon::Visible( const Vector2<int>& position ) const
 {
@@ -289,7 +289,7 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 }
 bool Dungeon::TileLacking( const Vector2<int>& position, int bitmask ) const
 {
-    for( const auto& entity : GetTile( position ).occupants )
+    for( const auto& entity : _tiles[position].occupants )
     {
         if( entity->attributes & bitmask )
         {
@@ -447,7 +447,7 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
             if( OnBorder( iterator, _size ) &&
                 !InCorner( iterator, _size, sensitivity ) )
             {
-                sides[Quadrant( iterator, _size )].push_back( iterator );
+                sides[RectQuadrant( iterator, _size )].push_back( iterator );
             }
         }
     }

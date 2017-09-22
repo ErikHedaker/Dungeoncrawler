@@ -73,7 +73,7 @@ class Dungeon
         void Events( );
 
         const Vector2<int>& GetSize( ) const;
-        const Tile& GetTile( const Vector2<int>& position ) const;
+        char GetIcon( const Vector2<int>& position ) const;
         bool Visible( const Vector2<int>& position ) const;
         bool Unoccupied( const Vector2<int>& position ) const;
         bool Surrounded( const Vector2<int>& position, int threshold ) const;

@@ -39,7 +39,7 @@ std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector
 bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vector2<int>& origo = { 0, 0 }, int layerFrom = 0, int layerTo = 0 );
 bool InCorner( const Vector2<int>& position, const Vector2<int>& size, int sensitivity = 0 );
 bool InBounds( const Vector2<int>& position, const Vector2<int>& size );
-Orientation::Enum Quadrant( const Vector2<int>& position, const Vector2<int>& size );
+Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>& size );
 
 class FileString
 {

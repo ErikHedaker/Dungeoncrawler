@@ -284,7 +284,7 @@ void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& 
             else if( InBounds( iterator, dungeon.GetSize( ) ) &&
                      dungeon.Visible( iterator ) )
             {
-                std::cout << dungeon.GetTile( iterator ).icon;
+                std::cout << dungeon.GetIcon( iterator );
             }
             else
             {
@@ -555,7 +555,7 @@ bool InBounds( const Vector2<int>& position, const Vector2<int>& size )
         position.x < size.x &&
         position.y < size.y;
 }
-Orientation::Enum Quadrant( const Vector2<int>& position, const Vector2<int>& size )
+Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>& size )
 {
     static const std::map<std::pair<bool, bool>, Orientation::Enum> quadrants
     {
