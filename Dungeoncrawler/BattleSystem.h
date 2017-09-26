@@ -22,9 +22,15 @@ struct Effect
         power( power ),
         duration( duration )
     { }
+    Effect& operator=( const Effect& other )
+    {
+        duration = other.duration;
 
-    std::string name;
-    std::optional<Power> power;
+        return *this;
+    }
+
+    const std::string name;
+    const std::optional<Power> power;
     int duration;
 };
 
@@ -35,10 +41,17 @@ struct Spell
         power( power ),
         effects( effects )
     { }
+    Spell( const Spell& other ) :
+        name( other.name ),
+        power( other.power ),
+        effects( other.effects )
+    { }
+    Spell( Spell&& other ) = default;
+    Spell& operator=( const Spell& other ) = delete;
 
-    std::string name;
-    std::optional<Power> power;
-    int effects;
+    const std::string name;
+    const std::optional<Power> power;
+    const int effects;
 };
 
 class BattleSystem
@@ -47,9 +60,10 @@ class BattleSystem
         BattleSystem( );
 
         void Encounter( Character& player, Character& enemy ) const;
-        void TurnPlayer( Character& player, Character& enemy, std::string& event, std::string_view print, bool& flee ) const;
-        void TurnAI( Character& AI, Character& enemy, std::string& event ) const;
-        void Update( Character& character, std::string& event ) const;
+        void TurnPlayer( Character& player, Character& enemy, std::string& events, std::string_view print, bool& flee ) const;
+        void TurnAI( Character& AI, Character& enemy, std::string& events ) const;
+        void Update( Character& character, std::string& events ) const;
+        void CastSpell( Character& caster, Character& target, const Spell& spell, std::string& events ) const;
         std::optional<Spell> InputSpell( const std::vector<Spell>& spells ) const;
         std::vector<Effect> GetEffects( int bitmask ) const;
         std::vector<Spell> GetSpells( int bitmask ) const;

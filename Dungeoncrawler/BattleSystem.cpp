@@ -15,7 +15,7 @@ BattleSystem::BattleSystem( ) :
 
         for( int i = 0, limit = effects.size( ); i < limit; i++ )
         {
-            temp.emplace( std::make_pair( 1 << i, effects[i] ) );
+            temp.try_emplace( 1 << i, effects[i] );
         }
 
         return temp;
@@ -26,7 +26,7 @@ BattleSystem::BattleSystem( ) :
 
         for( int i = 0, limit = spells.size( ); i < limit; i++ )
         {
-            temp.emplace( std::make_pair( 1 << i, spells[i] ) );
+            temp.try_emplace( 1 << i, spells[i] );
         }
 
         return temp;
@@ -42,8 +42,8 @@ void BattleSystem::Encounter( Character& player, Character& AI ) const
     {
         static const std::array<std::string, 3> output
         {
-            "win!\n",
             "lose!\n",
+            "win!\n",
             "flee the battle!\n"
         };
         
@@ -76,16 +76,16 @@ void BattleSystem::Encounter( Character& player, Character& AI ) const
             .append( "\n> HEALTH <\n- " )
             .append( player.name )
             .append( ": " )
-            .append( GetHealth( player.health ) )
+            .append( GetStringHealth( player.health ) )
             .append( "\n- " )
             .append( AI.name )
             .append( ": " )
-            .append( GetHealth( AI.health ) )
-            .append( "\n\n> PLAYER <\n" );
+            .append( GetStringHealth( AI.health ) )
+            .append( "\n\n> ACTION <\n" );
         events.clear( );
         std::cout << print;
 
-        if( ExitCondition( { !AI.active, !player.active, flee } ) )
+        if( ExitCondition( { !player.active, !AI.active, flee } ) )
         {
             break;
         }
@@ -102,23 +102,29 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
 
     while( true )
     {
+        std::string selection( print );
+
         ClearScreen( );
-        std::cout << print;
-        std::cout << "[0] Flee\n";
-        std::cout << "[1] Attack with weapon\n";
-        std::cout << "[2] Attack with spell\n";
-        input = InputChar( "Enter choice: ", { '0', '1', '2' } );
+        selection
+            .append( "[0] Flee\n" )
+            .append( "[1] Attack with weapon\n" )
+            .append( "[2] Attack with spell\n" );
+        std::cout << selection;
+        input = InputChar( "Select action: ", { '0', '1', '2' } );
+        selection
+            .append( "Select action: " )
+            .append( std::string( 1, input ) )
+            .append( "\n" );
 
         switch( input )
         {
             case '0':
             {
-                flee = true;
-
                 events
                     .append( "- " )
                     .append( player.name )
                     .append( " attempt to flee!\n" );
+                flee = true;
 
                 return;
             }
@@ -130,7 +136,7 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
                     .append( "- " )
                     .append( player.name )
                     .append( " attack and deal " )
-                    .append( std::to_string( std::abs( result ) ) )
+                    .append( std::to_string( result ) )
                     .append( " damage to " )
                     .append( enemy.name )
                     .append( "!\n" );
@@ -140,79 +146,45 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
             }
             case '2':
             {
-                const std::optional<Spell> spell = InputSpell( GetSpells( player.spells ) );
-
-                if( !spell )
+                while( true )
                 {
                     ClearScreen( );
-                    break;
-                }
+                    std::cout << selection;
 
-                events
-                    .append( "- " )
-                    .append( player.name )
-                    .append( " cast " )
-                    .append( spell->name );
-
-                if( spell->power )
-                {
-                    const int result = GetPowerDiceRoll( *spell->power );
-                    const int type = spell->power->beneficial ? -1 : 1;
-                    const std::string positive = std::string( "restore " ) + std::to_string( result ) + std::string( " health" );
-                    const std::string negative = std::string( "deal "    ) + std::to_string( result ) + std::string( " damage" );
-                    const std::string typeLine = spell->power->beneficial ? positive : negative;
-
-                    events
-                        .append( " and " )
-                        .append( typeLine )
-                        .append( " to " )
-                        .append( enemy.name )
-                        .append( "!\n" );
-                    enemy.health.current -= result * type;
-                }
-                else
-                {
-                    events
-                        .append( " on " )
-                        .append( enemy.name )
-                        .append( "!\n" );
-                }
-
-                if( spell->effects != 0 )
-                {
-                    const std::vector<Effect> effects = GetEffects( spell->effects );
-                    bool initial = false;
-
-                    events
-                        .append( "- " )
-                        .append( spell->name )
-                        .append( " applies " );
-
-                    for( int i = 0, limit = effects.size( ); i < limit; i++ )
+                    const std::optional<Spell> spell( InputSpell( GetSpells( player.spells ) ) );
+                    const std::map<char, Character*> targets
                     {
-                        events.append( effects[i].name );
-                        enemy.effects.insert_or_assign( effects[i].name, effects[i] );
+                        { '0', nullptr },
+                        { '1', &enemy },
+                        { '2', &player }
+                    };
+                    Character* target;
+                    char choice;
 
-                        if( i == limit - 1 )
-                        {
-                            events
-                                .append( " to " )
-                                .append( enemy.name )
-                                .append( "!\n" );
+                    if( !spell )
+                    {
+                        break;
+                    }
 
-                        }
-                        else if( i == limit - 2 )
-                        {
-                            events.append( " and " );
-                        }
-                        else
-                        {
-                            events.append( ", " );
-                        }
+                    std::cout << "\n> DETAIL <\n";
+                    std::cout << "- Power:   " << ( spell->power ? GetStringPower( *spell->power ) : std::string( "---" ) ) << "\n";
+                    std::cout << "- Effects: " << GetStringEffects( GetEffects( spell->effects ) ) << "\n";
+                    std::cout << "\n> TARGET <\n";
+                    std::cout << "[0] Exit selection\n";
+                    std::cout << "[1] " << enemy.name << "\n";
+                    std::cout << "[2] " << player.name << "\n";
+                    choice = InputChar( "Select target: ", { '0', '1', '2' } );
+                    target = targets.at( choice );
+
+                    if( target )
+                    {
+                        CastSpell( player, *target, *spell, events );
+
+                        return;
                     }
                 }
 
-                return;
+                break;
             }
         }
     }
@@ -273,18 +245,69 @@ void BattleSystem::Update( Character& character, std::string& events ) const
 
     character.Update( );
 }
+void BattleSystem::CastSpell( Character& caster, Character& target, const Spell& spell, std::string& events ) const
+{
+    events
+        .append( "- " )
+        .append( caster.name )
+        .append( " cast " )
+        .append( spell.name );
+
+    if( spell.power )
+    {
+        const int result = GetPowerDiceRoll( *spell.power );
+        const int type = spell.power->beneficial ? -1 : 1;
+        const std::string positive = std::string( "restore " ) + std::to_string( result ) + std::string( " health" );
+        const std::string negative = std::string( "deal "    ) + std::to_string( result ) + std::string( " damage" );
+        const std::string typeLine = spell.power->beneficial ? positive : negative;
+
+        events
+            .append( " and " )
+            .append( typeLine )
+            .append( " to " )
+            .append( target.name )
+            .append( "!\n" );
+        target.health.current -= result * type;
+    }
+    else
+    {
+        events
+            .append( " on " )
+            .append( target.name )
+            .append( "!\n" );
+    }
+
+    if( spell.effects != 0 )
+    {
+        const std::vector<Effect> effects = GetEffects( spell.effects );
+
+        events
+            .append( "- " )
+            .append( spell.name )
+            .append( " applies " )
+            .append( GetStringEffects( effects ) )
+            .append( " to " )
+            .append( target.name )
+            .append( "!\n" );
+
+        for( const auto& effect : effects )
+        {
+            target.effects.insert_or_assign( effect.name, effect );
+        }
+    }
+}
 std::optional<Spell> BattleSystem::InputSpell( const std::vector<Spell>& spells ) const
 {
     std::vector<char> valid;
     char input;
 
     std::cout << "\n> SPELLS <\n";
-    std::cout << "[0] Exit spell selection\n";
+    std::cout << "[0] Exit selection\n";
     valid.push_back( '0' );
 
     for( int i = 0, limit = spells.size( ); i < limit; i++ )
     {
-        std::cout << "[" << i + 1 << "] Cast " << spells[i].name << "\t" << ( spells[i].power ? GetPower( *spells[i].power ) : std::string( "-" ) ) << "\n";
+        std::cout << "[" << i + 1 << "] " << spells[i].name << "\n";
         valid.push_back( i + '1' );
     }
 

@@ -79,11 +79,11 @@ std::optional<Power> GetOptionalPower( const std::string& line )
         values[3]
     } };
 }
-std::string GetPower( const Power& power )
+std::string GetStringPower( const Power& power )
 {
     return std::string( std::to_string( power.rolls ) + "d" + std::to_string( power.sides ) + " + " + std::to_string( power.modifier ) );
 }
-std::string GetHealth( const Health& health )
+std::string GetStringHealth( const Health& health )
 {
     std::string output;
 
@@ -105,6 +105,29 @@ std::string GetHealth( const Health& health )
     }
 
     output += ")";
+
+    return output;
+}
+std::string GetStringEffects( const std::vector<Effect>& effects )
+{
+    std::string output;
+
+    for( int i = 0, limit = effects.size( ); i < limit; i++ )
+    {
+        output.append( effects[i].name );
+
+        if( i != limit - 1 )
+        {
+            if( i == limit - 2 )
+            {
+                output.append( " and " );
+            }
+            else
+            {
+                output.append( ", " );
+            }
+        }
+    }
 
     return output;
 }
