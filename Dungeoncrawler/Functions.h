@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <optional>
+#include <string_view>
 
 struct Power;
 class Dungeon;
@@ -48,6 +49,7 @@ int RandomNumberGenerator( int min, int max );
 int GetPowerDiceRoll( const Power& power );
 int GetBitmask( const std::string& line );
 std::optional<Power> GetOptionalPower( const std::string& line );
+std::string GetPower( const Power& power );
 std::string GetHealth( const Health& health );
 Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& rotation );
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation );
@@ -62,8 +64,8 @@ void PrintDungeon( const Dungeon& dungeon, const Vector2<int>& center, const Vec
 void ClearScreen( );
 DungeonConfiguration InputDungeonConfiguration( );
 void InputEnter( );
-char InputChar( const std::string& context, const std::vector<char>& valid, std::function<int( int )> modifier = nullptr );
-int InputPositiveInteger( const std::string& context );
+char InputChar( std::string_view context, const std::vector<char>& valid, std::function<int( int )> modifier = nullptr );
+int InputPositiveInteger( std::string_view context );
 std::vector<Effect> LoadEffects( );
 std::vector<Spell> LoadSpells( );
 std::vector<Character> LoadCharacters( );

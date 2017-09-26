@@ -13,6 +13,7 @@
 #include <cctype>
 #include <limits>
 #include <cstdlib>
+#include <string_view>
 
 double RandomNumberGenerator( double min, double max )
 {
@@ -32,7 +33,6 @@ int RandomNumberGenerator( int min, int max )
 }
 int GetPowerDiceRoll( const Power& power )
 {
-    const int type = power.beneficial ? 1 : -1;
     int accumulate = 0;
 
     for( int i = 0; i < power.rolls; i++ )
@@ -40,7 +40,7 @@ int GetPowerDiceRoll( const Power& power )
         accumulate += RandomNumberGenerator( 1, power.sides );
     }
 
-    return type * ( accumulate + power.modifier );
+    return accumulate + power.modifier;
 }
 int GetBitmask( const std::string& line )
 {
@@ -63,7 +63,7 @@ std::optional<Power> GetOptionalPower( const std::string& line )
 
     if( line.size( ) == 0 )
     {
-        return { };
+        return std::optional<Power>( );
     }
 
     while( std::getline( sstream, value, ',' ) )
@@ -78,6 +78,10 @@ std::optional<Power> GetOptionalPower( const std::string& line )
         values[2],
         values[3]
     } };
+}
+std::string GetPower( const Power& power )
+{
+    return std::string( std::to_string( power.rolls ) + "d" + std::to_string( power.sides ) + " + " + std::to_string( power.modifier ) );
 }
 std::string GetHealth( const Health& health )
 {
@@ -355,7 +359,7 @@ void InputEnter( )
     std::cin.ignore( std::numeric_limits<std::streamsize>::max( ), '\n' );
     std::cin.get( );
 }
-char InputChar( const std::string& context, const std::vector<char>& valid, std::function<int( int )> modifier )
+char InputChar( std::string_view context, const std::vector<char>& valid, std::function<int( int )> modifier )
 {
     while( true )
     {
@@ -372,7 +376,7 @@ char InputChar( const std::string& context, const std::vector<char>& valid, std:
         }
     }
 }
-int InputPositiveInteger( const std::string& context )
+int InputPositiveInteger( std::string_view context )
 {
     while( true )
     {

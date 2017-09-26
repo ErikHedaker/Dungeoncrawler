@@ -6,6 +6,7 @@
 #include <optional>
 #include <cmath>
 #include <string_view>
+#include <array>
 
 BattleSystem::BattleSystem( ) :
     _effects( []( std::vector<Effect> effects )
@@ -34,59 +35,58 @@ BattleSystem::BattleSystem( ) :
 
 void BattleSystem::Encounter( Character& player, Character& AI ) const
 {
-    const int diff = AI.name.size( ) - player.name.size( );
     std::string events;
     std::string print;
     bool flee = false;
+    auto ExitCondition = [] ( const std::array<bool, 3> conditions )
+    {
+        static const std::array<std::string, 3> output
+        {
+            "win!\n",
+            "lose!\n",
+            "flee the battle!\n"
+        };
+        
+        for( int i = 0, limit = conditions.size( ); i < limit; i++ )
+        {
+            if( conditions[i] )
+            {
+                std::cout << "\nYou " << output[i];
+                std::cout << "Press enter to continue: ";
+                InputEnter( );
+
+                return true;
+            }
+        }
+
+        return false;
+    };
 
     while( true )
     {
         ClearScreen( );
         print.clear( );
-        print += "> BATTLE <\n";
-        print += "- ";
-        print += player.name;
-        print += " vs ";
-        print += AI.name;
-        print += "!\n";
-        print += "\n";
-        print += "> EVENTS <\n";
-        print += events;
-        print += "\n";
-        print += "> HEALTH <\n";
-        print += "- ";
-        print += player.name;
-        print += ": ";
-        print += GetHealth( player.health );
-        print += "\n";
-        print += "- ";
-        print += AI.name;
-        print += ": ";
-        print += GetHealth( AI.health );
-        print += "\n\n";
-        print += "> PLAYER <\n";
-        std::cout << print;
+        print
+            .append( "> BATTLE <\n- " )
+            .append( player.name )
+            .append( " vs " )
+            .append( AI.name )
+            .append( "!\n\n> EVENTS <\n" )
+            .append( events )
+            .append( "\n> HEALTH <\n- " )
+            .append( player.name )
+            .append( ": " )
+            .append( GetHealth( player.health ) )
+            .append( "\n- " )
+            .append( AI.name )
+            .append( ": " )
+            .append( GetHealth( AI.health ) )
+            .append( "\n\n> PLAYER <\n" );
         events.clear( );
+        std::cout << print;
 
-        if( !player.active )
+        if( ExitCondition( { !AI.active, !player.active, flee } ) )
         {
-            std::cout << "\nYou lose!\n";
-            std::cout << "Press enter to continue: ";
-            InputEnter( );
-            break;
-        }
-        if( !AI.active )
-        {
-            std::cout << "\nYou win!\n";
-            std::cout << "Press enter to continue: ";
-            InputEnter( );
-            break;
-        }
-        if( flee )
-        {
-            std::cout << "\nYou flee the battle!\n";
-            std::cout << "Press enter to continue: ";
-            InputEnter( );
             break;
         }
 
@@ -115,24 +115,26 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
             {
                 flee = true;
 
-                events += "- ";
-                events += player.name;
-                events += " attempt to flee!\n";
+                events
+                    .append( "- " )
+                    .append( player.name )
+                    .append( " attempt to flee!\n" );
 
                 return;
             }
             case '1':
             {
-                const int result = player.damage < 0 ? player.damage : player.damage * ( -1 );
+                const int result = player.damage;
 
-                events += "- ";
-                events += player.name;
-                events += " attack and deal ";
-                events += std::to_string( std::abs( result ) );
-                events += " damage to ";
-                events += enemy.name;
-                events += "!\n";
-                enemy.health.current += result;
+                events
+                    .append( "- " )
+                    .append( player.name )
+                    .append( " attack and deal " )
+                    .append( std::to_string( std::abs( result ) ) )
+                    .append( " damage to " )
+                    .append( enemy.name )
+                    .append( "!\n" );
+                enemy.health.current -= result;
 
                 return;
             }
@@ -146,23 +148,34 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
                     break;
                 }
 
+                events
+                    .append( "- " )
+                    .append( player.name )
+                    .append( " cast " )
+                    .append( spell->name );
+
                 if( spell->power )
                 {
                     const int result = GetPowerDiceRoll( *spell->power );
+                    const int type = spell->power->beneficial ? -1 : 1;
                     const std::string positive = std::string( "restore " ) + std::to_string( result ) + std::string( " health" );
-                    const std::string negative = std::string( "deal " ) + std::to_string( std::abs( result ) ) + std::string( " damage" );
-                    const std::string type = spell->power->beneficial ? positive : negative;
+                    const std::string negative = std::string( "deal "    ) + std::to_string( result ) + std::string( " damage" );
+                    const std::string typeLine = spell->power->beneficial ? positive : negative;
 
-                    events += "- ";
-                    events += player.name;
-                    events += " cast ";
-                    events += spell->name;
-                    events += " and ";
-                    events += type;
-                    events += " to ";
-                    events += enemy.name;
-                    events += "!\n";
-                    enemy.health.current += result;
+                    events
+                        .append( " and " )
+                        .append( typeLine )
+                        .append( " to " )
+                        .append( enemy.name )
+                        .append( "!\n" );
+                    enemy.health.current -= result * type;
+                }
+                else
+                {
+                    events
+                        .append( " on " )
+                        .append( enemy.name )
+                        .append( "!\n" );
                 }
 
                 if( spell->effects != 0 )
@@ -170,29 +183,31 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
                     const std::vector<Effect> effects = GetEffects( spell->effects );
                     bool initial = false;
 
-                    events += "- ";
-                    events += spell->name;
-                    events += " applies ";
+                    events
+                        .append( "- " )
+                        .append( spell->name )
+                        .append( " applies " );
 
                     for( int i = 0, limit = effects.size( ); i < limit; i++ )
                     {
-                        events += effects[i].name;
+                        events.append( effects[i].name );
                         enemy.effects.insert_or_assign( effects[i].name, effects[i] );
 
                         if( i == limit - 1 )
                         {
-                            events += " to ";
-                            events += enemy.name;
-                            events += "!\n";
+                            events
+                                .append( " to " )
+                                .append( enemy.name )
+                                .append( "!\n" );
 
                         }
                         else if( i == limit - 2 )
                         {
-                            events += " and ";
+                            events.append( " and " );
                         }
                         else
                         {
-                            events += ", ";
+                            events.append( ", " );
                         }
                     }
                 }
@@ -204,16 +219,17 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
 }
 void BattleSystem::TurnAI( Character& AI, Character& enemy, std::string& events ) const
 {
-    const int result = AI.damage < 0 ? AI.damage : AI.damage * ( -1 );
+    const int result = AI.damage;
 
-    events += "- ";
-    events += AI.name;
-    events += " attack and deal ";
-    events += std::to_string( std::abs( result ) );
-    events += " damage to ";
-    events += enemy.name;
-    events += "!\n";
-    enemy.health.current += result;
+    events
+        .append( "- " )
+        .append( AI.name )
+        .append( " attack and deal " )
+        .append( std::to_string( result ) )
+        .append( " damage to " )
+        .append( enemy.name )
+        .append( "!\n" );
+    enemy.health.current -= result;
 
     return;
 }
@@ -225,25 +241,27 @@ void BattleSystem::Update( Character& character, std::string& events ) const
         {
             const int result = GetPowerDiceRoll( *it->second.power );
 
-            events += "- ";
-            events += it->second.name;
-            events += "(";
-            events += std::to_string( it->second.duration );
-            events += ") ticks for ";
-            events += std::to_string( std::abs( result ) );
-            events += " damage on ";
-            events += character.name;
-            events += "!\n";
-            character.health.current += result;
+            events
+                .append( "- " )
+                .append( it->second.name )
+                .append( "(" )
+                .append( std::to_string( it->second.duration ) )
+                .append( ") ticks for " )
+                .append( std::to_string( result ) )
+                .append( " damage on " )
+                .append( character.name )
+                .append( "!\n" );
+            character.health.current -= result;
         }
 
         if( it->second.duration <= 0 )
         {
-            events += "- ";
-            events += it->second.name;
-            events += " fades from ";
-            events += character.name;
-            events += "!\n";
+            events
+                .append( "- " )
+                .append( it->second.name )
+                .append( " fades from " )
+                .append( character.name )
+                .append( "!\n" );
             it = character.effects.erase( it );
         }
         else
@@ -266,39 +284,39 @@ std::optional<Spell> BattleSystem::InputSpell( const std::vector<Spell>& spells 
 
     for( int i = 0, limit = spells.size( ); i < limit; i++ )
     {
-        std::cout << "[" << i + 1 << "] Cast " << spells[i].name << "\n";
+        std::cout << "[" << i + 1 << "] Cast " << spells[i].name << "\t" << ( spells[i].power ? GetPower( *spells[i].power ) : std::string( "-" ) ) << "\n";
         valid.push_back( i + '1' );
     }
 
-    input = InputChar( "Enter choice: ", valid );
+    input = InputChar( "Select spell: ", valid );
 
     return input != '0' ? spells[input - '1'] : std::optional<Spell>( );
 }
 std::vector<Effect> BattleSystem::GetEffects( int bitmask ) const
 {
-    std::vector<Effect> effects;
+    std::vector<Effect> temp;
 
     for( const auto& it : _effects )
     {
         if( it.first & bitmask )
         {
-            effects.push_back( it.second );
+            temp.push_back( it.second );
         }
     }
 
-    return effects;
+    return temp;
 }
 std::vector<Spell> BattleSystem::GetSpells( int bitmask ) const
 {
-    std::vector<Spell> spells;
+    std::vector<Spell> temp;
 
     for( const auto& it : _spells )
     {
         if( it.first & bitmask )
         {
-            spells.push_back( it.second );
+            temp.push_back( it.second );
         }
     }
 
-    return spells;
+    return temp;
 }
