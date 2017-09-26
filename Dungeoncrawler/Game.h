@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Dungeon.h"
+#include "Enums.h"
+#include "BattleSystem.h"
 #include "EntityFactory.h"
+#include "Dungeon.h"
 
 class Game
 {
@@ -12,6 +14,7 @@ class Game
         void Menu( );
 
     private:
+        const BattleSystem _battleSystem;
         const EntityFactory _entityFactory;
         std::vector<Dungeon> _dungeons;
         DungeonConfiguration _config;

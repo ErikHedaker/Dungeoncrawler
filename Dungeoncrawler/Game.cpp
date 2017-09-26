@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "Functions.h"
 #include "Dungeon.h"
+#include "BattleSystem.h"
 #include "EntityFactory.h"
 #include <iostream>
 #include <sstream>
@@ -9,12 +10,62 @@
 #include <chrono>
 #include <vector>
 #include <map>
+#include <deque>
+
+class Stopwatch
+{
+    public:
+    Stopwatch( ) :
+        _current( 0 )
+    { }
+
+    void Start( )
+    {
+        _start = std::chrono::high_resolution_clock::now( );
+    }
+    void Stop( )
+    {
+        _stop = std::chrono::high_resolution_clock::now( );
+        _current = std::chrono::duration_cast<std::chrono::microseconds>( _stop - _start );
+        _average.push_back( _current );
+
+        if( _average.size( ) > 100 )
+        {
+            _average.pop_front( );
+        }
+    }
+    long long int Microseconds( ) const
+    {
+        return _current.count( );
+    }
+    long long int MicrosecondsAverage( ) const
+    {
+        long long int total = 0;
+
+        for( const auto& value : _average )
+        {
+            total += value.count( );
+        }
+
+        return total / ( _average.size( ) ? _average.size( ) : 1 );
+    }
+    double FPS( )
+    {
+        return 1.0 / ( static_cast<double>( _current.count( ) ) / 1000000.0 );
+    }
+
+    private:
+    std::chrono::microseconds _current;
+    std::deque<std::chrono::microseconds> _average;
+    std::chrono::time_point<std::chrono::steady_clock> _start;
+    std::chrono::time_point<std::chrono::steady_clock> _stop;
+};
 
 Stopwatch stopwatch;
 Stopwatch stopwatchLogic;
 
 Game::Game( ) :
-    _player( _entityFactory.player )
+    _player( _entityFactory.PlayerDefault( ) )
 { }
 
 bool Game::Exist( ) const
@@ -33,7 +84,7 @@ void Game::Menu( )
         std::cout << "[3] Build new game (Randomization)\n";
         std::cout << "[4] Build new game (Configuration)\n";
         std::cout << "[5] Exit\n\n";
-        input = GetChar( "Enter choice: ", { '1', '2', '3', '4', '5' } );
+        input = InputChar( "Enter choice: ", { '1', '2', '3', '4', '5' } );
 
         switch( input )
         {
@@ -59,7 +110,7 @@ void Game::Menu( )
                 {
                     std::cout << "\nERROR " << error.what( );
                     std::cout << "\n\nPress enter to continue: ";
-                    GetEnter( );
+                    InputEnter( );
 
                     break;
                 }
@@ -74,7 +125,7 @@ void Game::Menu( )
             case '3':
             case '4':
             {
-                _config = input == '3' ? DungeonConfiguration( ) : GetDungeonConfiguration( );
+                _config = input == '3' ? DungeonConfiguration( ) : InputDungeonConfiguration( );
                 ClearScreen( );
                 std::cout << "Loading, please wait.\n";
                 Reset( );
@@ -110,11 +161,11 @@ bool Game::PlayerTurn( )
     while( true )
     {
         ClearScreen( );
-        PrintDungeon( _dungeons[_index], _player.real->visionReach, _player.real->position, { 16, 8 } );
+        PrintDungeon( _dungeons[_index], _player.real->position, { 32, 16 } );
         stopwatch.Stop( );
         std::cout << "Frames per second: " << stopwatch.FPS( ) << "\n";
         std::cout << "Sampled logic microseconds: " << stopwatchLogic.MicrosecondsAverage( ) << "\n\n";
-        PrintHealth( *_player.real );
+        std::cout << GetHealth( *_player.real );
         std::cout << "\n";
         std::cout << "[W] Go North\n";
         std::cout << "[A] Go West\n";
@@ -124,8 +175,8 @@ bool Game::PlayerTurn( )
         std::cout << "[R] Exit to meny without saving\n";
         std::cout << "[F] Rotate dungeon 90'\n";
         std::cout << "[G] Rotate dungeon 180'\n";
-        std::cout << "[H] Rotate dungeon 270'\n\n";
-        input = GetChar( "Enter choice: ", { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
+        std::cout << "[H] Rotate dungeon 270'\n";
+        input = InputChar( "Enter choice: ", { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
         stopwatch.Start( );
 
         switch( input )
@@ -164,7 +215,7 @@ bool Game::PlayerTurn( )
 }
 void Game::Reset( )
 {
-    _player.Reset( _entityFactory.player );
+    _player.Reset( _entityFactory.PlayerDefault( ) );
     _dungeons.clear( );
     _dungeons.emplace_back( _player, _entityFactory, _config );
     _index = 0;
@@ -173,11 +224,11 @@ void Game::Reset( )
 }
 void Game::Start( )
 {
-    while( _player.real->health > 0 &&
+    while( _player.real->active &&
            PlayerTurn( ) )
     {
         _dungeons[_index].MovementRandom( );
-        _dungeons[_index].Events( );
+        _dungeons[_index].Events( _battleSystem );
         _player.real->Update( );
 
         if( _player.real->states & States::Swapping )

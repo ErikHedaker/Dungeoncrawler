@@ -65,13 +65,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)\Executable\</OutDir>
+    <OutDir>$(SolutionDir)Executable\</OutDir>
     <TargetName>$(ProjectName)_Debug</TargetName>
     <IntDir>$(ProjectName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)\Executable\</OutDir>
+    <OutDir>$(SolutionDir)Executable\</OutDir>
     <IntDir>$(ProjectName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -108,6 +108,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Dungeoncrawler\AStarAlgorithm.cpp" />
+    <ClCompile Include="Dungeoncrawler\BattleSystem.cpp" />
     <ClCompile Include="Dungeoncrawler\Dungeon.cpp" />
     <ClCompile Include="Dungeoncrawler\EntityFactory.cpp" />
     <ClCompile Include="Dungeoncrawler\Functions.cpp" />
@@ -117,6 +118,7 @@
   <ItemGroup>
     <ClInclude Include="Dungeoncrawler\Array2D.h" />
     <ClInclude Include="Dungeoncrawler\AStarAlgorithm.h" />
+    <ClInclude Include="Dungeoncrawler\BattleSystem.h" />
     <ClInclude Include="Dungeoncrawler\Dungeon.h" />
     <ClInclude Include="Dungeoncrawler\EntityFactory.h" />
     <ClInclude Include="Dungeoncrawler\Enums.h" />

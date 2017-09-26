@@ -10,6 +10,8 @@
 #include <unordered_set>
 #include <vector>
 
+class BattleSystem;
+
 struct DungeonConfiguration
 {
     DungeonConfiguration( );
@@ -59,18 +61,18 @@ struct Tile
 class Dungeon
 {
     public:
-        Dungeon( Dungeon&& dungeon ) = default;
-        Dungeon( const Dungeon& dungeon ) = delete;
         Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const DungeonConfiguration& config );
         Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<char>& icons );
+        Dungeon( const Dungeon& dungeon ) = delete;
+        Dungeon( Dungeon&& dungeon ) = default;
 
         std::vector<Link> links;
 
-        void Rotate( const Orientation::Enum& orientation );
         void PlayerPlace( const Vector2<int>& position );
+        void Events( const BattleSystem& battleSystem );
+        void Rotate( const Orientation::Enum& orientation );
         void MovementPlayer( const Orientation::Enum& orientation );
         void MovementRandom( );
-        void Events( );
 
         const Vector2<int>& GetSize( ) const;
         char GetIcon( const Vector2<int>& position ) const;

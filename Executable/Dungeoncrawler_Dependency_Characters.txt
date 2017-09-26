@@ -5,7 +5,7 @@
 # Health Max
 # Health Regen
 # Damage
-# Abilities
+# Spells
 
 # 0
 :Rotten Zombie
@@ -14,7 +14,7 @@
 :120
 :120
 :5
-:20.0
+:20
 :
 
 # 1
@@ -24,8 +24,8 @@
 :80
 :80
 :0
-:10.0
-:2
+:10
+:1
 
 # 2
 :Burning Lunatic
@@ -34,5 +34,5 @@
 :70
 :70
 :0
-:10.0
-:1
+:10
+:0

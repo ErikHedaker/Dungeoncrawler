@@ -1,4 +1,5 @@
 #include "Functions.h"
+#include "BattleSystem.h"
 #include "Game.h"
 #include "Enums.h"
 #include <iostream>
@@ -29,6 +30,18 @@ int RandomNumberGenerator( int min, int max )
 
     return random( generator );
 }
+int GetPowerDiceRoll( const Power& power )
+{
+    const int type = power.beneficial ? 1 : -1;
+    int accumulate = 0;
+
+    for( int i = 0; i < power.rolls; i++ )
+    {
+        accumulate += RandomNumberGenerator( 1, power.sides );
+    }
+
+    return type * ( accumulate + power.modifier );
+}
 int GetBitmask( const std::string& line )
 {
     std::stringstream sstream( line );
@@ -42,85 +55,56 @@ int GetBitmask( const std::string& line )
 
     return values;
 };
-int GetPositiveInteger( const std::string& context )
+std::optional<Power> GetOptionalPower( const std::string& line )
 {
-    while( true )
+    std::stringstream sstream( line );
+    std::string value;
+    std::vector<int> values;
+
+    if( line.size( ) == 0 )
     {
-        std::string input;
+        return { };
+    }
 
-        std::cout << context;
-        std::cin >> input;
+    while( std::getline( sstream, value, ',' ) )
+    {
+        values.push_back( std::stoi( value ) );
+    }
 
-        if( input.size( ) < 10 &&
-            std::all_of( input.begin( ), input.end( ), ::isdigit ) )
+    return
+    { {
+        values[0] != 0,
+        values[1],
+        values[2],
+        values[3]
+    } };
+}
+std::string GetHealth( const Character& character )
+{
+    std::string output;
+
+    output += character.name;
+    output += ": ";
+    output += std::to_string( character.health.current );
+    output += " (";
+
+    if( character.health.current == character.health.max )
+    {
+        output += "max";
+    }
+    else
+    {
+        if( character.health.regeneration > 0 )
         {
-            return std::stoi( input );
+            output += "+";
         }
+
+        output += std::to_string( character.health.regeneration );
     }
-}
-char GetChar( const std::string& context, const std::vector<char>& valid, std::function<int(int)> modifier )
-{
-    while( true )
-    {
-        std::string input;
-        char last;
 
-        std::cout << context;
-        std::cin >> input;
-        last = modifier != nullptr ? modifier( input.back( ) ) : input.back( );
+    output += ")\n";
 
-        if( std::find( valid.begin( ), valid.end( ), last ) != valid.end( ) )
-        {
-            return last;
-        }
-    }
-}
-void GetEnter( )
-{
-    std::cin.ignore( std::numeric_limits<std::streamsize>::max( ), '\n' );
-    std::cin.get( );
-}
-void ClearScreen( )
-{
-    #ifdef _WIN32
-        std::system( "CLS" );
-    #else
-        std::system( "clear" );
-    #endif
-}
-DungeonConfiguration GetDungeonConfiguration( )
-{
-    DungeonConfiguration config;
-    auto ToBool = [] ( char input ) -> bool
-    {
-        return
-            input == 'Y' ||
-            input == 'y';
-    };
-
-    std::cout << "\n";
-    config.size.determined        = ToBool( GetChar( "Fixed dungeon size, [Y/N]: ",       { 'Y', 'N' }, std::toupper ) );
-    config.generate.doors         = ToBool( GetChar( "Generate doors, [Y/N]: ",           { 'Y', 'N' }, std::toupper ) );
-    config.generate.wallsOuter    = ToBool( GetChar( "Generate outer walls, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
-    config.generate.hiddenPath    = ToBool( GetChar( "Generate hidden path, [Y/N]: ",     { 'Y', 'N' }, std::toupper ) );
-    config.generate.wallsParents  = ToBool( GetChar( "Generate parent walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
-    config.generate.wallsChildren = ToBool( GetChar( "Generate children walls, [Y/N]: ",  { 'Y', 'N' }, std::toupper ) );
-    config.generate.wallsFiller   = ToBool( GetChar( "Generate filler walls, [Y/N]: ",    { 'Y', 'N' }, std::toupper ) );
-    config.generate.enemies       = ToBool( GetChar( "Generate monsters, [Y/N]: ",        { 'Y', 'N' }, std::toupper ) );
-    std::cout << "\n";
-
-    if( config.size.determined )
-    {
-        config.size.dungeon.x                                           = GetPositiveInteger( "Enter dungeon width: " );
-        config.size.dungeon.y                                           = GetPositiveInteger( "Enter dungeon height: " );
-    }
-    if( config.generate.doors )         config.amount.doors             = GetPositiveInteger( "Enter amount of doors: " );
-    if( config.generate.wallsParents )  config.amount.wallsParents      = GetPositiveInteger( "Enter amount of parent walls: " );
-    if( config.generate.wallsChildren ) config.amount.wallsChildren     = GetPositiveInteger( "Enter amount of children walls: " );
-    if( config.generate.wallsFiller )   config.amount.wallsFillerCycles = GetPositiveInteger( "Enter amount of filler wall cycles: " );
-    if( config.generate.enemies )       config.amount.enemies           = GetPositiveInteger( "Enter amount of enemies: " );
-    
-    return config;
+    return output;
 }
 Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& rotation )
 {
@@ -183,283 +167,6 @@ Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, i
     }
 
     return position;
-}
-Ability GetAbility( const std::vector<Ability>& abilities )
-{
-    std::map<char, Ability> pairs;
-    std::vector<char> valid;
-    char key = '1';
-    
-    std::cout << "\nChoose an ability:\n";
-
-    for( const auto& ability : abilities )
-    {
-        pairs.emplace( key, ability );
-        valid.push_back( key );
-        std::cout << "[" << key << "] " << pairs.at( key ).name << "\n";
-        key++;
-    }
-
-    std::cout << "\n";
-    
-    return pairs.at( GetChar( "Enter choice: ", valid ) );
-}
-std::string UseAbility( Character& attacker, Character& target, const Ability& ability )
-{
-    constexpr double min = 0.9;
-    constexpr double max = 1.1;
-    const int healthOld = target.health;
-
-    target.health -= static_cast<int>( ability.damage * RandomNumberGenerator( min, max ) );
-
-    return std::string( attacker.name + " casts " + ability.name + " on " + target.name + ", which dealt " + std::to_string( healthOld - target.health ) + " damage!" );
-}
-std::string UseWeapon( Character& attacker, Character& target )
-{
-    constexpr double min = 0.9;
-    constexpr double max = 1.1;
-    const int healthOld = target.health;
-
-    target.health -= static_cast<int>( attacker.damage * RandomNumberGenerator( min, max ) );
-
-    return std::string( attacker.name + " attacks " + target.name + " with a weapon, which dealt " + std::to_string( healthOld - target.health ) + " damage!" );
-}
-std::string TurnPlayer( Character& player, Character& AI )
-{
-    std::string result;
-    bool done = false;
-
-    while( !done )
-    {
-        std::cout << "\nChoose an action:\n";
-        std::cout << "[1] Attack with weapon\n";
-        std::cout << "[2] Attack with ability\n\n";
-        const char choice = GetChar( "Enter choice: ", { '1', '2' }, std::toupper );
-
-        switch( choice )
-        {
-            case '1':
-            {
-                result = UseWeapon( player, AI );
-                done = true;
-
-                break;
-            }
-            case '2':
-            {
-                if( player.abilities.size( ) > 0 )
-                {
-                    result = UseAbility( player, AI, GetAbility( player.abilities ) );
-                    done = true;
-                }
-
-                break;
-            }
-        }
-    }
-
-    return result;
-}
-std::string TurnAI( Character& player, Character& AI )
-{
-    const int number = RandomNumberGenerator( 0, AI.abilities.size( ) );
-
-    return number == AI.abilities.size( ) ? UseWeapon( AI, player ) : UseAbility( AI, player, AI.abilities[number] );
-}
-void PrintDungeon( const Dungeon& dungeon, int visionReach, const Vector2<int>& center, const Vector2<int>& sizeScreen )
-{
-    const Vector2<int> origoCamera = center - sizeScreen / 2;
-    const Vector2<int> iteratorBegin = origoCamera - 1;
-    const Vector2<int> iteratorEnd = origoCamera + 2 + sizeScreen;
-    Vector2<int> iterator;
-
-    for( iterator.y = iteratorBegin.y; iterator.y < iteratorEnd.y; iterator.y++ )
-    {
-        for( iterator.x = iteratorBegin.x; iterator.x < iteratorEnd.x; iterator.x++ )
-        {
-            if( OnBorder( iterator, iteratorEnd, iteratorBegin ) )
-            {
-                std::cout << '\\';
-            }
-            else if( InBounds( iterator, dungeon.GetSize( ) ) &&
-                     dungeon.Visible( iterator ) )
-            {
-                std::cout << dungeon.GetIcon( iterator );
-            }
-            else
-            {
-                std::cout << ' ';
-            }
-        }
-
-        std::cout << '\n';
-    }
-
-    std::cout << '\n';
-}
-void PrintHealth( const Character& combatant )
-{
-    std::cout << combatant.name << " HP: " << combatant.health << " (";
-
-    if( combatant.healthRegeneration > 0 )
-    {
-        std::cout << "+";
-    }
-
-    std::cout << combatant.healthRegeneration << ")\n";
-}
-void Fight( Character& player, Character& AI )
-{
-    std::string previousTurnPlayer;
-    std::string previousTurnAI;
-
-    while( true )
-    {
-        ClearScreen( );
-        std::cout << "You've been engaged in combat with a " << AI.name << "!\n";
-        std::cout << "\n-----\n\n";
-
-        player.Update( );
-        AI.Update( );
-
-        PrintHealth( player );
-        PrintHealth( AI );
-
-        std::cout << "\n-----\n";
-        std::cout << "\n" << previousTurnPlayer << "\n";
-        std::cout << "\n" << previousTurnAI << "\n";
-        std::cout << "\n-----\n";
-
-        if( player.health <= 0 || AI.health <= 0 )
-        {
-            std::cout << "\n" << ( player.health <= 0 ? player.name : AI.name ) << " died!";
-            std::cout << "\n\nPress enter to continue: ";
-            GetEnter( );
-
-            break;
-        }
-
-        previousTurnPlayer = TurnPlayer( player, AI );
-        previousTurnAI = TurnAI( player, AI );
-    }
-}
-std::vector<Ability> LoadAbilities( )
-{
-    constexpr int offset = 4;
-    const std::string name = "Dungeoncrawler_Dependency_Abilities.txt";
-    std::vector<std::string> fileCache { std::istream_iterator<FileString> { std::ifstream { name, std::ios::in } }, { } };
-    std::vector<Ability> abilities;
-
-    if( fileCache.empty( ) )
-    {
-        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
-    }
-
-    for( unsigned int i = 0; i < fileCache.size( ); i += offset )
-    {
-        abilities.emplace_back( fileCache[0 + i],
-                                fileCache[1 + i].back( ),
-                    GetBitmask( fileCache[2 + i] ),
-                     std::stof( fileCache[3 + i] ) );
-    }
-
-    return abilities;
-}
-std::vector<Character> LoadCharacters( )
-{
-    constexpr int offset = 8;
-    const std::string name = "Dungeoncrawler_Dependency_Characters.txt";
-    const std::vector<Ability> abilities = LoadAbilities( );
-    std::vector<std::string> fileCache { std::istream_iterator<FileString> { std::ifstream { name, std::ios::in } }, { } };
-    std::vector<Character> characters;
-    auto GetAbilities = [&abilities] ( const std::string& line ) -> std::vector<Ability>
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        std::vector<Ability> values;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values.push_back( abilities[std::stoi( value )] );
-        }
-
-        return values;
-    };
-
-    if( fileCache.empty( ) )
-    {
-        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
-    }
-
-    for( unsigned int i = 0; i < fileCache.size( ); i += offset )
-    {
-        characters.emplace_back( fileCache[0 + i],
-                                 fileCache[1 + i].back( ),
-                     GetBitmask( fileCache[2 + i] ),
-                      std::stoi( fileCache[3 + i] ),
-                      std::stoi( fileCache[4 + i] ),
-                      std::stoi( fileCache[5 + i] ),
-                      std::stof( fileCache[6 + i] ),
-                   GetAbilities( fileCache[7 + i] ) );
-    }
-
-    return characters;
-}
-std::vector<Structure> LoadStructures( )
-{
-    constexpr int offset = 3;
-    const std::string name = "Dungeoncrawler_Dependency_Structures.txt";
-    std::vector<std::string> fileCache { std::istream_iterator<FileString>{ std::ifstream{ name, std::ios::in } }, { } };
-    std::vector<Structure> structures;
-
-    if( fileCache.empty( ) )
-    {
-        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
-    }
-
-    for( unsigned int i = 0; i < fileCache.size( ); i += offset )
-    {
-        structures.emplace_back( fileCache[0 + i],
-                                 fileCache[1 + i].back( ),
-                     GetBitmask( fileCache[2 + i] ) );
-    }
-
-    return structures;
-}
-Player LoadPlayerDefault( )
-{
-    const std::string name = "Dungeoncrawler_Dependency_Player.txt";
-    const std::vector<Ability> abilities = LoadAbilities( );
-    std::vector<std::string> fileCache { std::istream_iterator<FileString>{ std::ifstream{ name, std::ios::in } }, { } };
-    auto GetAbilities = [&abilities] ( const std::string& line ) -> std::vector<Ability>
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        std::vector<Ability> values;
-
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values.push_back( abilities[std::stoi( value )] );
-        }
-
-        return values;
-    };
-
-    if( fileCache.empty( ) )
-    {
-        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
-    }
-
-    return Player( fileCache[0],
-                   fileCache[1].back( ),
-       GetBitmask( fileCache[2] ),
-        std::stoi( fileCache[3] ),
-        std::stoi( fileCache[4] ),
-        std::stoi( fileCache[5] ),
-        std::stof( fileCache[6] ),
-     GetAbilities( fileCache[7] ),
-        std::stoi( fileCache[8] ),
-       GetBitmask( fileCache[9] ) );
 }
 std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radius )
 {
@@ -571,4 +278,244 @@ Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>
     const bool rightOfAntiDiagonal = positionf.x > ( sizef.x - positionf.y * ratiof.x - 1 );
 
     return quadrants.at( { rightOfMainDiagonal, rightOfAntiDiagonal } );
+}
+void PrintDungeon( const Dungeon& dungeon, const Vector2<int>& center, const Vector2<int>& sizeScreen )
+{
+    const Vector2<int> origoCamera = center - sizeScreen / 2;
+    const Vector2<int> iteratorBegin = origoCamera - 1;
+    const Vector2<int> iteratorEnd = origoCamera + 2 + sizeScreen;
+    Vector2<int> iterator;
+
+    for( iterator.y = iteratorBegin.y; iterator.y < iteratorEnd.y; iterator.y++ )
+    {
+        for( iterator.x = iteratorBegin.x; iterator.x < iteratorEnd.x; iterator.x++ )
+        {
+            if( OnBorder( iterator, iteratorEnd, iteratorBegin ) )
+            {
+                std::cout << '/';
+            }
+            else if( InBounds( iterator, dungeon.GetSize( ) ) &&
+                     dungeon.Visible( iterator ) )
+            {
+                std::cout << dungeon.GetIcon( iterator );
+            }
+            else
+            {
+                std::cout << ' ';
+            }
+        }
+
+        std::cout << '\n';
+    }
+
+    std::cout << '\n';
+}
+void ClearScreen( )
+{
+    #ifdef _WIN32
+        std::system( "CLS" );
+    #else
+        std::system( "clear" );
+    #endif
+}
+DungeonConfiguration InputDungeonConfiguration( )
+{
+    DungeonConfiguration config;
+    auto ToBool = [] ( char input ) -> bool
+    {
+        return
+            input == 'Y' ||
+            input == 'y';
+    };
+
+    std::cout << "\n";
+    config.size.determined = ToBool( InputChar( "Fixed dungeon size, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
+    config.generate.doors = ToBool( InputChar( "Generate doors, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsOuter = ToBool( InputChar( "Generate outer walls, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
+    config.generate.hiddenPath = ToBool( InputChar( "Generate hidden path, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsParents = ToBool( InputChar( "Generate parent walls, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsChildren = ToBool( InputChar( "Generate children walls, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsFiller = ToBool( InputChar( "Generate filler walls, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
+    config.generate.enemies = ToBool( InputChar( "Generate monsters, [Y/N]: ", { 'Y', 'N' }, std::toupper ) );
+    std::cout << "\n";
+
+    if( config.size.determined )
+    {
+        config.size.dungeon.x = InputPositiveInteger( "Enter dungeon width: " );
+        config.size.dungeon.y = InputPositiveInteger( "Enter dungeon height: " );
+    }
+    if( config.generate.doors )         config.amount.doors = InputPositiveInteger( "Enter amount of doors: " );
+    if( config.generate.wallsParents )  config.amount.wallsParents = InputPositiveInteger( "Enter amount of parent walls: " );
+    if( config.generate.wallsChildren ) config.amount.wallsChildren = InputPositiveInteger( "Enter amount of children walls: " );
+    if( config.generate.wallsFiller )   config.amount.wallsFillerCycles = InputPositiveInteger( "Enter amount of filler wall cycles: " );
+    if( config.generate.enemies )       config.amount.enemies = InputPositiveInteger( "Enter amount of enemies: " );
+
+    return config;
+}
+void InputEnter( )
+{
+    std::cin.ignore( std::numeric_limits<std::streamsize>::max( ), '\n' );
+    std::cin.get( );
+}
+char InputChar( const std::string& context, const std::vector<char>& valid, std::function<int( int )> modifier )
+{
+    while( true )
+    {
+        std::string input;
+        char last;
+
+        std::cout << context;
+        std::cin >> input;
+        last = modifier != nullptr ? modifier( input.back( ) ) : input.back( );
+
+        if( std::find( valid.begin( ), valid.end( ), last ) != valid.end( ) )
+        {
+            return last;
+        }
+    }
+}
+int InputPositiveInteger( const std::string& context )
+{
+    while( true )
+    {
+        std::string input;
+
+        std::cout << context;
+        std::cin >> input;
+
+        if( input.size( ) < 10 &&
+            std::all_of( input.begin( ), input.end( ), ::isdigit ) )
+        {
+            return std::stoi( input );
+        }
+    }
+}
+std::vector<Effect> LoadEffects( )
+{
+    const std::string name = "Dungeoncrawler_Dependency_Effects.txt";
+    const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper> { std::ifstream { name, std::ios::in } }, { } };
+    constexpr int offset = 3;
+    std::vector<Effect> effects;
+
+    if( fileCache.empty( ) )
+    {
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
+    }
+
+    for( int i = 0, limit = fileCache.size( ); i < limit; i += offset )
+    {
+        effects.push_back(
+        {
+            fileCache[i + 0],
+            GetOptionalPower( fileCache[i + 1] ),
+            std::stoi( fileCache[i + 2] )
+        } );
+    }
+
+    return effects;
+}
+std::vector<Spell> LoadSpells( )
+{
+    const std::string name = "Dungeoncrawler_Dependency_Spells.txt";
+    const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper> { std::ifstream { name, std::ios::in } }, { } };
+    constexpr int offset = 3;
+    std::vector<Spell> spells;
+
+    if( fileCache.empty( ) )
+    {
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
+    }
+
+    for( int i = 0, limit = fileCache.size( ); i < limit; i += offset )
+    {
+        spells.push_back(
+        {
+            fileCache[i + 0],
+            GetOptionalPower( fileCache[i + 1] ),
+            GetBitmask( fileCache[i + 2] )
+        } );
+    }
+
+    return spells;
+}
+std::vector<Character> LoadCharacters( )
+{
+    const std::string name = "Dungeoncrawler_Dependency_Characters.txt";
+    const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper> { std::ifstream { name, std::ios::in } }, { } };
+    constexpr int offset = 8;
+    std::vector<Character> characters;
+
+    if( fileCache.empty( ) )
+    {
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
+    }
+
+    for( int i = 0, limit = fileCache.size( ); i < limit; i += offset )
+    {
+        characters.push_back(
+        {
+            fileCache[i + 0],
+            fileCache[i + 1].back( ),
+            GetBitmask( fileCache[i + 2] ),
+            {
+                std::stoi( fileCache[i + 3] ),
+                std::stoi( fileCache[i + 4] ),
+                std::stoi( fileCache[i + 5] )
+            },
+            std::stoi( fileCache[i + 6] ),
+            GetBitmask( fileCache[i + 7] )
+        } );
+    }
+
+    return characters;
+}
+std::vector<Structure> LoadStructures( )
+{
+    const std::string name = "Dungeoncrawler_Dependency_Structures.txt";
+    const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream { name, std::ios::in } }, { } };
+    constexpr int offset = 3;
+    std::vector<Structure> structures;
+
+    if( fileCache.empty( ) )
+    {
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
+    }
+
+    for( int i = 0, limit = fileCache.size( ); i < limit; i += offset )
+    {
+        structures.push_back(
+        {
+            fileCache[i + 0],
+            fileCache[i + 1].back( ),
+            GetBitmask( fileCache[i + 2] )
+        } );
+    }
+
+    return structures;
+}
+Player LoadPlayerDefault( )
+{
+    const std::string name = "Dungeoncrawler_Dependency_PlayerDefault.txt";
+    const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream { name, std::ios::in } }, { } };
+
+    if( fileCache.empty( ) )
+    {
+        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
+    }
+
+    return
+    {
+        fileCache[0],
+        fileCache[1].back( ),
+        GetBitmask( fileCache[2] ),
+        {
+            std::stoi( fileCache[3] ),
+            std::stoi( fileCache[4] ),
+            std::stoi( fileCache[5] )
+        },
+        std::stoi( fileCache[6] ),
+        GetBitmask( fileCache[7] ),
+        std::stoi( fileCache[8] ),
+        GetBitmask( fileCache[9] )
+    };
 }

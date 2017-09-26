@@ -15,6 +15,7 @@
 *.idb
 *.db
 Dungeoncrawler_Debug.exe
+Dungeoncrawler_Save.txt
 Dungeoncrawler/Debug/
 Dungeoncrawler/Release/
 Debug/

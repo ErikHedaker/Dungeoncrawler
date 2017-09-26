@@ -5,7 +5,7 @@
 # Health Max
 # Health Regen
 # Damage
-# Abilities
+# Spells
 # Vision Reach
 # States
 
@@ -15,7 +15,7 @@
 :100
 :100
 :1
-:50.0
-:0,1,2
-:7
+:50
+:0,1,2,3,4
+:8
 :
