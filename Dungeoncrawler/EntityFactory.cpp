@@ -2,24 +2,30 @@
 #include "Functions.h"
 
 EntityFactory::EntityFactory( ) :
-    _entities( [] ( )
-{
-    std::map<std::string, std::unique_ptr<Entity>> entities;
-
-    for( const auto& character : LoadCharacters( ) )
+    _entities( [](
+    std::vector<Character> characters,
+    std::vector<Structure> structures,
+    Player player )
     {
-        entities[character.name] = std::make_unique<Character>( character );
-    }
+        std::map<std::string, std::unique_ptr<Entity>> temp;
 
-    for( const auto& structure : LoadStructures( ) )
-    {
-        entities[structure.name] = std::make_unique<Structure>( structure );
-    }
+        for( const auto& character : characters )
+        {
+            temp[character.name] = std::make_unique<Character>( character );
+        }
 
-    entities["PlayerDefault"] = std::make_unique<Player>( LoadPlayerDefault( ) );
+        for( const auto& structure : structures )
+        {
+            temp[structure.name] = std::make_unique<Structure>( structure );
+        }
 
-    return std::move( entities );
-}( ) )
+        temp["PlayerDefault"] = std::make_unique<Player>( player );
+
+        return std::move( temp );
+    }(
+    LoadCharacters( ),
+    LoadStructures( ),
+    LoadPlayerDefault( ) ) )
 { }
 
 const std::unique_ptr<Entity>& EntityFactory::Get( const std::string& name ) const

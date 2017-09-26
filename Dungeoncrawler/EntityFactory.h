@@ -3,7 +3,6 @@
 #include "Vector2.h"
 #include "Enums.h"
 #include "BattleSystem.h"
-#include <set>
 #include <string>
 #include <memory>
 #include <map>

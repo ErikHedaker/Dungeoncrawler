@@ -79,30 +79,28 @@ std::optional<Power> GetOptionalPower( const std::string& line )
         values[3]
     } };
 }
-std::string GetHealth( const Character& character )
+std::string GetHealth( const Health& health )
 {
     std::string output;
 
-    output += character.name;
-    output += ": ";
-    output += std::to_string( character.health.current );
+    output += std::to_string( health.current );
     output += " (";
 
-    if( character.health.current == character.health.max )
+    if( health.current == health.max )
     {
         output += "max";
     }
     else
     {
-        if( character.health.regeneration > 0 )
+        if( health.regeneration > 0 )
         {
             output += "+";
         }
 
-        output += std::to_string( character.health.regeneration );
+        output += std::to_string( health.regeneration );
     }
 
-    output += ")\n";
+    output += ")";
 
     return output;
 }

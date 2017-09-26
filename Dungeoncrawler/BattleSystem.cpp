@@ -8,7 +8,7 @@
 #include <string_view>
 
 BattleSystem::BattleSystem( ) :
-    _effects( []( const std::vector<Effect>& effects )
+    _effects( []( std::vector<Effect> effects )
     {
         std::map<int, Effect> temp;
 
@@ -19,7 +19,7 @@ BattleSystem::BattleSystem( ) :
 
         return temp;
     }( LoadEffects( ) ) ),
-    _spells( []( const std::vector<Spell>& spells )
+    _spells( []( std::vector<Spell> spells )
     {
         std::map<int, Spell> temp;
 
@@ -34,6 +34,7 @@ BattleSystem::BattleSystem( ) :
 
 void BattleSystem::Encounter( Character& player, Character& AI ) const
 {
+    const int diff = AI.name.size( ) - player.name.size( );
     std::string events;
     std::string print;
     bool flee = false;
@@ -54,24 +55,29 @@ void BattleSystem::Encounter( Character& player, Character& AI ) const
         print += "\n";
         print += "> HEALTH <\n";
         print += "- ";
-        print += GetHealth( player );
-        print += "- ";
-        print += GetHealth( AI );
+        print += player.name;
+        print += ": ";
+        print += GetHealth( player.health );
         print += "\n";
+        print += "- ";
+        print += AI.name;
+        print += ": ";
+        print += GetHealth( AI.health );
+        print += "\n\n";
         print += "> PLAYER <\n";
         std::cout << print;
         events.clear( );
 
-        if( !AI.active )
+        if( !player.active )
         {
-            std::cout << "\nYou win!\n";
+            std::cout << "\nYou lose!\n";
             std::cout << "Press enter to continue: ";
             InputEnter( );
             break;
         }
-        if( !player.active )
+        if( !AI.active )
         {
-            std::cout << "\nYou lose!\n";
+            std::cout << "\nYou win!\n";
             std::cout << "Press enter to continue: ";
             InputEnter( );
             break;

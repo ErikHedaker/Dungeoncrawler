@@ -32,7 +32,7 @@ DungeonConfiguration::DungeonConfiguration( const std::vector<std::string>& data
 }
 
 Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const DungeonConfiguration& config ) :
-    _size( [&config] ( )
+    _size( [&config]( )
     {
         constexpr int min = 30;
         constexpr int max = 50;
@@ -93,11 +93,11 @@ void Dungeon::PlayerPlace( const Vector2<int>& position )
 {
     static constexpr std::array<Vector2<int>, 4> directions
     { {
-        { 0, -1 },
-        { 1,  0 },
-        { 0,  1 },
+        {  0, -1 },
+        {  1,  0 },
+        {  0,  1 },
         { -1,  0 }
-        } };
+    } };
 
     _player.real->position = InBounds( position, _size ) ? position : _size / 2;
 

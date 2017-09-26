@@ -165,8 +165,9 @@ bool Game::PlayerTurn( )
         stopwatch.Stop( );
         std::cout << "Frames per second: " << stopwatch.FPS( ) << "\n";
         std::cout << "Sampled logic microseconds: " << stopwatchLogic.MicrosecondsAverage( ) << "\n\n";
-        std::cout << GetHealth( *_player.real );
-        std::cout << "\n";
+        std::cout << "Health: ";
+        std::cout << GetHealth( _player.real->health );
+        std::cout << "\n\n";
         std::cout << "[W] Go North\n";
         std::cout << "[A] Go West\n";
         std::cout << "[S] Go South\n";
