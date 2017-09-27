@@ -131,6 +131,38 @@ std::string GetStringEffects( const std::vector<Effect>& effects )
 
     return output;
 }
+std::string GetStringDungeon( const Dungeon& dungeon, const Vector2<int>& center, const Vector2<int>& sizeScreen )
+{
+    const Vector2<int> origoCamera   = center - sizeScreen / 2;
+    const Vector2<int> iteratorBegin = origoCamera - 1;
+    const Vector2<int> iteratorEnd   = origoCamera + 2 + sizeScreen;
+    Vector2<int> iterator;
+    std::string output;
+
+    for( iterator.y = iteratorBegin.y; iterator.y < iteratorEnd.y; iterator.y++ )
+    {
+        for( iterator.x = iteratorBegin.x; iterator.x < iteratorEnd.x; iterator.x++ )
+        {
+            if( OnBorder( iterator, iteratorEnd, iteratorBegin ) )
+            {
+                output += '/';
+            }
+            else if( InBounds( iterator, dungeon.GetSize( ) ) &&
+                     dungeon.Visible( iterator ) )
+            {
+                output += dungeon.GetIcon( iterator );
+            }
+            else
+            {
+                output += ' ';
+            }
+        }
+
+        output += '\n';
+    }
+
+    return output;
+}
 Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& rotation )
 {
     switch( rotation )
@@ -214,7 +246,8 @@ std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radiu
             error += current.y * 2 + 1;
         }
 
-        if( temp > current.x || error > current.y )
+        if( temp > current.x ||
+            error > current.y )
         {
             current.x++;
             error += current.x * 2 + 1;
@@ -228,7 +261,7 @@ std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector
     const Vector2<int> delta
     {
         std::abs( end.x - start.x ),
-        std::abs( end.y - start.y ) * ( -1 )
+        std::abs( end.y - start.y ) * -1
     };
     const Vector2<int> offset
     {
@@ -303,37 +336,6 @@ Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>
     const bool rightOfAntiDiagonal = positionf.x > ( sizef.x - positionf.y * ratiof.x - 1 );
 
     return quadrants.at( { rightOfMainDiagonal, rightOfAntiDiagonal } );
-}
-void PrintDungeon( const Dungeon& dungeon, const Vector2<int>& center, const Vector2<int>& sizeScreen )
-{
-    const Vector2<int> origoCamera = center - sizeScreen / 2;
-    const Vector2<int> iteratorBegin = origoCamera - 1;
-    const Vector2<int> iteratorEnd = origoCamera + 2 + sizeScreen;
-    Vector2<int> iterator;
-
-    for( iterator.y = iteratorBegin.y; iterator.y < iteratorEnd.y; iterator.y++ )
-    {
-        for( iterator.x = iteratorBegin.x; iterator.x < iteratorEnd.x; iterator.x++ )
-        {
-            if( OnBorder( iterator, iteratorEnd, iteratorBegin ) )
-            {
-                std::cout << '/';
-            }
-            else if( InBounds( iterator, dungeon.GetSize( ) ) &&
-                     dungeon.Visible( iterator ) )
-            {
-                std::cout << dungeon.GetIcon( iterator );
-            }
-            else
-            {
-                std::cout << ' ';
-            }
-        }
-
-        std::cout << '\n';
-    }
-
-    std::cout << '\n';
 }
 void ClearScreen( )
 {

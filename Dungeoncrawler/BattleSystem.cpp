@@ -36,7 +36,7 @@ BattleSystem::BattleSystem( ) :
 void BattleSystem::Encounter( Character& player, Character& AI ) const
 {
     std::string events;
-    std::string print;
+    std::string output;
     bool flee = false;
     auto ExitCondition = [] ( const std::array<bool, 3> conditions )
     {
@@ -65,8 +65,8 @@ void BattleSystem::Encounter( Character& player, Character& AI ) const
     while( true )
     {
         ClearScreen( );
-        print.clear( );
-        print
+        output.clear( );
+        output
             .append( "> BATTLE <\n- " )
             .append( player.name )
             .append( " vs " )
@@ -82,22 +82,25 @@ void BattleSystem::Encounter( Character& player, Character& AI ) const
             .append( ": " )
             .append( GetStringHealth( AI.health ) )
             .append( "\n\n> ACTION <\n" );
-        events.clear( );
-        std::cout << print;
+        std::cout << output;
 
         if( ExitCondition( { !player.active, !AI.active, flee } ) )
         {
             break;
         }
 
-        TurnPlayer( player, AI, events, print, flee );
-        TurnAI( AI, player, events );
-        Update( player, events );
-        Update( AI, events );
+        events.clear( );
+        events += UpdateEffects( player );
+        events += UpdateEffects( AI );
+        events += TurnPlayer( player, AI, output, flee );
+        events += TurnAI( AI, player );
+        player.Update( );
+        AI.Update( );
     }
 }
-void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string& events, std::string_view print, bool& flee ) const
+std::string BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string_view print, bool& flee ) const
 {
+    std::string events;
     char input;
 
     while( true )
@@ -126,7 +129,7 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
                     .append( " attempt to flee!\n" );
                 flee = true;
 
-                return;
+                return events;
             }
             case '1':
             {
@@ -142,7 +145,7 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
                     .append( "!\n" );
                 enemy.health.current -= result;
 
-                return;
+                return events;
             }
             case '2':
             {
@@ -167,7 +170,7 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
                     }
 
                     std::cout << "\n> DETAIL <\n";
-                    std::cout << "- Power:   " << ( spell->power ? GetStringPower( *spell->power ) : std::string( "---" ) ) << "\n";
+                    std::cout << "- Power:   " << ( spell->power ? GetStringPower( *spell->power ) : std::string( "-" ) ) << "\n";
                     std::cout << "- Effects: " << GetStringEffects( GetEffects( spell->effects ) ) << "\n";
                     std::cout << "\n> TARGET <\n";
                     std::cout << "[0] Exit selection\n";
@@ -178,9 +181,7 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
 
                     if( target )
                     {
-                        CastSpell( player, *target, *spell, events );
-
-                        return;
+                        return CastSpell( player, *target, *spell );
                     }
                 }
 
@@ -189,9 +190,10 @@ void BattleSystem::TurnPlayer( Character& player, Character& enemy, std::string&
         }
     }
 }
-void BattleSystem::TurnAI( Character& AI, Character& enemy, std::string& events ) const
+std::string BattleSystem::TurnAI( Character& AI, Character& enemy ) const
 {
     const int result = AI.damage;
+    std::string events;
 
     events
         .append( "- " )
@@ -203,10 +205,12 @@ void BattleSystem::TurnAI( Character& AI, Character& enemy, std::string& events 
         .append( "!\n" );
     enemy.health.current -= result;
 
-    return;
+    return events;
 }
-void BattleSystem::Update( Character& character, std::string& events ) const
+std::string BattleSystem::UpdateEffects( Character& character ) const
 {
+    std::string events;
+
     for( auto it = character.effects.begin( ); it != character.effects.end( ); )
     {
         if( it->second.power )
@@ -214,15 +218,15 @@ void BattleSystem::Update( Character& character, std::string& events ) const
             const int result = GetPowerDiceRoll( *it->second.power );
 
             events
-                .append( "- " )
-                .append( it->second.name )
-                .append( "(" )
+                .append( "- (" )
                 .append( std::to_string( it->second.duration ) )
-                .append( ") ticks for " )
+                .append( ")" )
+                .append( it->second.name )
+                .append( " ticks for " )
                 .append( std::to_string( result ) )
                 .append( " damage on " )
                 .append( character.name )
-                .append( "!\n" );
+                .append( "\n" );
             character.health.current -= result;
         }
 
@@ -233,7 +237,7 @@ void BattleSystem::Update( Character& character, std::string& events ) const
                 .append( it->second.name )
                 .append( " fades from " )
                 .append( character.name )
-                .append( "!\n" );
+                .append( "\n" );
             it = character.effects.erase( it );
         }
         else
@@ -243,10 +247,12 @@ void BattleSystem::Update( Character& character, std::string& events ) const
         }
     }
 
-    character.Update( );
+    return events;
 }
-void BattleSystem::CastSpell( Character& caster, Character& target, const Spell& spell, std::string& events ) const
+std::string BattleSystem::CastSpell( Character& caster, Character& target, const Spell& spell ) const
 {
+    std::string events;
+
     events
         .append( "- " )
         .append( caster.name )
@@ -295,6 +301,8 @@ void BattleSystem::CastSpell( Character& caster, Character& target, const Spell&
             target.effects.insert_or_assign( effect.name, effect );
         }
     }
+
+    return events;
 }
 std::optional<Spell> BattleSystem::InputSpell( const std::vector<Spell>& spells ) const
 {

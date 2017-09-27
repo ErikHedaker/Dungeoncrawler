@@ -60,10 +60,10 @@ class BattleSystem
         BattleSystem( );
 
         void Encounter( Character& player, Character& enemy ) const;
-        void TurnPlayer( Character& player, Character& enemy, std::string& events, std::string_view print, bool& flee ) const;
-        void TurnAI( Character& AI, Character& enemy, std::string& events ) const;
-        void Update( Character& character, std::string& events ) const;
-        void CastSpell( Character& caster, Character& target, const Spell& spell, std::string& events ) const;
+        std::string TurnPlayer( Character& player, Character& enemy, std::string_view print, bool& flee ) const;
+        std::string TurnAI( Character& AI, Character& enemy ) const;
+        std::string UpdateEffects( Character& character ) const;
+        std::string CastSpell( Character& caster, Character& target, const Spell& spell ) const;
         std::optional<Spell> InputSpell( const std::vector<Spell>& spells ) const;
         std::vector<Effect> GetEffects( int bitmask ) const;
         std::vector<Spell> GetSpells( int bitmask ) const;

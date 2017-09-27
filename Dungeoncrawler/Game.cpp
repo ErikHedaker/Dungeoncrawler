@@ -15,53 +15,35 @@
 class Stopwatch
 {
     public:
-    Stopwatch( ) :
-        _current( 0 )
-    { }
-
-    void Start( )
-    {
-        _start = std::chrono::high_resolution_clock::now( );
-    }
-    void Stop( )
-    {
-        _stop = std::chrono::high_resolution_clock::now( );
-        _current = std::chrono::duration_cast<std::chrono::microseconds>( _stop - _start );
-        _average.push_back( _current );
-
-        if( _average.size( ) > 100 )
+        Stopwatch& Start( )
         {
-            _average.pop_front( );
-        }
-    }
-    long long int Microseconds( ) const
-    {
-        return _current.count( );
-    }
-    long long int MicrosecondsAverage( ) const
-    {
-        long long int total = 0;
+            _start = std::chrono::high_resolution_clock::now( );
 
-        for( const auto& value : _average )
+            return *this;
+        }
+        Stopwatch& Stop( )
         {
-            total += value.count( );
-        }
+            _stop = std::chrono::high_resolution_clock::now( );
+            _current = std::chrono::duration_cast<std::chrono::microseconds>( _stop - _start );
 
-        return total / ( _average.size( ) ? _average.size( ) : 1 );
-    }
-    double FPS( )
-    {
-        return 1.0 / ( static_cast<double>( _current.count( ) ) / 1000000.0 );
-    }
+            return *this;
+        }
+        std::string FPS( ) const
+        {
+            return std::to_string( 1.0 / ( static_cast<double>( _current.count( ) ) / 1000000.0 ) );
+        }
+        std::string Microseconds( ) const
+        {
+            return std::to_string( _current.count( ) );
+        }
 
     private:
-    std::chrono::microseconds _current;
-    std::deque<std::chrono::microseconds> _average;
-    std::chrono::time_point<std::chrono::steady_clock> _start;
-    std::chrono::time_point<std::chrono::steady_clock> _stop;
+        std::chrono::microseconds _current;
+        std::chrono::time_point<std::chrono::steady_clock> _start;
+        std::chrono::time_point<std::chrono::steady_clock> _stop;
 };
 
-Stopwatch stopwatch;
+Stopwatch stopwatchTotal;
 Stopwatch stopwatchLogic;
 
 Game::Game( ) :
@@ -74,17 +56,21 @@ bool Game::Exist( ) const
 }
 void Game::Menu( )
 {
+    std::string output;
     char input;
 
     while( true )
     {
         ClearScreen( );
-        std::cout << "[1] Continue current game\n";
-        std::cout << "[2] Load game from file\n";
-        std::cout << "[3] Build new game (Randomization)\n";
-        std::cout << "[4] Build new game (Configuration)\n";
-        std::cout << "[5] Exit\n\n";
-        input = InputChar( "Enter choice: ", { '1', '2', '3', '4', '5' } );
+        output.clear( );
+        output
+            .append( "[1] Continue current game\n" )
+            .append( "[2] Load game from file\n" )
+            .append( "[3] Build new game (Randomization)\n" )
+            .append( "[4] Build new game (Configuration)\n" )
+            .append( "[5] Exit\n\n" );
+        std::cout << output;
+        input = InputChar( "Select option ", { '1', '2', '3', '4', '5' } );
 
         switch( input )
         {
@@ -125,7 +111,10 @@ void Game::Menu( )
             case '3':
             case '4':
             {
-                _config = input == '3' ? DungeonConfiguration( ) : InputDungeonConfiguration( );
+                _config =
+                    input == '4' ?
+                    InputDungeonConfiguration( ) :
+                    DungeonConfiguration( );
                 ClearScreen( );
                 std::cout << "Loading, please wait.\n";
                 Reset( );
@@ -156,29 +145,38 @@ bool Game::PlayerTurn( )
         { 'G', Orientation::South },
         { 'H', Orientation::West  }
     };
+    std::string output;
     char input;
 
     while( true )
     {
         ClearScreen( );
-        PrintDungeon( _dungeons[_index], _player.real->position, { 32, 16 } );
-        stopwatch.Stop( );
-        std::cout << "Frames per second: " << stopwatch.FPS( ) << "\n";
-        std::cout << "Sampled logic microseconds: " << stopwatchLogic.MicrosecondsAverage( ) << "\n\n";
-        std::cout << "Health: ";
-        std::cout << GetStringHealth( _player.real->health );
-        std::cout << "\n\n";
-        std::cout << "[W] Go North\n";
-        std::cout << "[A] Go West\n";
-        std::cout << "[S] Go South\n";
-        std::cout << "[D] Go East\n";
-        std::cout << "[E] Exit to meny while saving\n";
-        std::cout << "[R] Exit to meny without saving\n";
-        std::cout << "[F] Rotate dungeon 90'\n";
-        std::cout << "[G] Rotate dungeon 180'\n";
-        std::cout << "[H] Rotate dungeon 270'\n";
-        input = InputChar( "Enter choice: ", { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
-        stopwatch.Start( );
+        output.clear( );
+        output
+            .append( GetStringDungeon( _dungeons[_index], _player.real->position, { 32, 16 } ) )
+            .append( "\nTotal time between frames:  " )
+            .append( stopwatchTotal.Stop( ).Microseconds( ) )
+            .append( "\nSampled logic microseconds: " )
+            .append( stopwatchLogic.Microseconds( ) )
+            .append( "\n\nHealth: " )
+            .append( GetStringHealth( _player.real->health ) )
+            .append( "\n\n" )
+            .append( "[W] Go North\n" )
+            .append( "[A] Go West\n" )
+            .append( "[S] Go South\n" )
+            .append( "[D] Go East\n" )
+            .append( "[E] Exit to meny while saving\n" )
+            .append( "[R] Exit to meny without saving\n" )
+            .append( "[F] Rotate dungeon 90'\n" )
+            .append( "[G] Rotate dungeon 180'\n" )
+            .append( "[H] Rotate dungeon 270'\n" );
+        std::cout << output;
+        input = InputChar( "Select action: ", { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
+        output
+            .append( "Select action: " )
+            .append( std::string( 1, input ) )
+            .append( "\n" );
+        stopwatchTotal.Start( );
 
         switch( input )
         {

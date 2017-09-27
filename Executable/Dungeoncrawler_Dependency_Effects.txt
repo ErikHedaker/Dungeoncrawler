@@ -3,7 +3,7 @@
 # Duration
 
 # 1 << 0
-:Frostbite
+:Freeze
 :0,1,4,0
 :5
 

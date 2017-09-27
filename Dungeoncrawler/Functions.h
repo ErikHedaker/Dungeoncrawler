@@ -52,6 +52,7 @@ std::optional<Power> GetOptionalPower( const std::string& line );
 std::string GetStringPower( const Power& power );
 std::string GetStringHealth( const Health& health );
 std::string GetStringEffects( const std::vector<Effect>& effects );
+std::string GetStringDungeon( const Dungeon& dungeon, const Vector2<int>& center, const Vector2<int>& sizeScreen );
 Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& rotation );
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation );
 Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, int west, int south, int east, int still );
@@ -61,7 +62,6 @@ bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vec
 bool InCorner( const Vector2<int>& position, const Vector2<int>& size, int sensitivity = 0 );
 bool InBounds( const Vector2<int>& position, const Vector2<int>& size );
 Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>& size );
-void PrintDungeon( const Dungeon& dungeon, const Vector2<int>& center, const Vector2<int>& sizeScreen );
 void ClearScreen( );
 DungeonConfiguration InputDungeonConfiguration( );
 void InputEnter( );
