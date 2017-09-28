@@ -21,7 +21,7 @@ class Game
         PlayerHandle _player;
         int _index;
 
-        bool PlayerTurn( );
+        bool TurnPlayer( );
         void Reset( );
         void Start( );
         void DungeonSwap( );

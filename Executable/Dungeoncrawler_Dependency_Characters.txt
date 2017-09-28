@@ -8,7 +8,7 @@
 # Spells
 
 # 0
-:Rotten Zombie
+:Zombie
 :R
 :1,2
 :120
@@ -18,7 +18,7 @@
 :
 
 # 1
-:Frozen Skeleton
+:Skeleton
 :F
 :1,2
 :80
@@ -28,7 +28,7 @@
 :1
 
 # 2
-:Burning Lunatic
+:Lunatic
 :B
 :1,2
 :70

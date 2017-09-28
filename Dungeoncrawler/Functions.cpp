@@ -81,7 +81,7 @@ std::optional<Power> GetOptionalPower( const std::string& line )
 }
 std::string GetStringPower( const Power& power )
 {
-    return std::string( std::to_string( power.rolls ) + "d" + std::to_string( power.sides ) + " + " + std::to_string( power.modifier ) );
+    return std::string( std::to_string( power.rolls ) + "d" + std::to_string( power.sides ) + "+" + std::to_string( power.modifier ) );
 }
 std::string GetStringHealth( const Health& health )
 {

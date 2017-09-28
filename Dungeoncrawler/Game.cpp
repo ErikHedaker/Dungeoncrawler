@@ -130,7 +130,7 @@ void Game::Menu( )
     }
 }
 
-bool Game::PlayerTurn( )
+bool Game::TurnPlayer( )
 {
     static const std::map<char, Orientation::Enum> directions
     {
@@ -224,7 +224,7 @@ void Game::Reset( )
 void Game::Start( )
 {
     while( _player.real->active &&
-           PlayerTurn( ) )
+           TurnPlayer( ) )
     {
         _dungeons[_index].MovementRandom( );
         _dungeons[_index].Events( _battleSystem );

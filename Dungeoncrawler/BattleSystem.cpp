@@ -133,19 +133,7 @@ std::string BattleSystem::TurnPlayer( Character& player, Character& enemy, std::
             }
             case '1':
             {
-                const int result = player.damage;
-
-                events
-                    .append( "- " )
-                    .append( player.name )
-                    .append( " attack and deal " )
-                    .append( std::to_string( result ) )
-                    .append( " damage to " )
-                    .append( enemy.name )
-                    .append( "!\n" );
-                enemy.health.current -= result;
-
-                return events;
+                return AttackWeapon( player, enemy );
             }
             case '2':
             {
@@ -181,7 +169,7 @@ std::string BattleSystem::TurnPlayer( Character& player, Character& enemy, std::
 
                     if( target )
                     {
-                        return CastSpell( player, *target, *spell );
+                        return AttackSpell( player, *target, *spell );
                     }
                 }
 
@@ -192,20 +180,7 @@ std::string BattleSystem::TurnPlayer( Character& player, Character& enemy, std::
 }
 std::string BattleSystem::TurnAI( Character& AI, Character& enemy ) const
 {
-    const int result = AI.damage;
-    std::string events;
-
-    events
-        .append( "- " )
-        .append( AI.name )
-        .append( " attack and deal " )
-        .append( std::to_string( result ) )
-        .append( " damage to " )
-        .append( enemy.name )
-        .append( "!\n" );
-    enemy.health.current -= result;
-
-    return events;
+    return AttackWeapon( AI, enemy );
 }
 std::string BattleSystem::UpdateEffects( Character& character ) const
 {
@@ -218,14 +193,12 @@ std::string BattleSystem::UpdateEffects( Character& character ) const
             const int result = GetPowerDiceRoll( *it->second.power );
 
             events
-                .append( "- (" )
-                .append( std::to_string( it->second.duration ) )
-                .append( ")" )
+                .append( "- " )
                 .append( it->second.name )
-                .append( " ticks for " )
-                .append( std::to_string( result ) )
-                .append( " damage on " )
+                .append( " affects " )
                 .append( character.name )
+                .append( ", damaging its health by " )
+                .append( std::to_string( result ) )
                 .append( "\n" );
             character.health.current -= result;
         }
@@ -249,7 +222,24 @@ std::string BattleSystem::UpdateEffects( Character& character ) const
 
     return events;
 }
-std::string BattleSystem::CastSpell( Character& caster, Character& target, const Spell& spell ) const
+std::string BattleSystem::AttackWeapon( Character& attacker, Character& target ) const
+{
+    const int result = attacker.damage;
+    std::string events;
+
+    events
+        .append( "- " )
+        .append( attacker.name )
+        .append( " attack " )
+        .append( target.name )
+        .append( ", damaging its health by " )
+        .append( std::to_string( result ) )
+        .append( "\n" );
+    target.health.current -= result;
+
+    return events;
+}
+std::string BattleSystem::AttackSpell( Character& caster, Character& target, const Spell& spell ) const
 {
     std::string events;
 
@@ -257,31 +247,24 @@ std::string BattleSystem::CastSpell( Character& caster, Character& target, const
         .append( "- " )
         .append( caster.name )
         .append( " cast " )
-        .append( spell.name );
+        .append( spell.name )
+        .append( " on " )
+        .append( target.name );
 
     if( spell.power )
     {
         const int result = GetPowerDiceRoll( *spell.power );
         const int type = spell.power->beneficial ? -1 : 1;
-        const std::string positive = std::string( "restore " ) + std::to_string( result ) + std::string( " health" );
-        const std::string negative = std::string( "deal "    ) + std::to_string( result ) + std::string( " damage" );
-        const std::string typeLine = spell.power->beneficial ? positive : negative;
 
         events
-            .append( " and " )
-            .append( typeLine )
-            .append( " to " )
-            .append( target.name )
-            .append( "!\n" );
+            .append( ", " )
+            .append( spell.power->beneficial ? "restoring" : "damaging" )
+            .append( " its health by " )
+            .append( std::to_string( result ) );
         target.health.current -= result * type;
     }
-    else
-    {
-        events
-            .append( " on " )
-            .append( target.name )
-            .append( "!\n" );
-    }
+
+    events.append( "\n" );
 
     if( spell.effects != 0 )
     {
@@ -290,11 +273,11 @@ std::string BattleSystem::CastSpell( Character& caster, Character& target, const
         events
             .append( "- " )
             .append( spell.name )
-            .append( " applies " )
-            .append( GetStringEffects( effects ) )
-            .append( " to " )
+            .append( " affects " )
             .append( target.name )
-            .append( "!\n" );
+            .append( ", applying " )
+            .append( GetStringEffects( effects ) )
+            .append( "\n" );
 
         for( const auto& effect : effects )
         {
