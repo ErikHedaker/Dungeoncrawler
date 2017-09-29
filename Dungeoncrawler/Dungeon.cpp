@@ -38,8 +38,8 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
         constexpr int max = 50;
         const Vector2<int> random
         {
-            RandomNumberGenerator( min, max ),
-            RandomNumberGenerator( min, max )
+            GetRNG( min, max ),
+            GetRNG( min, max )
         };
 
         return config.size.determined ? config.size.dungeon : random;
@@ -426,7 +426,7 @@ void Dungeon::EntityRemove( int index )
 void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
 {
     const int limit = amount ? amount : 3;
-    const int start = RandomNumberGenerator( 0, 3 );
+    const int start = GetRNG( 0, 3 );
     const int sensitivity = static_cast<int>( std::ceil( ( std::sqrt( _size.x * _size.y ) + 6.0 ) / 10.0 ) - 1.0 );
     std::map<Orientation::Enum, std::vector<Vector2<int>>> sides;
     std::vector<int> spacing;
@@ -452,7 +452,7 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
     for( const auto& value : spacing )
     {
         const Orientation::Enum side = static_cast<Orientation::Enum>( value );
-        const int index = RandomNumberGenerator( 0, sides[side].size( ) - 1 );
+        const int index = GetRNG( 0, sides[side].size( ) - 1 );
 
         EntityInsert( sides[side][index], entityFactory.Get( "Door" )->Clone( ) );
         links.push_back( { -1, -1, sides[side][index], { -1, -1 } } );
@@ -506,8 +506,8 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
         {
             const Vector2<int> random
             {
-                RandomNumberGenerator( 1, _size.x - 2 ),
-                RandomNumberGenerator( 1, _size.y - 2 )
+                GetRNG( 1, _size.x - 2 ),
+                GetRNG( 1, _size.y - 2 )
             };
 
             if( Unoccupied( random ) )
@@ -533,8 +533,8 @@ void Dungeon::GenerateWallsParents( const EntityFactory& entityFactory, int amou
     {
         const Vector2<int> position
         {
-            RandomNumberGenerator( 1, _size.x - 2 ),
-            RandomNumberGenerator( 1, _size.y - 2 )
+            GetRNG( 1, _size.x - 2 ),
+            GetRNG( 1, _size.y - 2 )
         };
 
         if( Unoccupied( position ) )
@@ -561,7 +561,7 @@ void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amo
         {
             if( _entities[i]->attributes & Attributes::Obstacle )
             {
-                const int index = RandomNumberGenerator( 0, directions.size( ) - 1 );
+                const int index = GetRNG( 0, directions.size( ) - 1 );
                 const Vector2<int> position = _entities[i]->position + directions[index];
 
                 if( InBounds( position, _size ) &&
@@ -605,13 +605,13 @@ void Dungeon::GenerateEnemies( const EntityFactory& entityFactory, int amount )
         {
             const Vector2<int> position
             {
-                RandomNumberGenerator( 1, _size.x - 2 ),
-                RandomNumberGenerator( 1, _size.y - 2 )
+                GetRNG( 1, _size.x - 2 ),
+                GetRNG( 1, _size.y - 2 )
             };
 
             if( Unoccupied( position ) )
             {
-                const int index = RandomNumberGenerator( 0, enemies.size( ) - 1 );
+                const int index = GetRNG( 0, enemies.size( ) - 1 );
                 const std::string random = enemies[index]->name;
 
                 EntityInsert( position, entityFactory.Get( random )->Clone( ) );

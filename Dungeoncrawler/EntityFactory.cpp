@@ -11,15 +11,15 @@ EntityFactory::EntityFactory( ) :
 
         for( const auto& character : characters )
         {
-            temp[character.name] = std::make_unique<Character>( character );
+            temp.insert_or_assign( character.name, std::make_unique<Character>( character ) );
         }
 
         for( const auto& structure : structures )
         {
-            temp[structure.name] = std::make_unique<Structure>( structure );
+            temp.insert_or_assign( structure.name, std::make_unique<Structure>( structure ) );
         }
 
-        temp["PlayerDefault"] = std::make_unique<Player>( player );
+        temp.insert_or_assign( "PlayerDefault", std::make_unique<Player>( player ) );
 
         return std::move( temp );
     }(

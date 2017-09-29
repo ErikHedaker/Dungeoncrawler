@@ -3,10 +3,11 @@
 #include "Functions.h"
 #include <iostream>
 #include <utility>
-#include <optional>
 #include <cmath>
 #include <string_view>
 #include <array>
+#include <memory>
+#include <functional>
 
 BattleSystem::BattleSystem( ) :
     _effects( []( std::vector<Effect> effects )
@@ -53,7 +54,7 @@ void BattleSystem::Encounter( Character& player, Character& AI ) const
             {
                 std::cout << "\nYou " << output[i];
                 std::cout << "Press enter to continue: ";
-                InputEnter( );
+                SelectEnter( );
 
                 return true;
             }
@@ -111,11 +112,11 @@ std::string BattleSystem::TurnPlayer( Character& player, Character& enemy, std::
         selection
             .append( "[0] Flee\n" )
             .append( "[1] Attack with weapon\n" )
-            .append( "[2] Attack with spell\n" );
+            .append( "[2] Attack with spell\n" )
+            .append( "Select action: " );
         std::cout << selection;
-        input = InputChar( "Select action: ", { '0', '1', '2' } );
+        input = SelectChar( { '0', '1', '2' } );
         selection
-            .append( "Select action: " )
             .append( std::string( 1, input ) )
             .append( "\n" );
 
@@ -133,39 +134,26 @@ std::string BattleSystem::TurnPlayer( Character& player, Character& enemy, std::
             }
             case '1':
             {
-                return AttackWeapon( player, enemy );
+                return AttackMelee( player, enemy );
             }
             case '2':
             {
                 while( true )
                 {
+                    const Spell* spell;
+                    Character* target;
+
                     ClearScreen( );
                     std::cout << selection;
-
-                    const std::optional<Spell> spell( InputSpell( GetSpells( player.spells ) ) );
-                    const std::map<char, Character*> targets
-                    {
-                        { '0', nullptr },
-                        { '1', &enemy },
-                        { '2', &player }
-                    };
-                    Character* target;
-                    char choice;
+                    SelectSpell( spell, GetSpells( player.spells ) );
 
                     if( !spell )
                     {
                         break;
                     }
 
-                    std::cout << "\n> DETAIL <\n";
-                    std::cout << "- Power:   " << ( spell->power ? GetStringPower( *spell->power ) : std::string( "-" ) ) << "\n";
-                    std::cout << "- Effects: " << GetStringEffects( GetEffects( spell->effects ) ) << "\n";
-                    std::cout << "\n> TARGET <\n";
-                    std::cout << "[0] Exit selection\n";
-                    std::cout << "[1] " << enemy.name << "\n";
-                    std::cout << "[2] " << player.name << "\n";
-                    choice = InputChar( "Select target: ", { '0', '1', '2' } );
-                    target = targets.at( choice );
+                    DisplayDetail( *spell );
+                    SelectTarget( target, { &enemy, &player } );
 
                     if( target )
                     {
@@ -180,7 +168,7 @@ std::string BattleSystem::TurnPlayer( Character& player, Character& enemy, std::
 }
 std::string BattleSystem::TurnAI( Character& AI, Character& enemy ) const
 {
-    return AttackWeapon( AI, enemy );
+    return AttackMelee( AI, enemy );
 }
 std::string BattleSystem::UpdateEffects( Character& character ) const
 {
@@ -222,30 +210,101 @@ std::string BattleSystem::UpdateEffects( Character& character ) const
 
     return events;
 }
-std::string BattleSystem::AttackWeapon( Character& attacker, Character& target ) const
+std::string BattleSystem::DisplayDetail( const Spell& spell ) const
 {
-    const int result = attacker.damage;
+    std::string output;
+
+    output
+        .append( "\n> DETAIL <\n-   Power: " )
+        .append( spell.power ? GetStringPower( *spell.power ) : std::string( "-" ) )
+        .append( "\n- Effects: " )
+        .append( spell.effects ? GetStringEffects( GetEffects( spell.effects ) ) : std::string( "-" ) )
+        .append( "\n" );
+    std::cout << output;
+
+    return output;
+}
+std::string BattleSystem::SelectTarget( Character*& target, const std::vector<Character*>& targets ) const
+{
+    std::map<char, Character*> mapped;
+    std::vector<char> valid;
+    std::string output;
+    char select;
+
+    output
+        .append( "\n> TARGET <\n" )
+        .append( "[0] Exit selection\n" );
+    mapped.emplace( '0', nullptr );
+    valid.push_back( '0' );
+
+    for( int i = 0, limit = targets.size( ); i < limit; i++ )
+    {
+        const char option = '1' + i;
+
+        output
+            .append( "[" )
+            .append( std::string( 1, option ) )
+            .append( "] " )
+            .append( targets[i]->name )
+            .append( "\n" );
+        mapped.emplace( option, targets[i] );
+        valid.push_back( option );
+    }
+
+    output.append( "Select target: " );
+    std::cout << output;
+    select = SelectChar( valid );
+    output
+        .append( std::string( 1, select ) )
+        .append( "\n" );
+    target = mapped.at( select );
+
+    return output;
+}
+std::string BattleSystem::SelectSpell( const Spell*& spell, const std::vector<std::reference_wrapper<const Spell>>& spells ) const
+{
+    std::map<char, const Spell*> mapped;
+    std::vector<char> valid;
+    std::string output;
+    char select;
+
+    output
+        .append( "\n> SPELLS <\n" )
+        .append( "[0] Exit selection\n" );
+    mapped.emplace( '0', nullptr );
+    valid.push_back( '0' );
+
+    for( int i = 0, limit = spells.size( ); i < limit; i++ )
+    {
+        const char option = '1' + i;
+
+        output
+            .append( "[" )
+            .append( std::string( 1, option ) )
+            .append( "] " )
+            .append( spells[i].get( ).name )
+            .append( "\n" );
+        mapped.emplace( option, &spells[i].get( ) );
+        valid.push_back( option );
+    }
+
+    output.append( "Select target: " );
+    std::cout << output;
+    select = SelectChar( valid );
+    output
+        .append( std::string( 1, select ) )
+        .append( "\n" );
+    spell = mapped.at( select );
+
+    return output;
+}
+std::string BattleSystem::AttackSpell( Character& attacker, Character& target, const Spell& spell ) const
+{
     std::string events;
 
     events
         .append( "- " )
         .append( attacker.name )
-        .append( " attack " )
-        .append( target.name )
-        .append( ", damaging its health by " )
-        .append( std::to_string( result ) )
-        .append( "\n" );
-    target.health.current -= result;
-
-    return events;
-}
-std::string BattleSystem::AttackSpell( Character& caster, Character& target, const Spell& spell ) const
-{
-    std::string events;
-
-    events
-        .append( "- " )
-        .append( caster.name )
         .append( " cast " )
         .append( spell.name )
         .append( " on " )
@@ -268,7 +327,7 @@ std::string BattleSystem::AttackSpell( Character& caster, Character& target, con
 
     if( spell.effects != 0 )
     {
-        const std::vector<Effect> effects = GetEffects( spell.effects );
+        const std::vector<std::reference_wrapper<const Effect>> effects = GetEffects( spell.effects );
 
         events
             .append( "- " )
@@ -281,54 +340,52 @@ std::string BattleSystem::AttackSpell( Character& caster, Character& target, con
 
         for( const auto& effect : effects )
         {
-            target.effects.insert_or_assign( effect.name, effect );
+            target.effects.insert_or_assign( effect.get( ).name, effect.get( ) );
         }
     }
 
     return events;
 }
-std::optional<Spell> BattleSystem::InputSpell( const std::vector<Spell>& spells ) const
+std::string BattleSystem::AttackMelee( Character& attacker, Character& target ) const
 {
-    std::vector<char> valid;
-    char input;
+    const int result = attacker.damage;
+    std::string events;
 
-    std::cout << "\n> SPELLS <\n";
-    std::cout << "[0] Exit selection\n";
-    valid.push_back( '0' );
+    events
+        .append( "- " )
+        .append( attacker.name )
+        .append( " attack " )
+        .append( target.name )
+        .append( ", damaging its health by " )
+        .append( std::to_string( result ) )
+        .append( "\n" );
+    target.health.current -= result;
 
-    for( int i = 0, limit = spells.size( ); i < limit; i++ )
-    {
-        std::cout << "[" << i + 1 << "] " << spells[i].name << "\n";
-        valid.push_back( i + '1' );
-    }
-
-    input = InputChar( "Select spell: ", valid );
-
-    return input != '0' ? spells[input - '1'] : std::optional<Spell>( );
+    return events;
 }
-std::vector<Effect> BattleSystem::GetEffects( int bitmask ) const
+std::vector<std::reference_wrapper<const Effect>> BattleSystem::GetEffects( int bitmask ) const
 {
-    std::vector<Effect> temp;
+    std::vector<std::reference_wrapper<const Effect>> temp;
 
     for( const auto& it : _effects )
     {
         if( it.first & bitmask )
         {
-            temp.push_back( it.second );
+            temp.push_back( std::cref( it.second ) );
         }
     }
 
     return temp;
 }
-std::vector<Spell> BattleSystem::GetSpells( int bitmask ) const
+std::vector<std::reference_wrapper<const Spell>> BattleSystem::GetSpells( int bitmask ) const
 {
-    std::vector<Spell> temp;
+    std::vector<std::reference_wrapper<const Spell>> temp;
 
     for( const auto& it : _spells )
     {
         if( it.first & bitmask )
         {
-            temp.push_back( it.second );
+            temp.push_back( std::cref( it.second ) );
         }
     }
 

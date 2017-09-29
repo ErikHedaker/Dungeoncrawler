@@ -44,14 +44,13 @@ class StringWrapper
         std::string _data;
 };
 
-double RandomNumberGenerator( double min, double max );
-int RandomNumberGenerator( int min, int max );
+int GetRNG( int min, int max );
 int GetPowerDiceRoll( const Power& power );
 int GetBitmask( const std::string& line );
 std::optional<Power> GetOptionalPower( const std::string& line );
 std::string GetStringPower( const Power& power );
 std::string GetStringHealth( const Health& health );
-std::string GetStringEffects( const std::vector<Effect>& effects );
+std::string GetStringEffects( const std::vector<std::reference_wrapper<const Effect>>& effects );
 std::string GetStringDungeon( const Dungeon& dungeon, const Vector2<int>& center, const Vector2<int>& sizeScreen );
 Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& rotation );
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation );
@@ -63,12 +62,12 @@ bool InCorner( const Vector2<int>& position, const Vector2<int>& size, int sensi
 bool InBounds( const Vector2<int>& position, const Vector2<int>& size );
 Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>& size );
 void ClearScreen( );
-DungeonConfiguration InputDungeonConfiguration( );
-void InputEnter( );
-char InputChar( std::string_view context, const std::vector<char>& valid, std::function<int( int )> modifier = nullptr );
-int InputPositiveInteger( std::string_view context );
-std::vector<Effect> LoadEffects( );
-std::vector<Spell> LoadSpells( );
+DungeonConfiguration SelectDungeonConfiguration( );
+void SelectEnter( );
+char SelectChar( const std::vector<char>& valid, std::function<int( int )> modifier = nullptr );
+int SelectPositiveInteger( );
 std::vector<Character> LoadCharacters( );
 std::vector<Structure> LoadStructures( );
+std::vector<Effect> LoadEffects( );
+std::vector<Spell> LoadSpells( );
 Player LoadPlayerDefault( );

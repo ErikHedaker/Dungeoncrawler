@@ -68,9 +68,11 @@ void Game::Menu( )
             .append( "[2] Load game from file\n" )
             .append( "[3] Build new game (Randomization)\n" )
             .append( "[4] Build new game (Configuration)\n" )
-            .append( "[5] Exit\n\n" );
+            .append( "[5] Exit\n" )
+            .append( "Select option: " );
         std::cout << output;
-        input = InputChar( "Select option ", { '1', '2', '3', '4', '5' } );
+        input = SelectChar( { '1', '2', '3', '4', '5' } );
+        std::cout << "\nLoading, please wait.";
 
         switch( input )
         {
@@ -85,18 +87,15 @@ void Game::Menu( )
             }
             case '2':
             {
-                ClearScreen( );
-                std::cout << "Loading, please wait.\n";
-
                 try
                 {
                     Load( );
                 }
                 catch( const std::exception& error )
                 {
-                    std::cout << "\nERROR " << error.what( );
+                    std::cout << "\n\nERROR " << error.what( );
                     std::cout << "\n\nPress enter to continue: ";
-                    InputEnter( );
+                    SelectEnter( );
 
                     break;
                 }
@@ -109,14 +108,16 @@ void Game::Menu( )
                 break;
             }
             case '3':
+            {
+                _config = DungeonConfiguration( );
+                Reset( );
+                Start( );
+
+                break;
+            }
             case '4':
             {
-                _config =
-                    input == '4' ?
-                    InputDungeonConfiguration( ) :
-                    DungeonConfiguration( );
-                ClearScreen( );
-                std::cout << "Loading, please wait.\n";
+                _config = SelectDungeonConfiguration( );
                 Reset( );
                 Start( );
 
@@ -169,11 +170,11 @@ bool Game::TurnPlayer( )
             .append( "[R] Exit to meny without saving\n" )
             .append( "[F] Rotate dungeon 90'\n" )
             .append( "[G] Rotate dungeon 180'\n" )
-            .append( "[H] Rotate dungeon 270'\n" );
+            .append( "[H] Rotate dungeon 270'\n" )
+            .append( "Select action: " );
         std::cout << output;
-        input = InputChar( "Select action: ", { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
+        input = SelectChar( { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
         output
-            .append( "Select action: " )
             .append( std::string( 1, input ) )
             .append( "\n" );
         stopwatchTotal.Start( );
