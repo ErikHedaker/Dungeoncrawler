@@ -27,6 +27,6 @@ class Game
         void DungeonSwap( );
         void DungeonLink( int indexDungeonCurrent );
         void DungeonRotate( int indexDungeon, const Orientation::Enum& orientation );
-		void Save( );
+        void Save( );
         void Load( );
 };

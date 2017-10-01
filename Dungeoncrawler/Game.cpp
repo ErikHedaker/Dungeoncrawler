@@ -193,13 +193,13 @@ bool Game::TurnPlayer( )
                 return true;
             }
             case 'E':
+            {
+                Save( );
+
+                return false;
+            }
             case 'R':
             {
-                if( input == 'E' )
-                {
-                    Save( );
-                }
-
                 return false;
             }
             case 'F':

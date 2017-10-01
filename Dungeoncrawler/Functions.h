@@ -57,7 +57,7 @@ Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum
 Vector2<int> PositionMoveProbability( const Vector2<int>& position, int north, int west, int south, int east, int still );
 std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radius );
 std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector2<int>& end );
-bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vector2<int>& origo = { 0, 0 }, int layerFrom = 0, int layerTo = 0 );
+bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vector2<int>& origo = { 0, 0 }, int minLayer = 0, int maxLayer = 0 );
 bool InCorner( const Vector2<int>& position, const Vector2<int>& size, int sensitivity = 0 );
 bool InBounds( const Vector2<int>& position, const Vector2<int>& size );
 Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>& size );

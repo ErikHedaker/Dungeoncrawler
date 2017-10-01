@@ -339,30 +339,29 @@ void ClearScreen( )
 }
 DungeonConfiguration SelectDungeonConfiguration( )
 {
-    DungeonConfiguration config;
-    auto ToBool = [] ( char input ) -> bool
+    static const std::map<char, bool> convert
     {
-        return
-            input == 'Y' ||
-            input == 'y';
+        { 'Y', true  },
+        { 'N', false }
     };
+    DungeonConfiguration config;
 
     std::cout << "\nFixed dungeon size, [Y/N]: ";
-    config.size.determined = ToBool( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.size.determined = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
     std::cout << "Generate doors, [Y/N]: ";
-    config.generate.doors = ToBool( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.doors = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
     std::cout << "Generate outer walls, [Y/N]: ";
-    config.generate.wallsOuter = ToBool( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsOuter = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
     std::cout << "Generate hidden path, [Y/N]: ";
-    config.generate.hiddenPath = ToBool( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.hiddenPath = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
     std::cout << "Generate parent walls, [Y/N]: ";
-    config.generate.wallsParents = ToBool( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsParents = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
     std::cout << "Generate children walls, [Y/N]: ";
-    config.generate.wallsChildren = ToBool( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsChildren = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
     std::cout << "Generate filler walls, [Y/N]: ";
-    config.generate.wallsFiller = ToBool( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsFiller = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
     std::cout << "Generate monsters, [Y/N]: ";
-    config.generate.enemies = ToBool( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.enemies = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
     std::cout << "\n";
 
     if( config.size.determined )
@@ -373,15 +372,15 @@ DungeonConfiguration SelectDungeonConfiguration( )
         config.size.dungeon.y = SelectPositiveInteger( );
     }
     std::cout << "Enter amount of doors: ";
-    if( config.generate.doors )         config.amount.doors = SelectPositiveInteger( );
+    if( config.generate.doors ) config.amount.doors = SelectPositiveInteger( );
     std::cout << "Enter amount of parent walls: ";
-    if( config.generate.wallsParents )  config.amount.wallsParents = SelectPositiveInteger( );
+    if( config.generate.wallsParents ) config.amount.wallsParents = SelectPositiveInteger( );
     std::cout << "Enter amount of children walls: ";
     if( config.generate.wallsChildren ) config.amount.wallsChildren = SelectPositiveInteger( );
     std::cout << "Enter amount of filler wall cycles: ";
-    if( config.generate.wallsFiller )   config.amount.wallsFillerCycles = SelectPositiveInteger( );
+    if( config.generate.wallsFiller ) config.amount.wallsFillerCycles = SelectPositiveInteger( );
     std::cout << "Enter amount of enemies: ";
-    if( config.generate.enemies )       config.amount.enemies = SelectPositiveInteger( );
+    if( config.generate.enemies ) config.amount.enemies = SelectPositiveInteger( );
 
     return config;
 }
