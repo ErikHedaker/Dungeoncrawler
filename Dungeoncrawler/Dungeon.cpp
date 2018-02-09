@@ -60,7 +60,7 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
     _tiles( size ),
     _player( player )
 {
-    std::optional<Vector2<int>> place;
+    std::optional<Vector2<int>> positionPlayer;
     Vector2<int> iterator;
 
     for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
@@ -73,7 +73,7 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
             {
                 if( icon == '@' )
                 {
-                    place = iterator;
+                    positionPlayer = iterator;
                 }
                 else
                 {
@@ -83,13 +83,13 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
         }
     }
 
-    if( place )
+    if( positionPlayer )
     {
-        PlayerPlace( *place );
+        PlayerSet( *positionPlayer );
     }
 }
 
-void Dungeon::PlayerPlace( const Vector2<int>& position )
+void Dungeon::PlayerSet( const Vector2<int>& position )
 {
     static constexpr std::array<Vector2<int>, 4> directions
     { {
@@ -272,9 +272,7 @@ bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
 
     for( const auto& direction : directions )
     {
-        const Vector2<int> neighbour = position + direction;
-
-        if( !TileLacking( neighbour, Attributes::Obstacle ) )
+        if( !TileLacking( position + direction, Attributes::Obstacle ) )
         {
             count++;
         }
@@ -301,52 +299,36 @@ void Dungeon::UpdateTile( const Vector2<int>& position )
 }
 void Dungeon::BuildVision( const Vector2<int>& position, int visionReach )
 {
-    static constexpr std::array<int, 2> polarity = { 1, -1 };
-    static constexpr std::array<std::pair<Vector2<int>, std::pair<Vector2<int>, Vector2<int>>>, 4> neighbours
-    { {
-        { {  0, -1 }, { { -1, -1 }, {  1, -1 } } },
-        { {  1,  0 }, { {  1, -1 }, {  1,  1 } } },
-        { {  0,  1 }, { {  1,  1 }, { -1,  1 } } },
-        { { -1,  0 }, { { -1,  1 }, { -1, -1 } } }
-    } };
-    auto LineOfSight = [this] ( const std::vector<Vector2<int>>& path )
-    {
-        for( const auto& current : path )
-        {
-            if( !InBounds( current, _size ) )
-            {
-                break;
-            }
-
-            _vision.insert( current );
-
-            if( !TileLacking( current, Attributes::Obstacle ) )
-            {
-                break;
-            }
-        }
-    };
-
     _vision.clear( );
 
-    /* Base vision generation */
     for( const auto& endpoint : BresenhamCircle( position, visionReach ) )
     {
         LineOfSight( BresenhamLine( position, endpoint ) );
     }
 
-    /* Fix vision artifacts by adding to parallell obstacles  */
-    for( const auto& neighbour : neighbours )
+    FixVisionNearbyWalls( position, visionReach );
+    FixVisionDeadspots( position );
+}
+void Dungeon::FixVisionNearbyWalls( const Vector2<int>& position, int visionReach )
+{
+    static constexpr std::array<Vector2<int>, 4> directions
+    { {
+        {  0, -1 },
+        {  1,  0 },
+        {  0,  1 },
+        { -1,  0 }
+    } };
+
+    for( const auto& direction : directions )
     {
-        const Vector2<int> direction = neighbour.first;
         const std::vector<Vector2<int>> straight = BresenhamLine( position, position + direction * visionReach );
 
-        for( const auto& polar : polarity )
+        for( const auto& polarity : { 1, -1 } )
         {
             for( const auto& current : straight )
             {
                 const Vector2<int> flip = { direction.y, direction.x };
-                const Vector2<int> adjacent = current + flip * polar;
+                const Vector2<int> adjacent = current + flip * polarity;
 
                 if( InBounds( adjacent, _size ) &&
                     !TileLacking( adjacent, Attributes::Obstacle ) )
@@ -362,8 +344,17 @@ void Dungeon::BuildVision( const Vector2<int>& position, int visionReach )
             }
         }
     }
+}
+void Dungeon::FixVisionDeadspots( const Vector2<int>& position )
+{
+    static constexpr std::array<std::pair<Vector2<int>, std::pair<Vector2<int>, Vector2<int>>>, 4> neighbours
+    { {
+        { {  0, -1 }, { { -1, -1 }, {  1, -1 } } },
+        { {  1,  0 }, { {  1, -1 }, {  1,  1 } } },
+        { {  0,  1 }, { {  1,  1 }, { -1,  1 } } },
+        { { -1,  0 }, { { -1,  1 }, { -1, -1 } } }
+    } };
 
-    /* Fix vision artifacts by adding to surrounded deadspots */
     for( const auto& visible : _vision )
     {
         for( const auto& neighbour : neighbours )
@@ -384,6 +375,23 @@ void Dungeon::BuildVision( const Vector2<int>& position, int visionReach )
                     LineOfSight( BresenhamLine( position, adjacent ) );
                 }
             }
+        }
+    }
+}
+void Dungeon::LineOfSight( const std::vector<Vector2<int>>& path )
+{
+    for( const auto& current : path )
+    {
+        if( !InBounds( current, _size ) )
+        {
+            break;
+        }
+
+        _vision.insert( current );
+
+        if( !TileLacking( current, Attributes::Obstacle ) )
+        {
+            break;
         }
     }
 }
@@ -612,9 +620,8 @@ void Dungeon::GenerateEnemies( const EntityFactory& entityFactory, int amount )
             if( Unoccupied( position ) )
             {
                 const int index = GetRNG( 0, enemies.size( ) - 1 );
-                const std::string random = enemies[index]->name;
 
-                EntityInsert( position, entityFactory.Get( random )->Clone( ) );
+                EntityInsert( position, enemies[index]->Clone( ) );
 
                 break;
             }

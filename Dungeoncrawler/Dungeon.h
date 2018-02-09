@@ -68,7 +68,7 @@ class Dungeon
 
         std::vector<Link> links;
 
-        void PlayerPlace( const Vector2<int>& position );
+        void PlayerSet( const Vector2<int>& position );
         void Events( const BattleSystem& battleSystem );
         void Rotate( const Orientation::Enum& orientation );
         void MovementPlayer( const Orientation::Enum& orientation );
@@ -90,6 +90,9 @@ class Dungeon
 
         void UpdateTile( const Vector2<int>& position );
         void BuildVision( const Vector2<int>& position, int visionReach );
+        void FixVisionNearbyWalls( const Vector2<int>& position, int visionReach );
+        void FixVisionDeadspots( const Vector2<int>& position );
+        void LineOfSight( const std::vector<Vector2<int>>& path );
         void OccupantInsert( const Vector2<int>& position, Entity* entity );
         void OccupantRemove( const Vector2<int>& position, Entity* entity );
         void EntityInsert( const Vector2<int>& position, Entity* entity );

@@ -220,7 +220,7 @@ void Game::Reset( )
     _dungeons.emplace_back( _player, _entityFactory, _config );
     _index = 0;
     DungeonLink( 0 );
-    _dungeons[0].PlayerPlace( _dungeons[0].GetSize( ) / 2 );
+    _dungeons[0].PlayerSet( _dungeons[0].GetSize( ) / 2 );
 }
 void Game::Start( )
 {
@@ -254,7 +254,7 @@ void Game::DungeonSwap( )
 
             DungeonLink( indexNext );
             _index = indexNext;
-            _dungeons[indexNext].PlayerPlace( _dungeons[indexPrev].links[i].exit );
+            _dungeons[indexNext].PlayerSet( _dungeons[indexPrev].links[i].exit );
             DungeonRotate( indexNext, static_cast<Orientation::Enum>( align ) );
 
             break;
