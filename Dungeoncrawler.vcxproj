@@ -116,7 +116,6 @@
     <ClCompile Include="Dungeoncrawler\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Dungeoncrawler\Array2D.h" />
     <ClInclude Include="Dungeoncrawler\AStarAlgorithm.h" />
     <ClInclude Include="Dungeoncrawler\BattleSystem.h" />
     <ClInclude Include="Dungeoncrawler\Dungeon.h" />
@@ -124,6 +123,7 @@
     <ClInclude Include="Dungeoncrawler\Enums.h" />
     <ClInclude Include="Dungeoncrawler\Functions.h" />
     <ClInclude Include="Dungeoncrawler\Game.h" />
+    <ClInclude Include="Dungeoncrawler\Grid.h" />
     <ClInclude Include="Dungeoncrawler\Vector2.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

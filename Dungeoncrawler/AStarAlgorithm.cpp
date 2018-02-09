@@ -2,11 +2,11 @@
 #include <unordered_map>
 #include <queue>
 
-Grid::Grid( const Vector2<int>& size, const std::vector<Vector2<int>>& obstacles ) :
+ObstacleGrid::ObstacleGrid( const Vector2<int>& size, const std::vector<Vector2<int>>& obstacles ) :
     _size( size ),
     _obstacles( obstacles.begin( ), obstacles.end( ) )
 { }
-bool Grid::InBounds( const Vector2<int>& position ) const
+bool ObstacleGrid::InBounds( const Vector2<int>& position ) const
 {
     return
         position.x >= 0 &&
@@ -14,11 +14,11 @@ bool Grid::InBounds( const Vector2<int>& position ) const
         position.x < _size.x &&
         position.y < _size.y;
 }
-bool Grid::Passable( const Vector2<int>& position ) const
+bool ObstacleGrid::Passable( const Vector2<int>& position ) const
 {
     return !_obstacles.count( position );
 }
-std::vector<Vector2<int>> Grid::GetNeighbours( const Vector2<int>& position ) const
+std::vector<Vector2<int>> ObstacleGrid::GetNeighbours( const Vector2<int>& position ) const
 {
     const std::array<Vector2<int>, 4> directions =
     { {
@@ -71,7 +71,7 @@ std::vector<Vector2<int>> AStarAlgorithm( const Vector2<int>& start, const Vecto
         My implementation of the A* algorithm is based on this article
     */
 
-    const Grid grid( size, obstacles );
+    const ObstacleGrid grid( size, obstacles );
     std::priority_queue<Node, std::vector<Node>, NodeCompare> nodesActive;
     std::unordered_map<Vector2<int>, Vector2<int>, HasherVector2<int>> positionCameFrom;
     std::unordered_map<Vector2<int>, int,          HasherVector2<int>> positionCost;

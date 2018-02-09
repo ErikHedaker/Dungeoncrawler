@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Vector2.h"
-#include "Array2D.h"
+#include "Grid.h"
 #include "Enums.h"
 #include "EntityFactory.h"
 #include <vector>
@@ -62,7 +62,7 @@ class Dungeon
 {
     public:
         Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const DungeonConfiguration& config );
-        Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Vector2<int>& size, const std::vector<char>& icons );
+        Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Grid<char>& icons );
         Dungeon( const Dungeon& dungeon ) = delete;
         Dungeon( Dungeon&& dungeon ) = default;
 
@@ -82,8 +82,7 @@ class Dungeon
         bool TileLacking( const Vector2<int>& position, int bitmask ) const;
 
     private:
-        Vector2<int> _size;
-        Array2D<Tile> _tiles;
+        Grid<Tile> _grid;
         std::vector<std::unique_ptr<Entity>> _entities;
         std::unordered_set<Vector2<int>, HasherVector2<int>> _vision;
         PlayerHandle& _player;

@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Grid.h"
 #include "Functions.h"
 #include "Dungeon.h"
 #include "BattleSystem.h"
@@ -359,8 +360,15 @@ void Game::Load( )
 {
     const std::string name = "Dungeoncrawler_Save.txt";
     std::ifstream fileIn( name, std::ios::in );
-    std::string line;
     int amountDungeon;
+    auto GetString = [] ( std::ifstream& stream )
+    {
+        std::string line;
+
+        std::getline( stream, line );
+
+        return line;
+    };
     auto GetConfig = [] ( const std::string& line ) -> DungeonConfiguration
     {
         std::stringstream sstream( line );
@@ -413,46 +421,32 @@ void Game::Load( )
     }
 
     _dungeons.clear( );
-
-    std::getline( fileIn, line );
-    _config = GetConfig( line );
-
-    std::getline( fileIn, line );
-    _index = std::stoi( line );
-
-    std::getline( fileIn, line );
-    amountDungeon = std::stoi( line );
+    _config = GetConfig( GetString( fileIn ) );
+    _index = std::stoi( GetString( fileIn ) );
+    amountDungeon = std::stoi( GetString( fileIn ) );
 
     for( int indexDungeon = 0; indexDungeon < amountDungeon; indexDungeon++ )
     {
-        std::vector<char> icons;
-        Vector2<int> size;
+        Grid<char> icons( GetVector2int( GetString( fileIn ) ) );
         Vector2<int> iterator;
         int amountLink;
 
-        std::getline( fileIn, line );
-        size = GetVector2int( line );
-        icons.resize( size.x * size.y );
-
-        for( iterator.y = 0; iterator.y < size.y; iterator.y++ )
+        for( iterator.y = 0; iterator.y < icons.Size( ).y; iterator.y++ )
         {
-            std::getline( fileIn, line );
+            const std::string line = GetString( fileIn );
 
-            for( iterator.x = 0; iterator.x < size.x; iterator.x++ )
+            for( iterator.x = 0; iterator.x < icons.Size( ).x; iterator.x++ )
             {
-                icons[( iterator.y * size.x ) + iterator.x] = line[iterator.x];
+                icons[iterator] = line[iterator.x];
             }
         }
 
-        _dungeons.emplace_back( _player, _entityFactory, size, icons );
-
-        std::getline( fileIn, line );
-        amountLink = std::stoi( line );
+        _dungeons.emplace_back( _player, _entityFactory, icons );
+        amountLink = std::stoi( GetString( fileIn ) );
 
         for( int indexLink = 0; indexLink < amountLink; indexLink++ )
         {
-            std::getline( fileIn, line );
-            _dungeons.back( ).links.push_back( GetLink( line ) );
+            _dungeons.back( ).links.push_back( GetLink( GetString( fileIn ) ) );
         }
     }
 }

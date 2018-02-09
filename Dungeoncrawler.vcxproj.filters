@@ -59,10 +59,10 @@
     <ClInclude Include="Dungeoncrawler\Vector2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Dungeoncrawler\Array2D.h">
+    <ClInclude Include="Dungeoncrawler\BattleSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Dungeoncrawler\BattleSystem.h">
+    <ClInclude Include="Dungeoncrawler\Grid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

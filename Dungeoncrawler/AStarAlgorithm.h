@@ -5,10 +5,10 @@
 #include <array>
 #include <vector>
 
-class Grid
+class ObstacleGrid
 {
     public:
-        Grid( const Vector2<int>& size, const std::vector<Vector2<int>>& obstacles );
+        ObstacleGrid( const Vector2<int>& size, const std::vector<Vector2<int>>& obstacles );
 
         bool InBounds( const Vector2<int>& position ) const;
         bool Passable( const Vector2<int>& position ) const;
