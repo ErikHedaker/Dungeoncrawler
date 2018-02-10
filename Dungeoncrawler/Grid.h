@@ -14,17 +14,7 @@ class Grid
             _size( size ),
             _data( size.x * size.y )
         { }
-        Grid( Grid<T>&& other ) = default;
-        Grid( const Grid<T>& other ) = delete;
 
-        Grid<T>& operator=( const Grid<T>& other ) = delete;
-        Grid<T>& operator=( Grid<T>&& other )
-        {
-            _size = std::move( other._size );
-            _data = std::move( other._data );
-
-            return *this;
-        }
         const T& operator[]( const Vector2<int>& position ) const
         {
             return _data[( position.y * _size.x ) + position.x];

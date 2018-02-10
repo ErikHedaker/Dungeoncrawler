@@ -329,14 +329,6 @@ Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>
 
     return quadrants.at( { rightOfMainDiagonal, rightOfAntiDiagonal } );
 }
-void ClearScreen( )
-{
-    #ifdef _WIN32
-        std::system( "CLS" );
-    #else
-        std::system( "clear" );
-    #endif
-}
 DungeonConfiguration SelectDungeonConfiguration( )
 {
     static const std::map<char, bool> convert
@@ -384,10 +376,20 @@ DungeonConfiguration SelectDungeonConfiguration( )
 
     return config;
 }
-void SelectEnter( )
+int SelectPositiveInteger( )
 {
-    std::cin.ignore( std::numeric_limits<std::streamsize>::max( ), '\n' );
-    std::cin.get( );
+    while( true )
+    {
+        std::string input;
+
+        std::cin >> input;
+
+        if( input.size( ) < 10 &&
+            std::all_of( input.begin( ), input.end( ), ::isdigit ) )
+        {
+            return std::stoi( input );
+        }
+    }
 }
 char SelectChar( const std::vector<char>& valid, std::function<int( int )> modifier )
 {
@@ -405,20 +407,18 @@ char SelectChar( const std::vector<char>& valid, std::function<int( int )> modif
         }
     }
 }
-int SelectPositiveInteger( )
+void SelectEnter( )
 {
-    while( true )
-    {
-        std::string input;
-
-        std::cin >> input;
-
-        if( input.size( ) < 10 &&
-            std::all_of( input.begin( ), input.end( ), ::isdigit ) )
-        {
-            return std::stoi( input );
-        }
-    }
+    std::cin.ignore( std::numeric_limits<std::streamsize>::max( ), '\n' );
+    std::cin.get( );
+}
+void ClearScreen( )
+{
+    #ifdef _WIN32
+    std::system( "CLS" );
+    #else
+    std::system( "clear" );
+    #endif
 }
 std::vector<Character> LoadCharacters( )
 {

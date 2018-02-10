@@ -168,7 +168,7 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
     }
 
     _player.real->position = PositionRotate( _player.real->position, _grid.Size( ), orientation );
-    _vision = vision;
+    _vision = std::move( vision );
     _grid.Rotate( orientation );
 }
 void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
@@ -508,7 +508,7 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
     for( const auto& pair : redirection )
     {
         PathAdd( AStarAlgorithm( pair.first, pair.second, _grid.Size( ), obstacles ) );
-        PathAdd( AStarAlgorithm( pair.second, center, _grid.Size( ), obstacles ) );
+        PathAdd( AStarAlgorithm( pair.second,     center, _grid.Size( ), obstacles ) );
     }
 }
 void Dungeon::GenerateWallsParents( const EntityFactory& entityFactory, int amount )

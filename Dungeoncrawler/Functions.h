@@ -61,11 +61,11 @@ bool OnBorder( const Vector2<int>& position, const Vector2<int>& size, const Vec
 bool InCorner( const Vector2<int>& position, const Vector2<int>& size, int sensitivity = 0 );
 bool InBounds( const Vector2<int>& position, const Vector2<int>& size );
 Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>& size );
-void ClearScreen( );
 DungeonConfiguration SelectDungeonConfiguration( );
-void SelectEnter( );
-char SelectChar( const std::vector<char>& valid, std::function<int( int )> modifier = nullptr );
 int SelectPositiveInteger( );
+char SelectChar( const std::vector<char>& valid, std::function<int( int )> modifier = nullptr );
+void SelectEnter( );
+void ClearScreen( );
 std::vector<Character> LoadCharacters( );
 std::vector<Structure> LoadStructures( );
 std::vector<Effect> LoadEffects( );

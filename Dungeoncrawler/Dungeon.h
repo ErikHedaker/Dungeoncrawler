@@ -63,7 +63,6 @@ class Dungeon
     public:
         Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const DungeonConfiguration& config );
         Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Grid<char>& icons );
-        Dungeon( const Dungeon& dungeon ) = delete;
         Dungeon( Dungeon&& dungeon ) = default;
 
         std::vector<Link> links;
