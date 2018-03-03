@@ -10,26 +10,6 @@ struct Attributes
     };
 };
 
-struct Spells
-{
-    enum Enum
-    {
-        TouchOfDeath = 1 << 0,
-        Fireball     = 1 << 1,
-        Iceblast     = 1 << 2
-    };
-};
-
-struct States
-{
-    enum Enum
-    {
-        Fighting = 1 << 0,
-        Swapping = 1 << 1,
-        Looting  = 1 << 2
-    };
-};
-
 struct Orientation
 {
     enum Enum
@@ -39,10 +19,4 @@ struct Orientation
         South =  2,
         West  = -1
     };
-};
-
-enum class ItemType
-{
-    Weapon,
-    Armour
 };

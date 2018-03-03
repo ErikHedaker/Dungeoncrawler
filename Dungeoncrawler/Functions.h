@@ -7,14 +7,13 @@
 #include <optional>
 #include <string_view>
 
-struct Power;
 class Dungeon;
+struct Power;
 struct DungeonConfiguration;
 struct Effect;
 struct Spell;
 struct Health;
 struct Character;
-struct Structure;
 struct Player;
 
 class StringWrapper
@@ -67,7 +66,6 @@ char SelectChar( const std::vector<char>& valid, std::function<int( int )> modif
 void SelectEnter( );
 void ClearScreen( );
 std::vector<Character> LoadCharacters( );
-std::vector<Structure> LoadStructures( );
 std::vector<Effect> LoadEffects( );
 std::vector<Spell> LoadSpells( );
 Player LoadPlayerDefault( );

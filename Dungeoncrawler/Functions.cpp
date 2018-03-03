@@ -221,28 +221,28 @@ std::vector<Vector2<int>> BresenhamCircle( const Vector2<int>& center, int radiu
 {
     std::vector<Vector2<int>> result;
     Vector2<int> current = { radius * ( -1 ), 0 };
-    int error = 2 - 2 * radius;
+    int errorNext = 2 - 2 * radius;
 
     while( current.x < 0 )
     {
-        const int temp = error;
+        const int errorPrev = errorNext;
 
         result.push_back( { center.x - current.x, center.y + current.y } );
         result.push_back( { center.x - current.y, center.y - current.x } );
         result.push_back( { center.x + current.x, center.y - current.y } );
         result.push_back( { center.x + current.y, center.y + current.x } );
 
-        if( temp <= current.y )
+        if( errorPrev <= current.y )
         {
             current.y++;
-            error += current.y * 2 + 1;
+            errorNext += current.y * 2 + 1;
         }
 
-        if( temp > current.x ||
-            error > current.y )
+        if( errorPrev > current.x ||
+            errorNext > current.y )
         {
             current.x++;
-            error += current.x * 2 + 1;
+            errorNext += current.x * 2 + 1;
         }
     }
 
@@ -262,11 +262,11 @@ std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector
     };
     std::vector<Vector2<int>> result;
     Vector2<int> current = start;
-    int error = delta.x + delta.y;
+    int errorNext = delta.x + delta.y;
 
     while( true )
     {
-        const int temp = error * 2;
+        const int errorPrev = errorNext * 2;
 
         result.push_back( current );
 
@@ -275,15 +275,15 @@ std::vector<Vector2<int>> BresenhamLine( const Vector2<int>& start, const Vector
             break;
         }
 
-        if( temp >= delta.y )
+        if( errorPrev >= delta.y )
         {
-            error += delta.y;
+            errorNext += delta.y;
             current.x += offset.x;
         }
 
-        if( temp <= delta.x )
+        if( errorPrev <= delta.x )
         {
-            error += delta.x;
+            errorNext += delta.x;
             current.y += offset.y;
         }
     }
@@ -363,16 +363,36 @@ DungeonConfiguration SelectDungeonConfiguration( )
         std::cout << "Enter dungeon height: ";
         config.size.dungeon.y = SelectPositiveInteger( );
     }
-    std::cout << "Enter amount of doors: ";
-    if( config.generate.doors ) config.amount.doors = SelectPositiveInteger( );
-    std::cout << "Enter amount of parent walls: ";
-    if( config.generate.wallsParents ) config.amount.wallsParents = SelectPositiveInteger( );
-    std::cout << "Enter amount of children walls: ";
-    if( config.generate.wallsChildren ) config.amount.wallsChildren = SelectPositiveInteger( );
-    std::cout << "Enter amount of filler wall cycles: ";
-    if( config.generate.wallsFiller ) config.amount.wallsFillerCycles = SelectPositiveInteger( );
-    std::cout << "Enter amount of enemies: ";
-    if( config.generate.enemies ) config.amount.enemies = SelectPositiveInteger( );
+
+    if( config.generate.doors )
+    {
+        std::cout << "Enter amount of doors: ";
+        config.amount.doors = SelectPositiveInteger( );
+    }
+    
+    if( config.generate.wallsParents )
+    {
+        std::cout << "Enter amount of parent walls: ";
+        config.amount.wallsParents = SelectPositiveInteger( );
+    }
+
+    if( config.generate.wallsChildren )
+    {
+        std::cout << "Enter amount of children walls: ";
+        config.amount.wallsChildren = SelectPositiveInteger( );
+    }
+
+    if( config.generate.wallsFiller )
+    {
+        std::cout << "Enter amount of filler wall cycles: ";
+        config.amount.wallsFillerCycles = SelectPositiveInteger( );
+    }
+
+    if( config.generate.enemies )
+    {
+        std::cout << "Enter amount of enemies: ";
+        config.amount.enemies = SelectPositiveInteger( );
+    }
 
     return config;
 }
@@ -451,30 +471,6 @@ std::vector<Character> LoadCharacters( )
 
     return characters;
 }
-std::vector<Structure> LoadStructures( )
-{
-    const std::string name = "Dungeoncrawler_Dependency_Structures.txt";
-    const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream { name, std::ios::in } }, { } };
-    constexpr int offset = 3;
-    std::vector<Structure> structures;
-
-    if( fileCache.empty( ) )
-    {
-        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
-    }
-
-    for( int i = 0, limit = fileCache.size( ); i < limit; i += offset )
-    {
-        structures.push_back(
-        {
-            fileCache[i + 0],
-            fileCache[i + 1].back( ),
-            GetBitmask( fileCache[i + 2] )
-        } );
-    }
-
-    return structures;
-}
 std::vector<Effect> LoadEffects( )
 {
     const std::string name = "Dungeoncrawler_Dependency_Effects.txt";
@@ -545,7 +541,6 @@ Player LoadPlayerDefault( )
         },
         std::stoi( fileCache[6] ),
         GetBitmask( fileCache[7] ),
-        std::stoi( fileCache[8] ),
-        GetBitmask( fileCache[9] )
+        std::stoi( fileCache[8] )
     };
 }

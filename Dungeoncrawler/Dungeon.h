@@ -62,11 +62,10 @@ class Dungeon
 {
     public:
         Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const DungeonConfiguration& config );
-        Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Grid<char>& icons );
+        Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Grid<char>& icons, const std::vector<Door>& doors );
         Dungeon( Dungeon&& dungeon ) = default;
 
-        std::vector<Link> links;
-
+        void Connect( const Connector& connector, int index );
         void PlayerSet( const Vector2<int>& position );
         void Events( const BattleSystem& battleSystem );
         void Rotate( const Orientation::Enum& orientation );
@@ -74,14 +73,15 @@ class Dungeon
         void MovementRandom( );
 
         const Vector2<int>& GetSize( ) const;
+        const std::vector<Door*> GetDoors( ) const;
         char GetIcon( const Vector2<int>& position ) const;
         bool Visible( const Vector2<int>& position ) const;
         bool Unoccupied( const Vector2<int>& position ) const;
-        bool Surrounded( const Vector2<int>& position, int threshold ) const;
         bool TileLacking( const Vector2<int>& position, int bitmask ) const;
 
     private:
         Grid<Tile> _grid;
+        std::vector<int> _indexDoors;
         std::vector<std::unique_ptr<Entity>> _entities;
         std::unordered_set<Vector2<int>, HasherVector2<int>> _vision;
         PlayerHandle& _player;

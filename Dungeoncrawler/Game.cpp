@@ -207,7 +207,7 @@ bool Game::TurnPlayer( )
             case 'G':
             case 'H':
             {
-                DungeonRotate( _index, rotations.at( input ) );
+                _dungeons[_index].Rotate( rotations.at( input ) );
 
                 break;
             }
@@ -232,136 +232,108 @@ void Game::Start( )
         _dungeons[_index].Events( _battleSystem );
         _player.real->Update( );
 
-        if( _player.real->states & States::Swapping )
+        if( _player.real->next )
         {
-            _player.real->states &= ~States::Swapping;
-            DungeonSwap( );
+            DungeonSwap( *_player.real->next );
+            _player.real->next.reset( );
         }
     }
 }
-void Game::DungeonSwap( )
+void Game::DungeonSwap( const Connector& connector )
 {
-    const int limit = _dungeons[_index].links.size( );
+    const int indexPrev = _index;
+    const int indexNext = connector.indexDungeon;
+    const Vector2<int> position = _dungeons[indexNext].GetDoors( )[connector.indexDoor]->position;
+    const int entrance = RectQuadrant( _player.real->position, _dungeons[indexPrev].GetSize( ) );
+    const int exit = RectQuadrant( position, _dungeons[indexNext].GetSize( ) );
+    const int align = ( ( ( entrance - exit ) + 3 ) % 4 ) - 1;
 
-    for( int i = 0; i < limit; i++ )
-    {
-        if( _dungeons[_index].links[i].entrance == _player.real->position )
-        {
-            const int indexPrev = _index;
-            const int indexNext = _dungeons[indexPrev].links[i].indexDungeon;
-            const int entrance  = RectQuadrant( _dungeons[indexPrev].links[i].entrance, _dungeons[indexPrev].GetSize( ) );
-            const int exit      = RectQuadrant( _dungeons[indexPrev].links[i].exit,     _dungeons[indexNext].GetSize( ) );
-            const int align     = ( ( ( entrance - exit ) + 3 ) % 4 ) - 1;
-
-            DungeonLink( indexNext );
-            _index = indexNext;
-            _dungeons[indexNext].PlayerSet( _dungeons[indexPrev].links[i].exit );
-            DungeonRotate( indexNext, static_cast<Orientation::Enum>( align ) );
-
-            break;
-        }
-    }
+    DungeonLink( indexNext );
+    _index = indexNext;
+    _dungeons[indexNext].PlayerSet( position );
+    _dungeons[indexNext].Rotate( static_cast<Orientation::Enum>( align ) );
 }
-void Game::DungeonLink( int indexCurrentDungeon )
+void Game::DungeonLink( int dungeon )
 {
-    const int limit = _dungeons[indexCurrentDungeon].links.size( );
+    auto doors = _dungeons[dungeon].GetDoors( );
+    int size = doors.size( );
 
-    for( int indexCurrentLink = 0; indexCurrentLink < limit; indexCurrentLink++ )
+    for( int i = 0; i < size; i++ )
     {
-        if( _dungeons[indexCurrentDungeon].links[indexCurrentLink].indexLink < 0 &&
-            _dungeons[indexCurrentDungeon].links[indexCurrentLink].indexDungeon < 0 )
+        if( !doors[i]->connector )
         {
+            const int partner = _dungeons.size( );
+
             _dungeons.emplace_back( _player, _entityFactory, _config );
-
-            const int indexPartnerLink = 0;
-            const int indexPartnerDungeon = _dungeons.size( ) - 1;
-            Link& partner = _dungeons[indexPartnerDungeon].links[indexPartnerLink];
-            Link& current = _dungeons[indexCurrentDungeon].links[indexCurrentLink];
-
-            partner = { indexCurrentDungeon, indexCurrentLink, partner.entrance, current.entrance };
-            current = { indexPartnerDungeon, indexPartnerLink, current.entrance, partner.entrance };
+            _dungeons[partner].Connect( { dungeon, i }, 0 );
+            _dungeons[dungeon].Connect( { partner, 0 }, i );
         }
     }
-}
-void Game::DungeonRotate( int indexDungeon, const Orientation::Enum& orientation )
-{
-    const Vector2<int> sizePrev = _dungeons[indexDungeon].GetSize( );
-
-    for( auto& current : _dungeons[indexDungeon].links )
-    {
-        Link& partner = _dungeons[current.indexDungeon].links[current.indexLink];
-
-        current.entrance = PositionRotate( current.entrance, sizePrev, orientation );
-        partner.exit = PositionRotate( partner.exit, sizePrev, orientation );
-    }
-
-    _dungeons[indexDungeon].Rotate( orientation );
 }
 void Game::Save( )
 {
     const std::string name = "Dungeoncrawler_Save.txt";
-    std::ofstream fileOut( name, std::ios::out | std::ios::trunc );
+    std::ofstream oFile( name, std::ios::out | std::ios::trunc );
 
-    if( !fileOut.is_open( ) )
+    if( !oFile.is_open( ) )
     {
         throw std::exception( std::string( "Unable to open file: " + name ).c_str( ) );
     }
 
-    fileOut << _config.size.determined << ',';
-    fileOut << _config.size.dungeon.x << ',';
-    fileOut << _config.size.dungeon.y << ',';
-    fileOut << _config.generate.doors << ',';
-    fileOut << _config.generate.wallsOuter << ',';
-    fileOut << _config.generate.hiddenPath << ',';
-    fileOut << _config.generate.wallsParents << ',';
-    fileOut << _config.generate.wallsChildren << ',';
-    fileOut << _config.generate.wallsFiller << ',';
-    fileOut << _config.generate.enemies << ',';
-    fileOut << _config.amount.doors << ',';
-    fileOut << _config.amount.wallsParents << ',';
-    fileOut << _config.amount.wallsChildren << ',';
-    fileOut << _config.amount.wallsFillerCycles << ',';
-    fileOut << _config.amount.enemies << '\n';
-    fileOut << _index << '\n';
-    fileOut << _dungeons.size( ) << '\n';
+    oFile << _config.size.determined << ',';
+    oFile << _config.size.dungeon.x << ',';
+    oFile << _config.size.dungeon.y << ',';
+    oFile << _config.generate.doors << ',';
+    oFile << _config.generate.wallsOuter << ',';
+    oFile << _config.generate.hiddenPath << ',';
+    oFile << _config.generate.wallsParents << ',';
+    oFile << _config.generate.wallsChildren << ',';
+    oFile << _config.generate.wallsFiller << ',';
+    oFile << _config.generate.enemies << ',';
+    oFile << _config.amount.doors << ',';
+    oFile << _config.amount.wallsParents << ',';
+    oFile << _config.amount.wallsChildren << ',';
+    oFile << _config.amount.wallsFillerCycles << ',';
+    oFile << _config.amount.enemies << '\n';
+    oFile << _index << '\n';
+    oFile << _dungeons.size( ) << '\n';
 
     for( int i = 0, limit = _dungeons.size( ); i < limit; i++ )
     {
+        const auto doors = _dungeons[i].GetDoors( );
         const Vector2<int> sizeDungeon = _dungeons[i].GetSize( );
         Vector2<int> iterator;
 
-        fileOut << sizeDungeon.x << ',';
-        fileOut << sizeDungeon.y << '\n';
+        oFile << sizeDungeon.x << ',';
+        oFile << sizeDungeon.y << '\n';
 
         for( iterator.y = 0; iterator.y < sizeDungeon.y; iterator.y++ )
         {
             for( iterator.x = 0; iterator.x < sizeDungeon.x; iterator.x++ )
             {
-                fileOut << _dungeons[i].GetIcon( iterator );
+                oFile << _dungeons[i].GetIcon( iterator );
             }
 
-            fileOut << '\n';
+            oFile << '\n';
         }
 
-        fileOut << _dungeons[i].links.size( ) << '\n';
+        oFile << doors.size( ) << '\n';
 
-        for( const auto& link : _dungeons[i].links )
+        for( const auto& door : doors )
         {
-            fileOut << link.indexDungeon << ',';
-            fileOut << link.indexLink << ',';
-            fileOut << link.entrance.x << ',';
-            fileOut << link.entrance.y << ',';
-            fileOut << link.exit.x << ',';
-            fileOut << link.exit.y << '\n';
+            oFile << door->position.x << ',';
+            oFile << door->position.y << ',';
+            oFile << door->connector->indexDungeon << ',';
+            oFile << door->connector->indexDoor << '\n';
         }
     }
 }
 void Game::Load( )
 {
     const std::string name = "Dungeoncrawler_Save.txt";
-    std::ifstream fileIn( name, std::ios::in );
-    int amountDungeon;
-    auto GetString = [] ( std::ifstream& stream )
+    std::ifstream iFile( name, std::ios::in );
+    int dungeons;
+    auto GetString = [] ( std::ifstream& stream ) -> std::string
     {
         std::string line;
 
@@ -382,6 +354,19 @@ void Game::Load( )
 
         return DungeonConfiguration( values );
     };
+    auto GetVector = [] ( const std::string& line ) -> std::vector<int>
+    {
+        std::stringstream sstream( line );
+        std::string value;
+        std::vector<int> values;
+
+        while( std::getline( sstream, value, ',' ) )
+        {
+            values.push_back( std::stoi( value ) );
+        }
+
+        return values;
+    };
     auto GetVector2int = [] ( const std::string& line ) -> Vector2<int>
     {
         std::stringstream sstream( line );
@@ -395,45 +380,27 @@ void Game::Load( )
 
         return values;
     };
-    auto GetLink = [] ( const std::string& line ) -> Link
-    {
-        std::stringstream sstream( line );
-        std::string value;
-        std::vector<int> values;
 
-        while( std::getline( sstream, value, ',' ) )
-        {
-            values.push_back( std::stoi( value ) );
-        }
-
-        return Link
-        {
-            values[0],
-            values[1],
-            { values[2], values[3] },
-            { values[4], values[5] }
-        };
-    };
-
-    if( !fileIn.is_open( ) )
+    if( !iFile.is_open( ) )
     {
         throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
     }
 
     _dungeons.clear( );
-    _config = GetConfig( GetString( fileIn ) );
-    _index = std::stoi( GetString( fileIn ) );
-    amountDungeon = std::stoi( GetString( fileIn ) );
+    _config = GetConfig( GetString( iFile ) );
+    _index = std::stoi( GetString( iFile ) );
+    dungeons = std::stoi( GetString( iFile ) );
 
-    for( int indexDungeon = 0; indexDungeon < amountDungeon; indexDungeon++ )
+    for( int indexDungeon = 0; indexDungeon < dungeons; indexDungeon++ )
     {
-        Grid<char> icons( GetVector2int( GetString( fileIn ) ) );
+        Grid<char> icons( GetVector2int( GetString( iFile ) ) );
         Vector2<int> iterator;
-        int amountLink;
+        std::vector<Door> doors;
+        int size;
 
         for( iterator.y = 0; iterator.y < icons.Size( ).y; iterator.y++ )
         {
-            const std::string line = GetString( fileIn );
+            const std::string line = GetString( iFile );
 
             for( iterator.x = 0; iterator.x < icons.Size( ).x; iterator.x++ )
             {
@@ -441,12 +408,17 @@ void Game::Load( )
             }
         }
 
-        _dungeons.emplace_back( _player, _entityFactory, icons );
-        amountLink = std::stoi( GetString( fileIn ) );
+        size = std::stoi( GetString( iFile ) );
 
-        for( int indexLink = 0; indexLink < amountLink; indexLink++ )
+        for( int i = 0; i < size; i++ )
         {
-            _dungeons.back( ).links.push_back( GetLink( GetString( fileIn ) ) );
+            const std::vector<int> values = GetVector( GetString( iFile ) );
+
+            doors.push_back( *dynamic_cast<Door*>( _entityFactory.Get( "Door" ).get( ) ) );
+            doors[i].position  = { values[0], values[1] };
+            doors[i].connector = { values[2], values[3] };
         }
+
+        _dungeons.emplace_back( _player, _entityFactory, icons, doors );
     }
 }

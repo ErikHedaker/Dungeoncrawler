@@ -1,10 +1,30 @@
 #include "EntityFactory.h"
 #include "Functions.h"
 
+void Entity::Interact( Player* player )
+{
+
+}
+void Door::Interact( Player* player )
+{
+    player->next = connector;
+}
+void Wall::Interact( Player* player )
+{
+    player->blocked = true;
+}
+void Character::Interact( Player* player )
+{
+
+}
+void Player::Interact( Player* player )
+{
+
+}
+
 EntityFactory::EntityFactory( ) :
     _entities( [](
     std::vector<Character> characters,
-    std::vector<Structure> structures,
     Player player )
     {
         std::map<std::string, std::unique_ptr<Entity>> temp;
@@ -14,17 +34,14 @@ EntityFactory::EntityFactory( ) :
             temp.insert_or_assign( character.name, std::make_unique<Character>( character ) );
         }
 
-        for( const auto& structure : structures )
-        {
-            temp.insert_or_assign( structure.name, std::make_unique<Structure>( structure ) );
-        }
-
+        temp.insert_or_assign( "Hidden", std::make_unique<Entity>( "Hidden", '-', 0 ) );
+        temp.insert_or_assign( "Door", std::make_unique<Door>( "Door", '+', Attributes::Obstacle ) );
+        temp.insert_or_assign( "Wall", std::make_unique<Wall>( "Wall", '#', Attributes::Obstacle ) );
         temp.insert_or_assign( "PlayerDefault", std::make_unique<Player>( player ) );
 
         return std::move( temp );
     }(
     LoadCharacters( ),
-    LoadStructures( ),
     LoadPlayerDefault( ) ) )
 { }
 

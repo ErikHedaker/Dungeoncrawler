@@ -7,6 +7,14 @@
 #include <memory>
 #include <map>
 
+struct Player;
+
+struct Connector
+{
+    int indexDungeon;
+    int indexDoor;
+};
+
 struct Health
 {
     int max;
@@ -25,7 +33,11 @@ struct Entity
     { }
     virtual ~Entity( ) { }
 
-    virtual Entity* Clone( ) const = 0;
+    virtual Entity* Clone( ) const
+    {
+        return new Entity( *this );
+    }
+    virtual void Interact( Player* player );
 
     const std::string name;
     const char icon;
@@ -34,30 +46,32 @@ struct Entity
     Vector2<int> position;
 };
 
-struct Item : public Entity
+struct Door : public Entity
 {
-    Item( const std::string& name, char icon, int attributes ) :
+    Door( const std::string& name, char icon, int attributes ) :
         Entity( name, icon, attributes )
     { }
 
-    Item* Clone( ) const override
+    Door* Clone( ) const override
     {
-        return new Item( *this );
+        return new Door( *this );
     }
+    void Interact( Player* player ) override;
 
-    ItemType type;
+    std::optional<Connector> connector;
 };
 
-struct Structure : public Entity
+struct Wall : public Entity
 {
-    Structure( const std::string& name, char icon, int attributes ) :
+    Wall( const std::string& name, char icon, int attributes ) :
         Entity( name, icon, attributes )
     { }
 
-    Structure* Clone( ) const override
+    Wall* Clone( ) const override
     {
-        return new Structure( *this );
+        return new Wall( *this );
     }
+    void Interact( Player* player ) override;
 };
 
 struct Character : public Entity
@@ -73,6 +87,7 @@ struct Character : public Entity
     {
         return new Character( *this );
     }
+    void Interact( Player* player ) override;
     void Update( )
     {
         if( health.current > 0 )
@@ -98,14 +113,17 @@ struct Character : public Entity
 
 struct Player : public Character
 {
-    Player( const std::string& name, char icon, int attributes, Health health, int damage, int spells, int visionReach, int states ) :
+    Player( const std::string& name, char icon, int attributes, Health health, int damage, int spells, int visionReach ) :
         Character( name, icon, attributes, health, damage, spells ),
         visionReach( visionReach ),
-        states( states )
+        blocked( false )
     { }
 
+    void Interact( Player* player ) override;
+
     int visionReach;
-    int states;
+    bool blocked;
+    std::optional<Connector> next;
 };
 
 struct PlayerHandle

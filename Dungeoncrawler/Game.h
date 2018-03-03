@@ -24,9 +24,8 @@ class Game
         bool TurnPlayer( );
         void Reset( );
         void Start( );
-        void DungeonSwap( );
+        void DungeonSwap( const Connector& connector );
         void DungeonLink( int indexDungeonCurrent );
-        void DungeonRotate( int indexDungeon, const Orientation::Enum& orientation );
         void Save( );
         void Load( );
 };

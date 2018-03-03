@@ -75,6 +75,7 @@ std::vector<Vector2<int>> AStarAlgorithm( const Vector2<int>& start, const Vecto
     std::priority_queue<Node, std::vector<Node>, NodeCompare> nodesActive;
     std::unordered_map<Vector2<int>, Vector2<int>, HasherVector2<int>> positionCameFrom;
     std::unordered_map<Vector2<int>, int,          HasherVector2<int>> positionCost;
+    std::vector<Vector2<int>> path { end };
 
     nodesActive.emplace( start, 0 );
     positionCameFrom[start] = start;
@@ -107,11 +108,7 @@ std::vector<Vector2<int>> AStarAlgorithm( const Vector2<int>& start, const Vecto
         }
     }
 
-    /* Reconstruct path */
-    Vector2<int> current = end;
-    std::vector<Vector2<int>> path { current };
-
-    while( current != start )
+    for( auto current = end; current != start; )
     {
         try
         {

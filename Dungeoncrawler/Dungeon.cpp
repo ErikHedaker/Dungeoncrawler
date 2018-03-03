@@ -54,18 +54,25 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
     if( config.generate.wallsFiller )   GenerateWallsFiller( entityFactory, config.amount.wallsFillerCycles );
     if( config.generate.enemies )       GenerateEnemies( entityFactory, config.amount.enemies );
 }
-Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Grid<char>& icons ) :
+Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Grid<char>& icons, const std::vector<Door>& doors ) :
     _grid( icons.Size( ) ),
     _player( player )
 {
     std::optional<Vector2<int>> positionPlayer;
     Vector2<int> iterator;
 
+    for( const auto& door : doors )
+    {
+        EntityInsert( door.position, door.Clone( ) );
+        _indexDoors.push_back( _entities.size( ) - 1 );
+    }
+
     for( iterator.y = 0; iterator.y < _grid.Size( ).y; iterator.y++ )
     {
         for( iterator.x = 0; iterator.x < _grid.Size( ).x; iterator.x++ )
         {
-            if( icons[iterator] != '-' )
+            if( icons[iterator] != '-' &&
+                icons[iterator] != '+' )
             {
                 if( icons[iterator] == '@' )
                 {
@@ -85,6 +92,10 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
     }
 }
 
+void Dungeon::Connect( const Connector& connector, int index )
+{
+    dynamic_cast<Door*>( _entities[_indexDoors[index]].get( ) )->connector = connector;
+}
 void Dungeon::PlayerSet( const Vector2<int>& position )
 {
     static constexpr std::array<Vector2<int>, 4> directions
@@ -131,13 +142,9 @@ void Dungeon::Events( const BattleSystem& battleSystem )
     }
 
     /* Swap dungeon if conditions meet */
-    for( const auto& link : links )
+    if( _player.real->next )
     {
-        if( _player.real->position == link.entrance )
-        {
-            _player.real->states |= States::Swapping;
-            OccupantRemove( _player.real->position, _player.base.get( ) );
-        }
+        OccupantRemove( _player.real->position, _player.base.get( ) );
     }
 
 
@@ -174,26 +181,22 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
 void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
 {
     const Vector2<int> moving = PositionMove( _player.real->position, orientation );
-    auto Door = [this]( const Tile& tile )
+
+    if( InBounds( moving, _grid.Size( ) ) )
     {
-        for( const auto& entity : tile.occupants )
+        for( auto& entity : _grid[moving].occupants )
         {
-            if( entity->name == "Door" )
-            {
-                return true;
-            }
+            entity->Interact( _player.real );
         }
 
-        return false;
-    };
+        if( !_player.real->blocked )
+        {
+            OccupantRemove( _player.real->position, _player.base.get( ) );
+            _player.real->position = moving;
+            OccupantInsert( _player.real->position, _player.base.get( ) );
+        }
 
-    if( InBounds( moving, _grid.Size( ) ) &&
-        ( TileLacking( moving, Attributes::Obstacle ) ||
-          Door( _grid[moving] ) ) )
-    {
-        OccupantRemove( _player.real->position, _player.base.get( ) );
-        _player.real->position = moving;
-        OccupantInsert( _player.real->position, _player.base.get( ) );
+        _player.real->blocked = false;
     }
 
     BuildVision( _player.real->position, _player.real->visionReach );
@@ -221,6 +224,17 @@ const Vector2<int>& Dungeon::GetSize( ) const
 {
     return _grid.Size( );
 }
+const std::vector<Door*> Dungeon::GetDoors( ) const
+{
+    std::vector<Door*> doors;
+
+    for( auto i : _indexDoors )
+    {
+        doors.push_back( dynamic_cast<Door*>( _entities[i].get( ) ) );
+    }
+
+    return doors;
+}
 char Dungeon::GetIcon( const Vector2<int>& position ) const
 {
     return _grid[position].icon;
@@ -232,31 +246,6 @@ bool Dungeon::Visible( const Vector2<int>& position ) const
 bool Dungeon::Unoccupied( const Vector2<int>& position ) const
 {
     return _grid[position].occupants.empty( );
-}
-bool Dungeon::Surrounded( const Vector2<int>& position, int threshold ) const
-{
-    static constexpr std::array<Vector2<int>, 8> directions
-    { {
-        {  0, -1 },
-        {  1, -1 },
-        {  1,  0 },
-        {  1,  1 },
-        {  0,  1 },
-        { -1,  1 },
-        { -1,  0 },
-        { -1, -1 }
-    } };
-    int count = 0;
-
-    for( const auto& direction : directions )
-    {
-        if( !TileLacking( position + direction, Attributes::Obstacle ) )
-        {
-            count++;
-        }
-    }
-
-    return count >= threshold;
 }
 bool Dungeon::TileLacking( const Vector2<int>& position, int bitmask ) const
 {
@@ -441,8 +430,8 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
         const int index = GetRNG( 0, sides[side].size( ) - 1 );
 
         EntityInsert( sides[side][index], entityFactory.Get( "Door" )->Clone( ) );
-        links.push_back( { -1, -1, sides[side][index], { -1, -1 } } );
         sides[side].erase( sides[side].begin( ) + index );
+        _indexDoors.push_back( _entities.size( ) - 1 );
     }
 }
 void Dungeon::GenerateWallsOuter( const EntityFactory& entityFactory )
@@ -472,7 +461,7 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
         {
             if( Unoccupied( position ) )
             {
-                EntityInsert( position, entityFactory.Get( "Path" )->Clone( ) );
+                EntityInsert( position, entityFactory.Get( "Hidden" )->Clone( ) );
             }
         }
     };
@@ -486,7 +475,7 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
         }
     }
 
-    for( const auto& link : links )
+    for( const auto& door : GetDoors( ) )
     {
         while( true )
         {
@@ -498,7 +487,7 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
 
             if( Unoccupied( random ) )
             {
-                redirection.emplace_back( link.entrance, random );
+                redirection.emplace_back( door->position, random );
 
                 break;
             }
@@ -564,6 +553,31 @@ void Dungeon::GenerateWallsFiller( const EntityFactory& entityFactory, int amoun
 {
     const int limit = amount ? amount : 5;
     Vector2<int> iterator;
+    auto Surrounded = [this] ( const Vector2<int>& position, int threshold ) -> bool
+    {
+        static constexpr std::array<Vector2<int>, 8> directions
+        { {
+            {  0, -1 },
+            {  1, -1 },
+            {  1,  0 },
+            {  1,  1 },
+            {  0,  1 },
+            { -1,  1 },
+            { -1,  0 },
+            { -1, -1 }
+        } };
+        int count = 0;
+
+        for( const auto& direction : directions )
+        {
+            if( !( this->TileLacking( position + direction, Attributes::Obstacle ) ) )
+            {
+                count++;
+            }
+        }
+
+        return count >= threshold;
+    };
 
     for( int i = 0; i < limit; i++ )
     {
