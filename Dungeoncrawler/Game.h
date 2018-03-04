@@ -24,7 +24,6 @@ class Game
         bool TurnPlayer( );
         void Reset( );
         void Start( );
-        void DungeonSwap( const Connector& connector );
         void DungeonAlign( const Connector& connector );
         void DungeonConnect( int index );
         void Save( );

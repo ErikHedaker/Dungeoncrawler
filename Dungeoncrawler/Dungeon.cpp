@@ -190,7 +190,7 @@ void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
     {
         for( auto& entity : _grid[moving].occupants )
         {
-            entity->Interact( _player.real );
+            entity->Interact( *_player.real );
         }
 
         if( !_player.real->blocked )
@@ -234,8 +234,7 @@ const std::vector<Door*> Dungeon::GetDoors( ) const
 
     for( auto i : _indexDoors )
     {
-        Door* door = dynamic_cast<Door*>( _entities[i].get( ) );
-        doors.push_back( door );
+        doors.push_back( dynamic_cast<Door*>( _entities[i].get( ) ) );
     }
 
     return doors;

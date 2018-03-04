@@ -1,25 +1,91 @@
 #include "EntityFactory.h"
 #include "Functions.h"
 
-void Entity::Interact( Player* player )
+Entity::Entity( const std::string& name, char icon, int attributes ) :
+    name( name ),
+    icon( icon ),
+    attributes( attributes ),
+    active( true ),
+    position( { -1, -1 } )
+{ }
+Entity::~Entity( )
 {
 
 }
-void Door::Interact( Player* player )
+Entity* Entity::Clone( ) const
 {
-    player->next = connector;
+    return new Entity( *this );
 }
-void Wall::Interact( Player* player )
-{
-    player->blocked = true;
-}
-void Character::Interact( Player* player )
+void Entity::Interact( Player& player )
 {
 
 }
-void Player::Interact( Player* player )
-{
 
+Door::Door( const std::string& name, char icon, int attributes ) :
+    Entity( name, icon, attributes )
+{ }
+Door* Door::Clone( ) const
+{
+    return new Door( *this );
+}
+void Door::Interact( Player& player )
+{
+    player.next = connector;
+}
+
+Wall::Wall( const std::string& name, char icon, int attributes ) :
+    Entity( name, icon, attributes )
+{ }
+Wall* Wall::Clone( ) const
+{
+    return new Wall( *this );
+}
+void Wall::Interact( Player& player )
+{
+    player.blocked = true;
+}
+
+Character::Character( const std::string& name, char icon, int attributes, Health health, int damage, int spells ) :
+    Entity( name, icon, attributes ),
+    health( health ),
+    damage( damage ),
+    spells( spells )
+{ }
+Character* Character::Clone( ) const
+{
+    return new Character( *this );
+}
+void Character::Update( )
+{
+    if( health.current > 0 )
+    {
+        health.current += health.regeneration;
+    }
+    else
+    {
+        active = false;
+    }
+
+    if( health.current > health.max )
+    {
+        health.current = health.max;
+    }
+}
+
+Player::Player( const std::string& name, char icon, int attributes, Health health, int damage, int spells, int visionReach ) :
+    Character( name, icon, attributes, health, damage, spells ),
+    visionReach( visionReach ),
+    blocked( false )
+{ }
+
+PlayerHandle::PlayerHandle( const Player& player ) :
+    base( std::make_unique<Player>( player ) ),
+    real( dynamic_cast<Player*>( base.get( ) ) )
+{ }
+void PlayerHandle::Reset( const Player& player )
+{
+    base.reset( new Player( player ) );
+    real = dynamic_cast<Player*>( base.get( ) );
 }
 
 EntityFactory::EntityFactory( ) :

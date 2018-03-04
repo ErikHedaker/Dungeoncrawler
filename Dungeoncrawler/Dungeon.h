@@ -65,8 +65,8 @@ class Dungeon
         Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, const Grid<char>& icons, const std::vector<Door>& doors );
         Dungeon( Dungeon&& dungeon ) = default;
 
-        void Connect( const Connector& connector, int index );
         void PlayerSet( const std::optional<int>& index );
+        void Connect( const Connector& connector, int index );
         void Events( const BattleSystem& battleSystem );
         void Rotate( const Orientation::Enum& orientation );
         void MovementPlayer( const Orientation::Enum& orientation );

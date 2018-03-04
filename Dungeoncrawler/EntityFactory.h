@@ -24,20 +24,11 @@ struct Health
 
 struct Entity
 {
-    Entity( const std::string& name, char icon, int attributes ) :
-        name( name ),
-        icon( icon ),
-        attributes( attributes ),
-        active( true ),
-        position( { -1, -1 } )
-    { }
-    virtual ~Entity( ) { }
+    Entity( const std::string& name, char icon, int attributes );
+    virtual ~Entity( );
 
-    virtual Entity* Clone( ) const
-    {
-        return new Entity( *this );
-    }
-    virtual void Interact( Player* player );
+    virtual Entity* Clone( ) const;
+    virtual void Interact( Player& player );
 
     const std::string name;
     const char icon;
@@ -48,62 +39,28 @@ struct Entity
 
 struct Door : public Entity
 {
-    Door( const std::string& name, char icon, int attributes ) :
-        Entity( name, icon, attributes )
-    { }
+    Door( const std::string& name, char icon, int attributes );
 
-    Door* Clone( ) const override
-    {
-        return new Door( *this );
-    }
-    void Interact( Player* player ) override;
+    Door* Clone( ) const override;
+    void Interact( Player& player ) override;
 
     std::optional<Connector> connector;
 };
 
 struct Wall : public Entity
 {
-    Wall( const std::string& name, char icon, int attributes ) :
-        Entity( name, icon, attributes )
-    { }
+    Wall( const std::string& name, char icon, int attributes );
 
-    Wall* Clone( ) const override
-    {
-        return new Wall( *this );
-    }
-    void Interact( Player* player ) override;
+    Wall* Clone( ) const override;
+    void Interact( Player& player ) override;
 };
 
 struct Character : public Entity
 {
-    Character( const std::string& name, char icon, int attributes, Health health, int damage, int spells ) :
-        Entity( name, icon, attributes ),
-        health( health ),
-        damage( damage ),
-        spells( spells )
-    { }
+    Character( const std::string& name, char icon, int attributes, Health health, int damage, int spells );
 
-    Character* Clone( ) const override
-    {
-        return new Character( *this );
-    }
-    void Interact( Player* player ) override;
-    void Update( )
-    {
-        if( health.current > 0 )
-        {
-            health.current += health.regeneration;
-        }
-        else
-        {
-            active = false;
-        }
-
-        if( health.current > health.max )
-        {
-            health.current = health.max;
-        }
-    }
+    Character* Clone( ) const override;
+    void Update( );
 
     Health health;
     int damage;
@@ -113,13 +70,7 @@ struct Character : public Entity
 
 struct Player : public Character
 {
-    Player( const std::string& name, char icon, int attributes, Health health, int damage, int spells, int visionReach ) :
-        Character( name, icon, attributes, health, damage, spells ),
-        visionReach( visionReach ),
-        blocked( false )
-    { }
-
-    void Interact( Player* player ) override;
+    Player( const std::string& name, char icon, int attributes, Health health, int damage, int spells, int visionReach );
 
     int visionReach;
     bool blocked;
@@ -128,16 +79,9 @@ struct Player : public Character
 
 struct PlayerHandle
 {
-    PlayerHandle( const Player& player ) :
-        base( std::make_unique<Player>( player ) ),
-        real( dynamic_cast<Player*>( base.get( ) ) )
-    { }
+    PlayerHandle( const Player& player );
 
-    void Reset( const Player& player )
-    {
-        base.reset( new Player( player ) );
-        real = dynamic_cast<Player*>( base.get( ) );
-    }
+    void Reset( const Player& player );
 
     std::unique_ptr<Entity> base;
     Player* real;
