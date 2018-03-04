@@ -66,7 +66,7 @@ class Dungeon
         Dungeon( Dungeon&& dungeon ) = default;
 
         void Connect( const Connector& connector, int index );
-        void PlayerSet( const Vector2<int>& position );
+        void PlayerSet( const std::optional<int>& index );
         void Events( const BattleSystem& battleSystem );
         void Rotate( const Orientation::Enum& orientation );
         void MovementPlayer( const Orientation::Enum& orientation );

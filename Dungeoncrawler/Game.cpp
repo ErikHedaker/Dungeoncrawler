@@ -220,8 +220,8 @@ void Game::Reset( )
     _dungeons.clear( );
     _dungeons.emplace_back( _player, _entityFactory, _config );
     _index = 0;
-    DungeonLink( 0 );
-    _dungeons[0].PlayerSet( _dungeons[0].GetSize( ) / 2 );
+    _dungeons[0].PlayerSet( std::nullopt );
+    DungeonConnect( 0 );
 }
 void Game::Start( )
 {
@@ -241,21 +241,24 @@ void Game::Start( )
 }
 void Game::DungeonSwap( const Connector& connector )
 {
-    const int indexPrev = _index;
-    const int indexNext = connector.indexDungeon;
-    const Vector2<int> position = _dungeons[indexNext].GetDoors( )[connector.indexDoor]->position;
-    const int entrance = RectQuadrant( _player.real->position, _dungeons[indexPrev].GetSize( ) );
-    const int exit = RectQuadrant( position, _dungeons[indexNext].GetSize( ) );
-    const int align = ( ( ( entrance - exit ) + 3 ) % 4 ) - 1;
-
-    DungeonLink( indexNext );
-    _index = indexNext;
-    _dungeons[indexNext].PlayerSet( position );
-    _dungeons[indexNext].Rotate( static_cast<Orientation::Enum>( align ) );
+    DungeonConnect( connector.indexDungeon );
+    _index = connector.indexDungeon;
+    _dungeons[connector.indexDungeon].PlayerSet( connector.indexDoor );
+    DungeonAlign( connector );
 }
-void Game::DungeonLink( int dungeon )
+void Game::DungeonAlign( const Connector& connector )
 {
-    auto doors = _dungeons[dungeon].GetDoors( );
+    const auto doorNext = _dungeons[connector.indexDungeon].GetDoors( )[connector.indexDoor];
+    const auto doorPrev = _dungeons[doorNext->connector->indexDungeon].GetDoors( )[doorNext->connector->indexDoor];
+    const int next = RectQuadrant( doorNext->position, _dungeons[doorPrev->connector->indexDungeon].GetSize( ) );
+    const int prev = RectQuadrant( doorPrev->position, _dungeons[doorNext->connector->indexDungeon].GetSize( ) );
+    const int align = ( ( ( prev - next ) + 3 ) % 4 ) - 1;
+
+    _dungeons[connector.indexDungeon].Rotate( static_cast<Orientation::Enum>( align ) );
+}
+void Game::DungeonConnect( int index )
+{
+    auto doors = _dungeons[index].GetDoors( );
     int size = doors.size( );
 
     for( int i = 0; i < size; i++ )
@@ -265,8 +268,8 @@ void Game::DungeonLink( int dungeon )
             const int partner = _dungeons.size( );
 
             _dungeons.emplace_back( _player, _entityFactory, _config );
-            _dungeons[partner].Connect( { dungeon, i }, 0 );
-            _dungeons[dungeon].Connect( { partner, 0 }, i );
+            _dungeons[partner].Connect( { index, i }, 0 );
+            _dungeons[index].Connect( { partner, 0 }, i );
         }
     }
 }

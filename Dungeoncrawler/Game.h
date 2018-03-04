@@ -25,7 +25,8 @@ class Game
         void Reset( );
         void Start( );
         void DungeonSwap( const Connector& connector );
-        void DungeonLink( int indexDungeonCurrent );
+        void DungeonAlign( const Connector& connector );
+        void DungeonConnect( int index );
         void Save( );
         void Load( );
 };

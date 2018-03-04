@@ -88,7 +88,9 @@ Dungeon::Dungeon( PlayerHandle& player, const EntityFactory& entityFactory, cons
 
     if( positionPlayer )
     {
-        PlayerSet( *positionPlayer );
+        _player.real->position = *positionPlayer;
+        OccupantInsert( _player.real->position, _player.base.get( ) );
+        BuildVision( _player.real->position, _player.real->visionReach );
     }
 }
 
@@ -96,7 +98,7 @@ void Dungeon::Connect( const Connector& connector, int index )
 {
     dynamic_cast<Door*>( _entities[_indexDoors[index]].get( ) )->connector = connector;
 }
-void Dungeon::PlayerSet( const Vector2<int>& position )
+void Dungeon::PlayerSet( const std::optional<int>& index )
 {
     static constexpr std::array<Vector2<int>, 4> directions
     { {
@@ -106,22 +108,24 @@ void Dungeon::PlayerSet( const Vector2<int>& position )
         { -1,  0 }
     } };
 
-    _player.real->position = InBounds( position, _grid.Size( ) ) ? position : _grid.Size( ) / 2;
-
-    if( !TileLacking( position, Attributes::Obstacle ) )
+    if( index )
     {
         for( const auto& direction : directions )
         {
-            const Vector2<int> nearby = position + direction;
+            const Vector2<int> neighbour = _entities[_indexDoors[*index]]->position + direction;
 
-            if( InBounds( nearby, _grid.Size( ) ) &&
-                TileLacking( nearby, Attributes::Obstacle ) )
+            if( InBounds( neighbour, _grid.Size( ) ) &&
+                TileLacking( neighbour, Attributes::Obstacle ) )
             {
-                _player.real->position = nearby;
+                _player.real->position = neighbour;
 
                 break;
             }
         }
+    }
+    else
+    {
+        _player.real->position = _grid.Size( ) / 2;
     }
 
     OccupantInsert( _player.real->position, _player.base.get( ) );
@@ -230,7 +234,8 @@ const std::vector<Door*> Dungeon::GetDoors( ) const
 
     for( auto i : _indexDoors )
     {
-        doors.push_back( dynamic_cast<Door*>( _entities[i].get( ) ) );
+        Door* door = dynamic_cast<Door*>( _entities[i].get( ) );
+        doors.push_back( door );
     }
 
     return doors;
