@@ -272,13 +272,18 @@ void Dungeon::BuildVision( const Vector2<int>& position, int visionReach )
 {
     _vision.clear( );
 
-    for( const auto& endpoint : BresenhamCircle( position, visionReach ) )
+    for( const auto& endpoint : BresenhamCircle( position, visionReach * 10 ) )
     {
-        LineOfSight( BresenhamLine( position, endpoint ) );
+        LineOfSight( BresenhamLine( position, endpoint ), visionReach, position );
     }
 
-    FixVisionNearbyWalls( position, visionReach );
-    FixVisionDeadspots( position );
+    //for( const auto& endpoint : BresenhamCircle( position, visionReach ) )
+    //{
+    //    LineOfSight( BresenhamLine( position, endpoint ) );
+    //}
+
+    //FixVisionNearbyWalls( position, visionReach );
+    //FixVisionDeadspots( position );
 }
 void Dungeon::FixVisionNearbyWalls( const Vector2<int>& position, int visionReach )
 {
@@ -349,6 +354,29 @@ void Dungeon::FixVisionDeadspots( const Vector2<int>& position )
         }
     }
 }
+void Dungeon::LineOfSight( const std::vector<Vector2<int>>& path, int visionReach, Vector2<int> start )
+{
+    auto distanceSquared = [] ( Vector2<int> start, Vector2<int> end ) -> int
+    {
+        return ( start.x - end.x ) * ( start.x - end.x ) + ( start.y - end.y ) * ( start.y - end.y );
+    };
+
+    for( const auto& current : path )
+    {
+        if( !InBounds( current, _grid.Size( ) ) ||
+            visionReach * visionReach < distanceSquared( start, current ) )
+        {
+            break;
+        }
+
+        _vision.insert( current );
+
+        if( !TileLacking( current, Attributes::Obstacle ) )
+        {
+            break;
+        }
+    }
+}
 void Dungeon::LineOfSight( const std::vector<Vector2<int>>& path )
 {
     for( const auto& current : path )
@@ -406,9 +434,9 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
 {
     const int limit = amount ? amount : 3;
     const int start = GetRNG( 0, 3 );
-    const int sensitivity = static_cast<int>( std::ceil( ( std::sqrt( _grid.Size( ).x * _grid.Size( ).y ) + 6.0 ) / 10.0 ) - 1.0 );
-    std::map<Orientation::Enum, std::vector<Vector2<int>>> sides;
-    std::vector<int> spacing;
+    const int cornerOffset = static_cast<int>( std::ceil( ( std::sqrt( _grid.Size( ).x * _grid.Size( ).y ) + 6.0 ) / 10.0 ) - 1.0 );
+    std::map<Orientation::Enum, std::vector<Vector2<int>>> valid;
+    std::vector<Orientation::Enum> sides;
     Vector2<int> iterator;
 
     for( iterator.y = 0; iterator.y < _grid.Size( ).y; iterator.y++ )
@@ -416,25 +444,24 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
         for( iterator.x = 0; iterator.x < _grid.Size( ).x; iterator.x++ )
         {
             if( OnBorder( iterator, _grid.Size( ) ) &&
-                !InCorner( iterator, _grid.Size( ), sensitivity ) )
+                !InCorner( iterator, _grid.Size( ), cornerOffset ) )
             {
-                sides[RectQuadrant( iterator, _grid.Size( ) )].push_back( iterator );
+                valid[RectQuadrant( iterator, _grid.Size( ) )].push_back( iterator );
             }
         }
     }
 
     for( int i = 0; i < limit; i++ )
     {
-        spacing.push_back( ( ( start + i ) % 4 ) - 1 );
+        sides.push_back( static_cast<Orientation::Enum>( ( ( start + i ) % 4 ) - 1 ) );
     }
 
-    for( const auto& value : spacing )
+    for( const auto& side : sides )
     {
-        const Orientation::Enum side = static_cast<Orientation::Enum>( value );
-        const int index = GetRNG( 0, sides[side].size( ) - 1 );
+        const int index = GetRNG( 0, valid[side].size( ) - 1 );
 
-        EntityInsert( sides[side][index], entityFactory.Get( "Door" )->Clone( ) );
-        sides[side].erase( sides[side].begin( ) + index );
+        EntityInsert( valid[side][index], entityFactory.Get( "Door" )->Clone( ) );
+        valid[side].erase( valid[side].begin( ) + index );
         _indexDoors.push_back( _entities.size( ) - 1 );
     }
 }
@@ -472,8 +499,7 @@ void Dungeon::GenerateHiddenPath( const EntityFactory& entityFactory )
 
     for( const auto& entity : _entities )
     {
-        if( entity->attributes & Attributes::Obstacle &&
-            entity->name != "Door" )
+        if( entity->attributes & Attributes::Obstacle )
         {
             obstacles.push_back( entity->position );
         }
@@ -525,7 +551,7 @@ void Dungeon::GenerateWallsParents( const EntityFactory& entityFactory, int amou
 }
 void Dungeon::GenerateWallsChildren( const EntityFactory& entityFactory, int amount )
 {
-    static constexpr std::array<Vector2<int>, 4> directions
+    static const std::array<Vector2<int>, 4> directions
     { {
         {  0, -1 },
         {  1,  0 },
@@ -600,7 +626,7 @@ void Dungeon::GenerateWallsFiller( const EntityFactory& entityFactory, int amoun
 }
 void Dungeon::GenerateEnemies( const EntityFactory& entityFactory, int amount )
 {
-    static const std::vector<Entity*> enemies = entityFactory.Get( Attributes::Hostile | Attributes::Movement );
+    const std::vector<Entity*> enemies = entityFactory.Get( Attributes::Hostile | Attributes::Movement );
     const int limit = amount ? amount : ( _grid.Size( ).x * _grid.Size( ).y ) / 150;
 
     for( int i = 0; i < limit; i++ )

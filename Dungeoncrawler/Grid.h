@@ -47,23 +47,23 @@ class Grid
             };
             const Vector2<int> sizeNext = sizeSet.at( orientation );
             const Vector2<int> sizePrev = _size;
-            Grid<T> rotate( sizeNext );
+            Grid<T> rotatedGrid( sizeNext );
             Vector2<int> iterator;
 
-            for( iterator.y = 0; iterator.y < _size.y; iterator.y++ )
+            for( iterator.y = 0; iterator.y < sizePrev.y; iterator.y++ )
             {
-                for( iterator.x = 0; iterator.x < _size.x; iterator.x++ )
+                for( iterator.x = 0; iterator.x < sizePrev.x; iterator.x++ )
                 {
                     const Vector2<int> rotation = PositionRotate( iterator, sizePrev, orientation );
                     const int indexPrev = ( rotation.x * sizeNext.y ) + rotation.y;
                     const int indexNext = ( iterator.x * sizePrev.y ) + iterator.y;
 
-                    rotate[indexNext] = (*this)[indexPrev];
+                    rotatedGrid[indexNext] = (*this)[indexPrev];
                 }
             }
 
-            _size = std::move( rotate._size );
-            _data = std::move( rotate._data );
+            _size = std::move( rotatedGrid._size );
+            _data = std::move( rotatedGrid._data );
         }
 
     private:

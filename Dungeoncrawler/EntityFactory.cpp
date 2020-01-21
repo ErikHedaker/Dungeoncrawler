@@ -89,9 +89,7 @@ void PlayerHandle::Reset( const Player& player )
 }
 
 EntityFactory::EntityFactory( ) :
-    _entities( [](
-    std::vector<Character> characters,
-    Player player )
+    _entities( [] ( std::vector<Character> characters, Player player )
     {
         std::map<std::string, std::unique_ptr<Entity>> temp;
 
@@ -106,9 +104,7 @@ EntityFactory::EntityFactory( ) :
         temp.insert_or_assign( "PlayerDefault", std::make_unique<Player>( player ) );
 
         return std::move( temp );
-    }(
-    LoadCharacters( ),
-    LoadPlayerDefault( ) ) )
+    } ( LoadCharacters( ), LoadPlayerDefault( ) ) )
 { }
 
 const std::unique_ptr<Entity>& EntityFactory::Get( const std::string& name ) const

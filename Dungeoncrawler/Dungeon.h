@@ -44,14 +44,6 @@ struct DungeonConfiguration
     } amount;
 };
 
-struct Link
-{
-    int indexDungeon;
-    int indexLink;
-    Vector2<int> entrance;
-    Vector2<int> exit;
-};
-
 struct Tile
 {
     std::vector<Entity*> occupants = { };
@@ -90,6 +82,7 @@ class Dungeon
         void BuildVision( const Vector2<int>& position, int visionReach );
         void FixVisionNearbyWalls( const Vector2<int>& position, int visionReach );
         void FixVisionDeadspots( const Vector2<int>& position );
+        void LineOfSight( const std::vector<Vector2<int>>& path, int visionReach, Vector2<int> start );
         void LineOfSight( const std::vector<Vector2<int>>& path );
         void OccupantInsert( const Vector2<int>& position, Entity* entity );
         void OccupantRemove( const Vector2<int>& position, Entity* entity );

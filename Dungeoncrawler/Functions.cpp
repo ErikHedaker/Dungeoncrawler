@@ -14,6 +14,7 @@
 #include <limits>
 #include <cstdlib>
 #include <string_view>
+#include <functional>
 
 int GetRNG( int min, int max )
 {
@@ -157,27 +158,15 @@ std::string GetStringDungeon( const Dungeon& dungeon, const Vector2<int>& center
 }
 Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& rotation )
 {
-    switch( rotation )
+    const std::map<Orientation::Enum, Vector2<int>> result
     {
-        case Orientation::North:
-        {
-            return position;
-        }
-        case Orientation::East:
-        {
-            return { size.y - position.y - 1, position.x };
-        }
-        case Orientation::South:
-        {
-            return { size.x - position.x - 1, size.y - position.y - 1 };
-        }
-        case Orientation::West:
-        {
-            return { position.y, size.x - position.x - 1 };
-        }
-    }
+        { Orientation::North, position },
+        { Orientation::East,  { size.y - position.y - 1, position.x } },
+        { Orientation::South, { size.x - position.x - 1, size.y - position.y - 1 } },
+        { Orientation::West,  { position.y, size.x - position.x - 1 } }
+    };
 
-    return position;
+    return result.at( rotation );
 }
 Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation )
 {
@@ -325,35 +314,34 @@ Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>
     const Vector2<float> sizef     = size;
     const Vector2<float> ratiof    = sizef / sizef.y;
     const bool rightOfMainDiagonal = positionf.x > ( positionf.y * ratiof.x );
-    const bool rightOfAntiDiagonal = positionf.x > ( sizef.x - positionf.y * ratiof.x - 1 );
+    const bool rightOfAntiDiagonal = positionf.x > ( sizef.x - positionf.y * ratiof.x - 1.0f );
 
     return quadrants.at( { rightOfMainDiagonal, rightOfAntiDiagonal } );
 }
 DungeonConfiguration SelectDungeonConfiguration( )
 {
-    static const std::map<char, bool> convert
-    {
-        { 'Y', true  },
-        { 'N', false }
-    };
     DungeonConfiguration config;
+    auto Select = [] ( )
+    {
+        return 'Y' == SelectChar( { 'Y', 'N' }, std::toupper );
+    };
 
     std::cout << "\nFixed dungeon size, [Y/N]: ";
-    config.size.determined = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.size.determined = Select( );
     std::cout << "Generate doors, [Y/N]: ";
-    config.generate.doors = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.doors = Select( );
     std::cout << "Generate outer walls, [Y/N]: ";
-    config.generate.wallsOuter = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsOuter = Select( );
     std::cout << "Generate hidden path, [Y/N]: ";
-    config.generate.hiddenPath = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.hiddenPath = Select( );
     std::cout << "Generate parent walls, [Y/N]: ";
-    config.generate.wallsParents = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsParents = Select( );
     std::cout << "Generate children walls, [Y/N]: ";
-    config.generate.wallsChildren = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsChildren = Select( );
     std::cout << "Generate filler walls, [Y/N]: ";
-    config.generate.wallsFiller = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.wallsFiller = Select( );
     std::cout << "Generate monsters, [Y/N]: ";
-    config.generate.enemies = convert.at( SelectChar( { 'Y', 'N' }, std::toupper ) );
+    config.generate.enemies = Select( );
     std::cout << "\n";
 
     if( config.size.determined )
