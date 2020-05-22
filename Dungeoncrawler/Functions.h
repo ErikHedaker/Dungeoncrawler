@@ -16,6 +16,7 @@ struct Health;
 struct Character;
 struct Player;
 
+/*
 class StringWrapper
 {
     public:
@@ -42,6 +43,7 @@ class StringWrapper
     private:
         std::string _data;
 };
+*/
 
 int GetRNG( int min, int max );
 int GetPowerDiceRoll( const Power& power );
@@ -64,7 +66,7 @@ DungeonConfiguration SelectDungeonConfiguration( );
 int SelectPositiveInteger( );
 char SelectChar( const std::vector<char>& valid, std::function<int( int )> modifier = nullptr );
 void SelectEnter( );
-void ClearScreen( );
+void ClearScreen( bool clear );
 std::vector<Character> LoadCharacters( );
 std::vector<Effect> LoadEffects( );
 std::vector<Spell> LoadSpells( );

@@ -8,12 +8,13 @@
 class Game
 {
     public:
-        Game( );
+        Game( bool clear );
 
         bool Exist( ) const;
         void Menu( );
 
     private:
+        const bool _clearOutput;
         const BattleSystem _battleSystem;
         const EntityFactory _entityFactory;
         std::vector<Dungeon> _dungeons;

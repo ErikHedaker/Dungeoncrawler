@@ -420,16 +420,20 @@ void SelectEnter( )
     std::cin.ignore( std::numeric_limits<std::streamsize>::max( ), '\n' );
     std::cin.get( );
 }
-void ClearScreen( )
+void ClearScreen( bool clear )
 {
-    #ifdef _WIN32
-    std::system( "CLS" );
-    #else
-    std::system( "clear" );
-    #endif
+    if( clear )
+    {
+        #ifdef _WIN32
+        std::system("CLS");
+        #else
+        std::system("clear");
+        #endif
+    }
 }
 std::vector<Character> LoadCharacters( )
 {
+    /*
     const std::string name = "Dungeoncrawler_Dependency_Characters.txt";
     const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper> { std::ifstream { name, std::ios::in } }, { } };
     constexpr int offset = 8;
@@ -458,9 +462,18 @@ std::vector<Character> LoadCharacters( )
     }
 
     return characters;
+    */
+
+    return
+    {
+        Character( "Zombie",   'Z', GetBitmask( "1,2" ), { 120, 120, 5 }, 20, GetBitmask( "" )  ),
+        Character( "Skeleton", 'S', GetBitmask( "1,2" ), { 80, 80, 0 },   10, GetBitmask( "1" ) ),
+        Character( "Lunatic",  'L', GetBitmask( "1,2" ), { 70, 70, 0 },   10, GetBitmask( "" )  )
+    };
 }
 std::vector<Effect> LoadEffects( )
 {
+    /*
     const std::string name = "Dungeoncrawler_Dependency_Effects.txt";
     const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper> { std::ifstream { name, std::ios::in } }, { } };
     constexpr int offset = 3;
@@ -482,53 +495,85 @@ std::vector<Effect> LoadEffects( )
     }
 
     return effects;
-}
-std::vector<Spell> LoadSpells( )
-{
-    const std::string name = "Dungeoncrawler_Dependency_Spells.txt";
-    const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper> { std::ifstream { name, std::ios::in } }, { } };
-    constexpr int offset = 3;
-    std::vector<Spell> spells;
-
-    if( fileCache.empty( ) )
-    {
-        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
-    }
-
-    for( int i = 0, limit = fileCache.size( ); i < limit; i += offset )
-    {
-        spells.push_back(
-        {
-            fileCache[i + 0],
-            GetOptionalPower( fileCache[i + 1] ),
-            GetBitmask( fileCache[i + 2] )
-        } );
-    }
-
-    return spells;
-}
-Player LoadPlayerDefault( )
-{
-    const std::string name = "Dungeoncrawler_Dependency_PlayerDefault.txt";
-    const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream { name, std::ios::in } }, { } };
-
-    if( fileCache.empty( ) )
-    {
-        throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
-    }
+    */
 
     return
     {
-        fileCache[0],
-        fileCache[1].back( ),
-        GetBitmask( fileCache[2] ),
+        Effect( "Freeze", GetOptionalPower( "0,1,4,0" ), 5 ),
+        Effect( "Ignite", GetOptionalPower( "0,1,4,1" ), 3 ),
+        Effect( "Poison", GetOptionalPower( "0,3,4,0" ), 4 )
+    };
+}
+std::vector<Spell> LoadSpells( )
+{
+    /*
+        const std::string name = "Dungeoncrawler_Dependency_Spells.txt";
+        const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper> { std::ifstream { name, std::ios::in } }, { } };
+        constexpr int offset = 3;
+        std::vector<Spell> spells;
+
+        if( fileCache.empty( ) )
         {
-            std::stoi( fileCache[3] ),
-            std::stoi( fileCache[4] ),
-            std::stoi( fileCache[5] )
-        },
-        std::stoi( fileCache[6] ),
-        GetBitmask( fileCache[7] ),
-        std::stoi( fileCache[8] )
+            throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
+        }
+
+        for( int i = 0, limit = fileCache.size( ); i < limit; i += offset )
+        {
+            spells.push_back(
+            {
+                fileCache[i + 0],
+                GetOptionalPower( fileCache[i + 1] ),
+                GetBitmask( fileCache[i + 2] )
+            } );
+        }
+
+        return spells;
+    */
+
+    return
+    {
+        Spell( "Iceblast",     GetOptionalPower( "0,2,10,2" ), GetBitmask( "0" )     ),
+        Spell( "Fireball",     GetOptionalPower( "0,1,20,4" ), GetBitmask( "1" )     ),
+        Spell( "Frostfire",    GetOptionalPower( "0,2,6,3" ),  GetBitmask( "0,1" )   ),
+        Spell( "Throw Poison", GetOptionalPower( "0,1,4,3" ),  GetBitmask( "2" )     ),
+        Spell( "Infliction",   GetOptionalPower( "" ),         GetBitmask( "0,1,2" ) )
+    };
+}
+Player LoadPlayerDefault( )
+{
+    /*
+        const std::string name = "Dungeoncrawler_Dependency_PlayerDefault.txt";
+        const std::vector<std::string> fileCache { std::istream_iterator<StringWrapper>{ std::ifstream { name, std::ios::in } }, { } };
+
+        if( fileCache.empty( ) )
+        {
+            throw std::exception( std::string( "Missing file: " + name ).c_str( ) );
+        }
+
+        return
+        {
+            fileCache[0],
+            fileCache[1].back( ),
+            GetBitmask( fileCache[2] ),
+            {
+                std::stoi( fileCache[3] ),
+                std::stoi( fileCache[4] ),
+                std::stoi( fileCache[5] )
+            },
+            std::stoi( fileCache[6] ),
+            GetBitmask( fileCache[7] ),
+            std::stoi( fileCache[8] )
+        };
+    */
+
+    return
+    {
+        "Player",
+        '@',
+        GetBitmask( "" ),
+        { 100, 100, 1 },
+        50,
+        GetBitmask( "0,1,2,3,4" ),
+        8
     };
 }

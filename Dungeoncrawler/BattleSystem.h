@@ -52,7 +52,7 @@ struct Spell
 class BattleSystem
 {
     public:
-        BattleSystem( );
+        BattleSystem( bool clear );
 
         void Encounter( Character& player, Character& enemy ) const;
         std::string TurnPlayer( Character& player, Character& enemy, std::string_view print, bool& flee ) const;
@@ -68,6 +68,7 @@ class BattleSystem
 
 
     private:
+        const bool _clearOutput;
         const std::map<int, Effect> _effects;
         const std::map<int, Spell> _spells;
 };

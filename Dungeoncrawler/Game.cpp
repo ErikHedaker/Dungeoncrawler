@@ -13,42 +13,11 @@
 #include <map>
 #include <deque>
 
-class Stopwatch
-{
-    public:
-        Stopwatch& Start( )
-        {
-            _start = std::chrono::high_resolution_clock::now( );
-
-            return *this;
-        }
-        Stopwatch& Stop( )
-        {
-            _stop = std::chrono::high_resolution_clock::now( );
-            _current = std::chrono::duration_cast<std::chrono::microseconds>( _stop - _start );
-
-            return *this;
-        }
-        std::string FPS( ) const
-        {
-            return std::to_string( 1.0 / ( static_cast<double>( _current.count( ) ) / 1000000.0 ) );
-        }
-        std::string Microseconds( ) const
-        {
-            return std::to_string( _current.count( ) );
-        }
-
-    private:
-        std::chrono::microseconds _current;
-        std::chrono::time_point<std::chrono::steady_clock> _start;
-        std::chrono::time_point<std::chrono::steady_clock> _stop;
-};
-
-Stopwatch stopwatchTotal;
-Stopwatch stopwatchLogic;
-
-Game::Game( ) :
-    _player( _entityFactory.PlayerDefault( ) )
+Game::Game( bool clear ) :
+    _clearOutput( clear ),
+    _battleSystem( clear ),
+    _player( _entityFactory.PlayerDefault( ) ),
+    _index( -1 )
 { }
 
 bool Game::Exist( ) const
@@ -62,7 +31,7 @@ void Game::Menu( )
 
     while( true )
     {
-        ClearScreen( );
+        ClearScreen( _clearOutput );
         output.clear( );
         output
             .append( "[1] Continue current game\n" )
@@ -70,10 +39,9 @@ void Game::Menu( )
             .append( "[3] Build new game (Randomization)\n" )
             .append( "[4] Build new game (Configuration)\n" )
             .append( "[5] Exit\n" )
-            .append( "Select option: " );
+            .append( "Select option: \n" );
         std::cout << output;
         input = SelectChar( { '1', '2', '3', '4', '5' } );
-        std::cout << "\nLoading, please wait.";
 
         switch( input )
         {
@@ -95,7 +63,7 @@ void Game::Menu( )
                 catch( const std::exception& error )
                 {
                     std::cout << "\n\nERROR " << error.what( );
-                    std::cout << "\n\nPress enter to continue: ";
+                    std::cout << "\n\nPress enter to continue: \n";
                     SelectEnter( );
 
                     break;
@@ -152,15 +120,11 @@ bool Game::TurnPlayer( )
 
     while( true )
     {
-        ClearScreen( );
+        ClearScreen( _clearOutput );
         output.clear( );
         output
             .append( GetStringDungeon( _dungeons[_index], _player.real->position, { 32, 16 } ) )
-            .append( "\nTotal time between frames:  " )
-            .append( stopwatchTotal.Stop( ).Microseconds( ) )
-            .append( "\nSampled logic microseconds: " )
-            .append( stopwatchLogic.Microseconds( ) )
-            .append( "\n\nHealth: " )
+            .append( "Health: " )
             .append( GetStringHealth( _player.real->health ) )
             .append( "\n\n" )
             .append( "[W] Go North\n" )
@@ -172,13 +136,9 @@ bool Game::TurnPlayer( )
             .append( "[F] Rotate dungeon 90'\n" )
             .append( "[G] Rotate dungeon 180'\n" )
             .append( "[H] Rotate dungeon 270'\n" )
-            .append( "Select action: " );
+            .append( "Select action: \n" );
         std::cout << output;
         input = SelectChar( { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
-        output
-            .append( std::string( 1, input ) )
-            .append( "\n" );
-        stopwatchTotal.Start( );
 
         switch( input )
         {
@@ -187,9 +147,7 @@ bool Game::TurnPlayer( )
             case 'S':
             case 'D':
             {
-                stopwatchLogic.Start( );
                 _dungeons[_index].MovementPlayer( directions.at( input ) );
-                stopwatchLogic.Stop( );
 
                 return true;
             }

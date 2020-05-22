@@ -9,7 +9,8 @@
 #include <memory>
 #include <functional>
 
-BattleSystem::BattleSystem( ) :
+BattleSystem::BattleSystem( bool clear ) :
+    _clearOutput( clear ),
     _effects( []( std::vector<Effect> effects )
     {
         std::map<int, Effect> temp;
@@ -53,7 +54,7 @@ void BattleSystem::Encounter( Character& player, Character& AI ) const
             if( conditions[i] )
             {
                 std::cout << "\nYou " << output[i];
-                std::cout << "Press enter to continue: ";
+                std::cout << "Press enter to continue: \n";
                 SelectEnter( );
 
                 return true;
@@ -65,7 +66,7 @@ void BattleSystem::Encounter( Character& player, Character& AI ) const
 
     while( true )
     {
-        ClearScreen( );
+        ClearScreen( _clearOutput );
         output.clear( );
         output
             .append( "> BATTLE <\n- " )
@@ -108,12 +109,12 @@ std::string BattleSystem::TurnPlayer( Character& player, Character& enemy, std::
     {
         std::string selection( print );
 
-        ClearScreen( );
+        ClearScreen( _clearOutput );
         selection
             .append( "[0] Flee\n" )
             .append( "[1] Attack with weapon\n" )
             .append( "[2] Attack with spell\n" )
-            .append( "Select action: " );
+            .append( "Select action: \n" );
         std::cout << selection;
         input = SelectChar( { '0', '1', '2' } );
         selection
@@ -143,7 +144,7 @@ std::string BattleSystem::TurnPlayer( Character& player, Character& enemy, std::
                     const Spell* spell;
                     Character* target;
 
-                    ClearScreen( );
+                    ClearScreen( _clearOutput );
                     std::cout << selection;
                     SelectSpell( spell, GetSpells( player.spells ) );
 
@@ -251,7 +252,7 @@ std::string BattleSystem::SelectTarget( Character*& target, const std::vector<Ch
         valid.push_back( option );
     }
 
-    output.append( "Select target: " );
+    output.append( "Select target: \n" );
     std::cout << output;
     select = SelectChar( valid );
     output
@@ -288,7 +289,7 @@ std::string BattleSystem::SelectSpell( const Spell*& spell, const std::vector<st
         valid.push_back( option );
     }
 
-    output.append( "Select target: " );
+    output.append( "Select target: \n" );
     std::cout << output;
     select = SelectChar( valid );
     output
