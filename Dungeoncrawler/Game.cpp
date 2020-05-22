@@ -102,14 +102,14 @@ void Game::Menu( )
 
 bool Game::TurnPlayer( )
 {
-    static const std::map<char, Orientation::Enum> directions
+    static const std::map<char, Orientation> directions
     {
         { 'W', Orientation::North },
         { 'A', Orientation::West  },
         { 'S', Orientation::South },
         { 'D', Orientation::East  }
     };
-    static const std::map<char, Orientation::Enum> rotations
+    static const std::map<char, Orientation> rotations
     {
         { 'F', Orientation::East  },
         { 'G', Orientation::South },
@@ -204,11 +204,11 @@ void Game::DungeonAlign( const Connector& connector )
 {
     const auto doorNext = _dungeons[connector.indexDungeon].GetDoors( )[connector.indexDoor];
     const auto doorPrev = _dungeons[doorNext->connector->indexDungeon].GetDoors( )[doorNext->connector->indexDoor];
-    const int sideNext = RectQuadrant( doorNext->position, _dungeons[doorPrev->connector->indexDungeon].GetSize( ) );
-    const int sidePrev = RectQuadrant( doorPrev->position, _dungeons[doorNext->connector->indexDungeon].GetSize( ) );
+    const int sideNext = RectQuadrantArithmetic( RectQuadrant( doorNext->position, _dungeons[doorPrev->connector->indexDungeon].GetSize( ) ) );
+    const int sidePrev = RectQuadrantArithmetic( RectQuadrant( doorPrev->position, _dungeons[doorNext->connector->indexDungeon].GetSize( ) ) );
     const int align = ( ( ( sidePrev - sideNext ) + 3 ) % 4 ) - 1;
 
-    _dungeons[connector.indexDungeon].Rotate( static_cast<Orientation::Enum>( align ) );
+    _dungeons[connector.indexDungeon].Rotate( RectQuadrantArithmetic( align ) );
 }
 void Game::DungeonConnect( int index )
 {

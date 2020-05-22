@@ -164,7 +164,7 @@ void Dungeon::Events( const BattleSystem& battleSystem )
         }
     }
 }
-void Dungeon::Rotate( const Orientation::Enum& orientation )
+void Dungeon::Rotate( Orientation orientation )
 {
     std::unordered_set<Vector2<int>, HasherVector2<int>> vision;
 
@@ -182,7 +182,7 @@ void Dungeon::Rotate( const Orientation::Enum& orientation )
     _vision = std::move( vision );
     _grid.Rotate( orientation );
 }
-void Dungeon::MovementPlayer( const Orientation::Enum& orientation )
+void Dungeon::MovementPlayer( Orientation orientation )
 {
     const Vector2<int> moving = PositionMove( _player.real->position, orientation );
 
@@ -435,8 +435,8 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
     const int limit = amount ? amount : 3;
     const int start = GetRNG( 0, 3 );
     const int cornerOffset = static_cast<int>( std::ceil( ( std::sqrt( _grid.Size( ).x * _grid.Size( ).y ) + 6.0 ) / 10.0 ) - 1.0 );
-    std::map<Orientation::Enum, std::vector<Vector2<int>>> valid;
-    std::vector<Orientation::Enum> sides;
+    std::map<Orientation, std::vector<Vector2<int>>> valid;
+    std::vector<Orientation> sides;
     Vector2<int> iterator;
 
     for( iterator.y = 0; iterator.y < _grid.Size( ).y; iterator.y++ )
@@ -453,7 +453,7 @@ void Dungeon::GenerateDoors( const EntityFactory& entityFactory, int amount )
 
     for( int i = 0; i < limit; i++ )
     {
-        sides.push_back( static_cast<Orientation::Enum>( ( ( start + i ) % 4 ) - 1 ) );
+        sides.push_back( RectQuadrantArithmetic( ( ( start + i ) % 4 ) - 1 ) );
     }
 
     for( const auto& side : sides )

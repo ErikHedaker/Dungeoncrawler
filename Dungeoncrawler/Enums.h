@@ -10,13 +10,10 @@ struct Attributes
     };
 };
 
-struct Orientation
+enum class Orientation
 {
-    enum Enum
-    {
-        North =  0,
-        East  =  1,
-        South =  2,
-        West  = -1
-    };
+    North,
+    East,
+    South,
+    West
 };

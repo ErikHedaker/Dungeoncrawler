@@ -60,8 +60,8 @@ class Dungeon
         void PlayerSet( const std::optional<int>& index );
         void Connect( const Connector& connector, int index );
         void Events( const BattleSystem& battleSystem );
-        void Rotate( const Orientation::Enum& orientation );
-        void MovementPlayer( const Orientation::Enum& orientation );
+        void Rotate( Orientation orientation );
+        void MovementPlayer( Orientation orientation );
         void MovementRandom( );
 
         const Vector2<int>& GetSize( ) const;

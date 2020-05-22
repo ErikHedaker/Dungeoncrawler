@@ -36,9 +36,9 @@ class Grid
         {
             return _size;
         }
-        void Rotate( const Orientation::Enum& orientation )
+        void Rotate( Orientation orientation )
         {
-            const std::map<Orientation::Enum, Vector2<int>> sizeSet
+            const std::map<Orientation, Vector2<int>> sizeSet
             {
                 { Orientation::North, { _size.x, _size.y } },
                 { Orientation::East,  { _size.y, _size.x } },

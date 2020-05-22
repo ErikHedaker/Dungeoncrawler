@@ -156,9 +156,9 @@ std::string GetStringDungeon( const Dungeon& dungeon, const Vector2<int>& center
 
     return output;
 }
-Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, const Orientation::Enum& rotation )
+Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& size, Orientation rotation )
 {
-    const std::map<Orientation::Enum, Vector2<int>> result
+    const std::map<Orientation, Vector2<int>> result
     {
         { Orientation::North, position },
         { Orientation::East,  { size.y - position.y - 1, position.x } },
@@ -168,9 +168,9 @@ Vector2<int> PositionRotate( const Vector2<int>& position, const Vector2<int>& s
 
     return result.at( rotation );
 }
-Vector2<int> PositionMove( const Vector2<int>& position, const Orientation::Enum& orientation )
+Vector2<int> PositionMove( const Vector2<int>& position, Orientation orientation )
 {
-    static const std::map<Orientation::Enum, Vector2<int>> directions
+    static const std::map<Orientation, Vector2<int>> directions
     {
         { Orientation::North, {  0, -1 } },
         { Orientation::East,  {  1,  0 } },
@@ -301,9 +301,9 @@ bool InBounds( const Vector2<int>& position, const Vector2<int>& size )
         position.x < size.x &&
         position.y < size.y;
 }
-Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>& size )
+Orientation RectQuadrant( const Vector2<int>& position, const Vector2<int>& size )
 {
-    static const std::map<std::pair<bool, bool>, Orientation::Enum> quadrants
+    static const std::map<std::pair<bool, bool>, Orientation> quadrants
     {
         { { true,  false }, Orientation::North },
         { { true,  true  }, Orientation::East  },
@@ -317,6 +317,30 @@ Orientation::Enum RectQuadrant( const Vector2<int>& position, const Vector2<int>
     const bool rightOfAntiDiagonal = positionf.x > ( sizef.x - positionf.y * ratiof.x - 1.0f );
 
     return quadrants.at( { rightOfMainDiagonal, rightOfAntiDiagonal } );
+}
+Orientation RectQuadrantArithmetic( int orientation )
+{
+    static const std::map<int, Orientation> quadrant
+    {
+        {  0, Orientation::North },
+        { -1, Orientation::West  },
+        {  2, Orientation::South },
+        {  1, Orientation::East  }
+    };
+
+    return quadrant.at( orientation );
+}
+int RectQuadrantArithmetic( Orientation orientation )
+{
+    static const std::map<Orientation, int> quadrant
+    {
+        { Orientation::North, 0 },
+        { Orientation::West, -1 },
+        { Orientation::South, 2 },
+        { Orientation::East,  1 }
+    };
+
+    return quadrant.at( orientation );
 }
 DungeonConfiguration SelectDungeonConfiguration( )
 {
