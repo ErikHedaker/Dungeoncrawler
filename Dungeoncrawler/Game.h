@@ -8,13 +8,16 @@
 class Game
 {
     public:
-        Game( bool clear );
+        Game( bool clear, bool save, bool exit, bool config );
 
         bool Exist( ) const;
         void Menu( );
 
     private:
         const bool _clearOutput;
+        const bool _saveToFile;
+        const bool _exitable;
+        const bool _customConfig;
         const BattleSystem _battleSystem;
         const EntityFactory _entityFactory;
         std::vector<Dungeon> _dungeons;
@@ -22,7 +25,7 @@ class Game
         PlayerHandle _player;
         int _index;
 
-        bool TurnPlayer( );
+        bool Turn( );
         void Reset( );
         void Start( );
         void DungeonAlign( const Connector& connector );

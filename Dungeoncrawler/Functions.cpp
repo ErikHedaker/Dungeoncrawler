@@ -320,7 +320,7 @@ Orientation RectQuadrant( const Vector2<int>& position, const Vector2<int>& size
 }
 Orientation RectQuadrantArithmetic( int orientation )
 {
-    static const std::map<int, Orientation> quadrant
+    static const std::map<int, Orientation> quadrants
     {
         {  0, Orientation::North },
         { -1, Orientation::West  },
@@ -328,11 +328,11 @@ Orientation RectQuadrantArithmetic( int orientation )
         {  1, Orientation::East  }
     };
 
-    return quadrant.at( orientation );
+    return quadrants.at( orientation );
 }
 int RectQuadrantArithmetic( Orientation orientation )
 {
-    static const std::map<Orientation, int> quadrant
+    static const std::map<Orientation, int> quadrants
     {
         { Orientation::North, 0 },
         { Orientation::West, -1 },
@@ -340,7 +340,7 @@ int RectQuadrantArithmetic( Orientation orientation )
         { Orientation::East,  1 }
     };
 
-    return quadrant.at( orientation );
+    return quadrants.at( orientation );
 }
 DungeonConfiguration SelectDungeonConfiguration( )
 {

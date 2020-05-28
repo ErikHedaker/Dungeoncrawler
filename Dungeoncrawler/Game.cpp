@@ -13,8 +13,11 @@
 #include <map>
 #include <deque>
 
-Game::Game( bool clear ) :
+Game::Game( bool clear, bool save, bool exit, bool config ) :
     _clearOutput( clear ),
+    _saveToFile( save ),
+    _exitable( exit ),
+    _customConfig( config ),
     _battleSystem( clear ),
     _player( _entityFactory.PlayerDefault( ) ),
     _index( -1 )
@@ -34,14 +37,14 @@ void Game::Menu( )
         ClearScreen( _clearOutput );
         output.clear( );
         output
-            .append( "[1] Continue current game\n" )
-            .append( "[2] Load game from file\n" )
-            .append( "[3] Build new game (Randomization)\n" )
-            .append( "[4] Build new game (Configuration)\n" )
-            .append( "[5] Exit\n" )
+            .append( std::string( "[1] Continue current game" ) + ( Exist( ) ? "\n" : "\t[Disabled, no current game]\n" ) )
+            .append( std::string( "[2] Load game from file" ) + ( _saveToFile ? "\n" : "\t\t[Disabled by server]\n" ) )
+            .append( "[3] Build new game (Random)\n" )
+            .append( std::string( "[4] Build new game (Config)" ) + ( _customConfig ? "\n" : "\t[Disabled by server]\n" ) )
+            .append( std::string( "[5] Exit" ) + ( _exitable ? "\n" : "\t\t\t[Disabled by server]\n" ) )
             .append( "Select option: \n" );
         std::cout << output;
-        input = SelectChar( { '1', '2', '3', '4', '5' } );
+        input = SelectChar( { Exist() ? '1' : '\0', _saveToFile ? '2' : '\0', '3', _customConfig ? '4' : '\0', _exitable ? '5' : '\0' } );
 
         switch( input )
         {
@@ -100,7 +103,7 @@ void Game::Menu( )
     }
 }
 
-bool Game::TurnPlayer( )
+bool Game::Turn( )
 {
     static const std::map<char, Orientation> directions
     {
@@ -131,14 +134,14 @@ bool Game::TurnPlayer( )
             .append( "[A] Go West\n" )
             .append( "[S] Go South\n" )
             .append( "[D] Go East\n" )
-            .append( "[E] Exit to meny while saving\n" )
-            .append( "[R] Exit to meny without saving\n" )
+            .append( "[E] Exit to meny\n" )
+            .append( std::string( _saveToFile ? "[R] Exit to meny and save\n" : "" ) )
             .append( "[F] Rotate dungeon 90'\n" )
             .append( "[G] Rotate dungeon 180'\n" )
             .append( "[H] Rotate dungeon 270'\n" )
             .append( "Select action: \n" );
         std::cout << output;
-        input = SelectChar( { 'W', 'A', 'S', 'D', 'E', 'R', 'F', 'G', 'H' }, std::toupper );
+        input = SelectChar( { 'W', 'A', 'S', 'D', 'E', _saveToFile ? 'R' : '\0', 'F', 'G', 'H' }, std::toupper );
 
         switch( input )
         {
@@ -153,12 +156,15 @@ bool Game::TurnPlayer( )
             }
             case 'E':
             {
-                Save( );
-
                 return false;
             }
             case 'R':
             {
+                if (_saveToFile)
+                {
+                    Save();
+                }
+
                 return false;
             }
             case 'F':
@@ -184,7 +190,7 @@ void Game::Reset( )
 void Game::Start( )
 {
     while( _player.real->active &&
-           TurnPlayer( ) )
+           Turn( ) )
     {
         _dungeons[_index].MovementRandom( );
         _dungeons[_index].Events( _battleSystem );
